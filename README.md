@@ -94,7 +94,11 @@ Boot waits for the landing plate and the one dap about to play — nine files, n
   Still missing a real round: `rock/paper`, `rock/scissors`, `paper/rock`,
   `paper/paper`, `scissors/paper`. Add them to `ROUNDS` in `build_rps.py`.
 - **Campaign names** — each is its own hit area and links to a placeholder page.
-- **Back** — the `<- BACK` control, or `Esc`.
+- **Back** — the BACK control, or `Esc`. It sits on the edge the landing is
+  behind and points at it, so leaving reads as reversing the move that opened the
+  page: left on Pita, right on Salva, bottom centre on the &, top centre on a
+  campaign. The side is a `back-*` class on `#page`, set from `back` in
+  `PAGE_DEFS`.
 
 ## Timing
 

@@ -47,7 +47,9 @@
         <p>Ultimately, two so-called creative jerks.</p>
       </div>
       <div id="page-extra"></div>
-      <button id="back" type="button">&lt;- BACK</button>
+      <!-- the label lives in a span so the hover jitter can animate it without
+           fighting the centring transform on the button itself -->
+      <button id="back" type="button"><span class="back-in">BACK</span></button>
     </div>
 
     <div id="ghost"><img alt=""></div>

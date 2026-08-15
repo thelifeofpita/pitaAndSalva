@@ -10,11 +10,15 @@ let SEQ = null;
 let PAGES = null;
 
 const LANDING = 'landing_plate';
+/* `back` is the edge the landing lies behind, so leaving a page always reads as
+   reversing the move that opened it. */
 const PAGE_DEFS = {
-  pita:  { seq: 'pita',  key: 'kf_pita' },
-  salva: { seq: 'salva', key: 'kf_salva' },
-  and:   { seq: 'amp',   key: 'kf_amp_plate', backCentre: true, settleKey: true },
+  pita:  { seq: 'pita',  key: 'kf_pita',  back: 'left' },
+  salva: { seq: 'salva', key: 'kf_salva', back: 'right' },
+  and:   { seq: 'amp',   key: 'kf_amp_plate', back: 'bottom', settleKey: true },
 };
+const CAMPAIGN_BACK = 'top';   // campaign titles sit along the bottom of the landing
+const BACK_SIDES = ['back-left', 'back-right', 'back-top', 'back-bottom'];
 
 const BEATS = 'rps';          // rock / paper / scissors
 
@@ -49,6 +53,11 @@ let pendingCampaignOrigin = null;
 let campaignReturnOrigin = null;
 
 /* --------------------------------------------------------------- helpers */
+function setBackSide(side) {
+  page.classList.remove(...BACK_SIDES);
+  if (side) page.classList.add('back-' + side);
+}
+
 const src = (name) => `${IMG}${name}.png`;
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 const jitter = (ms, amt = 14) => ms + (Math.random() * 2 - 1) * amt;
@@ -266,7 +275,8 @@ function buildUI() {
 /* -------------------------------------------------------------- routing */
 async function enterLanding({ dap = true, frames = null } = {}) {
   current = null;
-  page.classList.remove('on', 'extra', 'top-centre');
+  page.classList.remove('on', 'extra');
+  setBackSide(null);
   ui.classList.add('hidden');
   if (dap) {
     await play(frames || pickDap(), TIMING.dap, TIMING.dapLast);
@@ -305,7 +315,7 @@ async function goPage(id) {
   await play(p.frames, TIMING.trans, TIMING.transLast);
   await dest;
   pageImg.src = src(p.key);
-  page.classList.toggle('top-centre', !!p.backCentre);
+  setBackSide(p.back);
   page.classList.remove('extra', 'page-and');
   page.classList.toggle('page-and', id === 'and');
   page.classList.add('on');
@@ -399,7 +409,8 @@ async function campaignDepthTransition(origin, reverse = false) {
     // first held pose without a flash of the normal landing state.
     show(LANDING);
     ui.classList.remove('hidden');
-    page.classList.remove('on', 'extra', 'top-centre', 'page-and');
+    page.classList.remove('on', 'extra', 'page-and');
+    setBackSide(null);
   }
 
   await Promise.all([titleMove.finished, worldMove.finished,
@@ -407,7 +418,8 @@ async function campaignDepthTransition(origin, reverse = false) {
 
   if (!reverse) {
     ui.classList.add('hidden');
-    page.classList.remove('top-centre', 'page-and');
+    page.classList.remove('page-and');
+    setBackSide(CAMPAIGN_BACK);
     page.classList.add('on', 'extra');
   }
   for (const animation of [titleMove, worldMove, handsMove]) animation.cancel();
@@ -450,7 +462,8 @@ async function goBack() {
     busy = false;
     return;
   }
-  page.classList.remove('on', 'extra', 'top-centre', 'page-and');
+  page.classList.remove('on', 'extra', 'page-and');
+  setBackSide(null);
   if (PAGES[id]) {
     await play([...PAGES[id].frames].reverse(), TIMING.trans, TIMING.transLast);
   }
@@ -646,7 +659,7 @@ document.addEventListener('click', (e) => {
     ([k, v]) => [k, {
       frames: v.settleKey ? [...SEQ[v.seq], v.key] : SEQ[v.seq],
       key: v.key,
-      backCentre: v.backCentre,
+      back: v.back,
     }]));
   buildUI();
 

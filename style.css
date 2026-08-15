@@ -137,7 +137,9 @@ html, body {
   left: 60px;
   top: 46px;
   font: inherit;
-  font-size: 30px;
+  /* the portrait pages leave a narrow gutter beside their copy, and the button
+     has to sit inside it without crowding the text */
+  font-size: 27px;
   letter-spacing: 1px;
   color: #fff;
   background: none;
@@ -145,15 +147,53 @@ html, body {
   padding: 0;
   cursor: pointer;
 }
-#back:hover { animation: jitter .18s steps(2) infinite; }
-#page.top-centre #back { left: 50%; transform: translateX(-50%); }
-#page.top-centre #back:hover { animation: jitter-centred .18s steps(2) infinite; }
-
-@keyframes jitter-centred {
-  0%   { transform: translateX(-50%) translate(0, 0); }
-  50%  { transform: translateX(-50%) translate(2px, -2px); }
-  100% { transform: translateX(-50%) translate(-1px, 1px); }
+.back-in {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  line-height: 1;
 }
+.back-in::before { content: '<-'; }
+#back:hover .back-in { animation: jitter .18s steps(2) infinite; }
+
+/* Back sits on the edge the landing is behind, and points at it: the camera
+   travels left to reach Pita, so from Pita home is back out to the left; Salva
+   is the mirror; the & is reached by pushing up into the faces, the campaigns by
+   dropping down to the titles. */
+#page.back-left #back {
+  left: 24px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+#page.back-right #back {
+  left: auto;
+  right: 24px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+#page.back-right .back-in { flex-direction: row-reverse; }
+#page.back-right .back-in::before { content: '->'; }
+
+/* the campaign title is fixed at y=85 and blown up 1.7x, so the only room above
+   it is the very top of the frame */
+#page.back-top #back {
+  left: 50%;
+  top: 12px;
+  transform: translateX(-50%);
+}
+#page.back-top .back-in { flex-direction: column; gap: 1px; }
+#page.back-top .back-in::before { content: '/\\'; }
+
+#page.back-bottom #back {
+  left: 50%;
+  top: auto;
+  bottom: 40px;
+  transform: translateX(-50%);
+}
+#page.back-bottom .back-in { flex-direction: column-reverse; gap: 1px; }
+#page.back-bottom .back-in::before { content: '\\/'; }
 
 #and-copy {
   position: absolute;
