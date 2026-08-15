@@ -53,27 +53,166 @@ const src = (name) => `${IMG}${name}.png`;
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 const jitter = (ms, amt = 14) => ms + (Math.random() * 2 - 1) * amt;
 
+/* ----------------------------------------------------------- frame store */
+/* One entry per frame, kept for the life of the page. Holding the Image is the
+   point: a released one is re-requested the next time it is shown, and online
+   that request is what makes a dap drop frames. Every frame is fetched exactly
+   once per visit. */
+const store = new Map();
+
+function entry(name) {
+  let e = store.get(name);
+  if (!e) {
+    e = { img: null, ready: null };
+    store.set(name, e);
+  }
+  return e;
+}
+
+/* A frame that fails to load must not resolve as if it had — the old preload
+   swallowed errors, and the blank that followed read as a missing dap. */
+function fetchFrame(name, tries = 3) {
+  const e = entry(name);
+  if (e.ready) return e.ready;
+  e.ready = new Promise((res, rej) => {
+    const attempt = (left) => {
+      const i = new Image();
+      i.decoding = 'async';
+      i.onload = () => { e.img = i; res(i); };
+      i.onerror = () => {
+        if (left > 1) setTimeout(() => attempt(left - 1), (tries - left + 1) * 250);
+        else rej(new Error('frame failed: ' + name));
+      };
+      i.src = src(name);
+    };
+    attempt(tries);
+  });
+  return e.ready;
+}
+
+function load(names) {
+  return Promise.all([...new Set(names)].map((n) => fetchFrame(n).catch(() => null)));
+}
+
+/* Loaded is not the same as paintable: the browser still has to turn the PNG
+   into a bitmap, and left alone it does that at the moment of the draw, on the
+   main thread, inside the hold. createImageBitmap does it in advance and off
+   thread. (HTMLImageElement.decode() is the obvious tool here and cannot be
+   used: on a detached image its promise can simply never settle.)
+
+   A decoded 1920x1080 frame costs ~8MB, so they are kept in a small window
+   around the playhead rather than all at once — 170 of them would be 1.4GB. */
+const WINDOW = 12;
+const BMP_CAP = 16;
+const bmps = new Map();        // name -> ImageBitmap, in insertion order
+let keep = new Set();          // frames the playhead still needs
+
+function trim() {
+  for (const [k, v] of bmps) {
+    if (bmps.size <= BMP_CAP) break;
+    if (keep.has(k)) continue;
+    bmps.delete(k);
+    v.close();
+  }
+}
+
+async function decodeFrame(name) {
+  if (bmps.has(name)) return bmps.get(name);
+  const img = await fetchFrame(name);
+  const bmp = await createImageBitmap(img);
+  if (bmps.has(name)) { bmp.close(); return bmps.get(name); }
+  bmps.set(name, bmp);
+  trim();
+  return bmp;
+}
+
+/* Load every frame of a sequence, decode the head of it. */
+async function prime(frames) {
+  const head = frames.slice(0, WINDOW);
+  keep = new Set(head);
+  load(frames);
+  await Promise.all(head.map((n) => decodeFrame(n).catch(() => null)));
+}
+
+/* Warm frames we will want soon without blocking anything that is on screen. */
+function warm(names) {
+  for (const n of names) fetchFrame(n).catch(() => {});
+  if (navigator.serviceWorker && navigator.serviceWorker.controller) {
+    navigator.serviceWorker.controller.postMessage({
+      type: 'warm',
+      urls: names.map((n) => new URL(src(n), location.href).href),
+    });
+  }
+}
+
+/* ------------------------------------------------------------- rendering */
+/* The plate is a canvas rather than an <img> because drawImage paints in the
+   call itself. Assigning a src does not: the element keeps showing the previous
+   frame until the new one is ready, so a slow frame is not a late frame, it is a
+   frame nobody ever sees. */
+const ctx = plate.getContext('2d', { alpha: false });
+ctx.imageSmoothingEnabled = false;
+
+let painted = null;
+
+function draw(name) {
+  const bmp = bmps.get(name);
+  if (bmp) { ctx.drawImage(bmp, 0, 0, 1920, 1080); painted = name; return true; }
+  const e = store.get(name);
+  if (!e || !e.img || !e.img.complete) return false;  // never blank the stage
+  // Loaded but not decoded yet: drawing the element decodes it here and now,
+  // which costs a few ms but always puts the right frame on screen.
+  ctx.drawImage(e.img, 0, 0, 1920, 1080);
+  painted = name;
+  return true;
+}
+
 function show(name) {
-  plate.src = src(name);
+  if (!draw(name)) fetchFrame(name).then(() => draw(name)).catch(() => {});
 }
 
 /* Plays a list of frames. The choppiness is the point: a handful of frames,
    each held for a short, slightly uneven beat. `lastHold` lets a move settle on
-   its final pose before whatever comes next. */
-async function play(frames, hold = TIMING.trans, lastHold = null) {
-  for (let i = 0; i < frames.length; i++) {
-    show(frames[i]);
-    const h = (i === frames.length - 1 && lastHold !== null) ? lastHold : hold;
-    await wait(Math.max(40, jitter(h, h * 0.18)));
-  }
-}
+   its final pose before whatever comes next.
 
-function preload(names) {
-  return Promise.all(names.map((n) => new Promise((res) => {
-    const i = new Image();
-    i.onload = i.onerror = () => res();
-    i.src = src(n);
-  })));
+   Driven off requestAnimationFrame so a hold ends on a paint rather than
+   whenever a timer happens to fire — setTimeout drift accumulated across a
+   twelve-frame dap is audible in the cadence. */
+async function play(frames, hold = TIMING.trans, lastHold = null) {
+  if (!frames || !frames.length) return;
+  await prime(frames);
+
+  const holds = frames.map((_, i) => {
+    const h = (i === frames.length - 1 && lastHold !== null) ? lastHold : hold;
+    return Math.max(40, jitter(h, h * 0.18));
+  });
+
+  return new Promise((resolve) => {
+    let i = 0;
+    let due = 0;
+    const step = (now) => {
+      if (!due) due = now;
+      if (now >= due) {
+        show(frames[i]);
+        // A backgrounded tab stops raf; on return, run the rest from now rather
+        // than flushing the whole backlog into one paint.
+        due = (now - due > 900 ? now : due) + holds[i];
+        i++;
+        if (i >= frames.length) {
+          keep = new Set();
+          setTimeout(resolve, Math.max(0, due - performance.now()));
+          return;
+        }
+        // Pull the decode window along behind the playhead. There are whole
+        // holds of runway here, so the decode never lands inside a beat.
+        keep = new Set(frames.slice(i, i + WINDOW));
+        const ahead = frames[i + WINDOW - 1];
+        if (ahead) decodeFrame(ahead).catch(() => {});
+      }
+      requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+  });
 }
 
 function fit() {
@@ -125,12 +264,12 @@ function buildUI() {
 }
 
 /* -------------------------------------------------------------- routing */
-async function enterLanding({ dap = true } = {}) {
+async function enterLanding({ dap = true, frames = null } = {}) {
   current = null;
   page.classList.remove('on', 'extra', 'top-centre');
   ui.classList.add('hidden');
   if (dap) {
-    await play(pickDap(), TIMING.dap, TIMING.dapLast);
+    await play(frames || pickDap(), TIMING.dap, TIMING.dapLast);
   }
   show(LANDING);
   ui.classList.remove('hidden');
@@ -160,7 +299,11 @@ async function goPage(id) {
   busy = true;
   const p = PAGES[id];
   ui.classList.add('hidden');
+  // Decode the destination alongside the move, so the last frame of the camera
+  // pull-back cuts straight to it instead of flashing the empty page.
+  const dest = load([p.key]);
   await play(p.frames, TIMING.trans, TIMING.transLast);
+  await dest;
   pageImg.src = src(p.key);
   page.classList.toggle('top-centre', !!p.backCentre);
   page.classList.remove('extra', 'page-and');
@@ -451,13 +594,19 @@ async function playRPS(zone, gesture) {
   // Omit the widest neutral frame. Landing -> tight -> medium -> RPS crop is a
   // single monotonic pull-back; the same exact bridge runs forwards on return.
   const rpsBridge = SEQ.pita_settle.slice(1);
-  await play([...rpsBridge].reverse(), TIMING.trans);
-  await play(SEQ.rps.pump, TIMING.pump);
 
   // every combination has a filmed round: the throw is held, then the hands act
   // the result out — scissors snip at the palm, the fist closes over the
   // scissors, paper covers the fist, two papers shake on it
   const round = SEQ.rps.round[left + right];
+  // The whole round is one continuous move through four sequences. Decoding it
+  // now means the count-in cannot stall on the way into the throw.
+  const whole = load([...rpsBridge, ...SEQ.rps.pump,
+                      ...round.hold, ...round.after, ...round.settle]);
+
+  await play([...rpsBridge].reverse(), TIMING.trans);
+  await whole;
+  await play(SEQ.rps.pump, TIMING.pump);
   // Keep the thrown gesture moving. A near-one-second freeze here made the
   // game stop dead just as the result appeared. Two additional held beats on
   // the final throw pose now let the result register before the interaction,
@@ -500,13 +649,25 @@ document.addEventListener('click', (e) => {
       backCentre: v.backCentre,
     }]));
   buildUI();
-  const all = [LANDING, 'kf_pita', 'kf_salva', 'kf_amp_plate',
-               ...SEQ.daps.flat(), ...SEQ.pita, ...SEQ.pita_settle,
-               ...SEQ.salva, ...SEQ.amp,
-               ...SEQ.rps.pump];
-  for (const r of Object.values(SEQ.rps.round)) all.push(...r.hold, ...r.after, ...r.settle);
-  await preload(all);
+
+  /* Wait for the landing and the one dap that is about to play — around a dozen
+     frames — instead of all two hundred. Everything else is fetched behind the
+     dap, so the page opens at the speed of what it is actually showing. */
+  const first = pickDap();
+  await load([LANDING, ...first]);
+  await decodeFrame(LANDING).catch(() => {});
   document.body.classList.remove('booting');
-  if (location.hash) { show(LANDING); route(); }
-  else await enterLanding({ dap: true });
+
+  const rest = [LANDING, 'kf_pita', 'kf_salva', 'kf_amp_plate',
+                ...SEQ.daps.flat(), ...SEQ.pita, ...SEQ.pita_settle,
+                ...SEQ.salva, ...SEQ.amp,
+                ...SEQ.rps.pump];
+  for (const r of Object.values(SEQ.rps.round)) rest.push(...r.hold, ...r.after, ...r.settle);
+
+  if (location.hash) { show(LANDING); warm(rest); route(); }
+  else {
+    const playing = enterLanding({ dap: true, frames: first });
+    warm(rest);
+    await playing;
+  }
 })();

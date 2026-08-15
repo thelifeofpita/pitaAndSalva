@@ -11,7 +11,8 @@ python3 -m http.server 8777
 open http://localhost:8777/
 ```
 
-(Needs to be served over HTTP — `app.js` fetches `img/ui.json`.)
+(Needs to be served over HTTP — `app.js` fetches `img/ui.json`, and `sw.js` only
+registers over HTTP.)
 
 Live at <https://thelifeofpita.github.io/pitaAndSalva/>.
 
@@ -33,6 +34,35 @@ large for GitHub. Keep `videos/` alongside the checkout to re-run `tools/`.
 | `img/rpsback_*.png` | fallback aftermath for combinations with no real round yet — hands unclench and open back out, composited per-arm |
 | `img/ui/*` | the overlay artwork, sliced out of `assets/` |
 | `img/ui.json` | position of every overlay element in 1920×1080 space |
+| `sw.js` | the frame cache — see *Playing frames over a network* below |
+
+## Playing frames over a network
+
+A dap holds each drawing for ~132ms, so a frame that arrives late does not
+arrive at all. Locally that is free. On GitHub Pages it is not: every file comes
+back with `cache-control: max-age=600`, so ten minutes after a visit the browser
+has to revalidate each of the 200 frames over the network before it can paint
+it. That is what made playback stutter online and look perfect on localhost.
+
+Three things keep the holds even, none of which change what is on screen:
+
+- **`sw.js`** keeps the frames in Cache Storage, where `max-age` does not reach
+  them. After the first visit a frame is a memory read, at any age, on any
+  connection, including none. Bump `VERSION` in it after rebuilding frames to
+  move every client onto the new art at once; without a bump the changes still
+  land, one visit later.
+- **The plate is a `<canvas>`.** `drawImage` paints inside the call. Assigning
+  `img.src` does not — the element keeps showing the previous frame until the new
+  one resolves, so a slow frame is not a late frame, it is a frame nobody sees.
+- **Frames are decoded before they are due.** `createImageBitmap` runs off the
+  main thread, on a sliding window of `WINDOW` frames around the playhead;
+  `BMP_CAP` bounds how many stay decoded, because a decoded 1920×1080 frame
+  costs ~8MB and all 170 at once would be 1.4GB. (`HTMLImageElement.decode()` is
+  the obvious tool and cannot be used: on a detached image its promise can
+  simply never settle.)
+
+Boot waits for the landing plate and the one dap about to play — nine files, not
+191. The rest is fetched behind the dap.
 
 ## Interactions
 

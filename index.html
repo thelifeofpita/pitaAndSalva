@@ -5,11 +5,17 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>PITA &amp; SALVA</title>
 <link rel="stylesheet" href="style.css">
+<!-- the three files that gate the first dap, requested before app.js is parsed -->
+<link rel="preload" as="fetch" href="img/frames.json" crossorigin>
+<link rel="preload" as="fetch" href="img/ui.json" crossorigin>
+<link rel="preload" as="image" href="img/landing_plate.png">
 </head>
 <body class="booting">
 <div id="fit">
   <div id="stage">
-    <img id="plate" alt="">
+    <!-- a canvas, not an <img>: drawImage paints during the call, so a frame can
+         never be skipped by a swap that has not finished resolving -->
+    <canvas id="plate" width="1920" height="1080"></canvas>
 
     <!-- landing overlay -->
     <div id="ui">
@@ -48,5 +54,12 @@
   </div>
 </div>
 <script src="app.js"></script>
+<script>
+/* Keeps the frames in Cache Storage, where the host's ten-minute max-age does
+   not reach them. Progressive: without it the page works exactly as before. */
+if ('serviceWorker' in navigator) {
+  addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
+}
+</script>
 </body>
 </html>
