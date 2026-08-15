@@ -1,0 +1,272 @@
+{
+ "pita": [
+  "pita_00",
+  "pita_01",
+  "pita_02",
+  "pita_03",
+  "pita_04",
+  "pita_05"
+ ],
+ "salva": [
+  "salva_00",
+  "salva_01",
+  "salva_02",
+  "salva_03",
+  "salva_04",
+  "salva_05"
+ ],
+ "amp": [
+  "amp_00",
+  "amp_01",
+  "amp_02",
+  "amp_03",
+  "amp_04",
+  "amp_05",
+  "amp_06",
+  "amp_07",
+  "amp_08"
+ ],
+ "rps": {
+  "pump": [
+   "rpspump_00",
+   "rpspump_01",
+   "rpspump_02",
+   "rpspump_03",
+   "rpspump_04",
+   "rpspump_05",
+   "rpspump_06",
+   "rpspump_07",
+   "rpspump_08",
+   "rpspump_09",
+   "rpspump_10",
+   "rpspump_11",
+   "rpspump_12",
+   "rpspump_13",
+   "rpspump_14",
+   "rpspump_15",
+   "rpspump_16",
+   "rpspump_17"
+  ],
+  "round": {
+   "rr": {
+    "hold": [
+     "rpsr_rr_hold0",
+     "rpsr_rr_hold1"
+    ],
+    "after": [
+     "rpsr_rr_after0",
+     "rpsr_rr_after1",
+     "rpsr_rr_after2",
+     "rpsr_rr_after3"
+    ],
+    "settle": [
+     "rpsr_rr_settle0",
+     "rpsr_rr_settle1"
+    ]
+   },
+   "rp": {
+    "hold": [
+     "rpsr_rp_hold0",
+     "rpsr_rp_hold1"
+    ],
+    "after": [
+     "rpsr_rp_after0",
+     "rpsr_rp_after1",
+     "rpsr_rp_after2",
+     "rpsr_rp_after3"
+    ],
+    "settle": [
+     "rpsr_rp_settle0",
+     "rpsr_rp_settle1"
+    ]
+   },
+   "rs": {
+    "hold": [
+     "rpsr_rs_hold0",
+     "rpsr_rs_hold1"
+    ],
+    "after": [
+     "rpsr_rs_after0",
+     "rpsr_rs_after1",
+     "rpsr_rs_after2",
+     "rpsr_rs_after3"
+    ],
+    "settle": [
+     "rpsr_rs_settle0",
+     "rpsr_rs_settle1"
+    ]
+   },
+   "pr": {
+    "hold": [
+     "rpsr_pr_hold0",
+     "rpsr_pr_hold1"
+    ],
+    "after": [
+     "rpsr_pr_after0",
+     "rpsr_pr_after1",
+     "rpsr_pr_after2",
+     "rpsr_pr_after3"
+    ],
+    "settle": [
+     "rpsr_pr_settle0",
+     "rpsr_pr_settle1"
+    ]
+   },
+   "pp": {
+    "hold": [
+     "rpsr_pp_hold0",
+     "rpsr_pp_hold1"
+    ],
+    "after": [
+     "rpsr_pp_after0",
+     "rpsr_pp_after1",
+     "rpsr_pp_after2",
+     "rpsr_pp_after3"
+    ],
+    "settle": [
+     "rpsr_pp_settle0",
+     "rpsr_pp_settle1"
+    ]
+   },
+   "ps": {
+    "hold": [
+     "rpsr_ps_hold0",
+     "rpsr_ps_hold1"
+    ],
+    "after": [
+     "rpsr_ps_after0",
+     "rpsr_ps_after1",
+     "rpsr_ps_after2",
+     "rpsr_ps_after3"
+    ],
+    "settle": [
+     "rpsr_ps_settle0",
+     "rpsr_ps_settle1"
+    ]
+   },
+   "sr": {
+    "hold": [
+     "rpsr_sr_hold0",
+     "rpsr_sr_hold1"
+    ],
+    "after": [
+     "rpsr_sr_after0",
+     "rpsr_sr_after1",
+     "rpsr_sr_after2",
+     "rpsr_sr_after3"
+    ],
+    "settle": [
+     "rpsr_sr_settle0",
+     "rpsr_sr_settle1"
+    ]
+   },
+   "sp": {
+    "hold": [
+     "rpsr_sp_hold0",
+     "rpsr_sp_hold1"
+    ],
+    "after": [
+     "rpsr_sp_after0",
+     "rpsr_sp_after1",
+     "rpsr_sp_after2",
+     "rpsr_sp_after3"
+    ],
+    "settle": [
+     "rpsr_sp_settle0",
+     "rpsr_sp_settle1"
+    ]
+   },
+   "ss": {
+    "hold": [
+     "rpsr_ss_hold0",
+     "rpsr_ss_hold1"
+    ],
+    "after": [
+     "rpsr_ss_after0",
+     "rpsr_ss_after1",
+     "rpsr_ss_after2",
+     "rpsr_ss_after3"
+    ],
+    "settle": [
+     "rpsr_ss_settle0",
+     "rpsr_ss_settle1"
+    ]
+   }
+  }
+ },
+ "daps": [
+  [
+   "dap0_00",
+   "dap0_01",
+   "dap0_02",
+   "dap0_03",
+   "dap0_04",
+   "dap0_05",
+   "dap0_06",
+   "dap0_07"
+  ],
+  [
+   "dap1_00",
+   "dap1_01",
+   "dap1_02",
+   "dap1_03",
+   "dap1_04",
+   "dap1_05",
+   "dap1_06",
+   "dap1_07",
+   "dap1_08",
+   "dap1_09"
+  ],
+  [
+   "dap2_00",
+   "dap2_01",
+   "dap2_02",
+   "dap2_03",
+   "dap2_04",
+   "dap2_05",
+   "dap2_06",
+   "dap2_07",
+   "dap2_08"
+  ],
+  [
+   "dap3_00",
+   "dap3_01",
+   "dap3_02",
+   "dap3_03",
+   "dap3_04",
+   "dap3_05",
+   "dap3_06",
+   "dap3_07"
+  ],
+  [
+   "dap4_00",
+   "dap4_01",
+   "dap4_02",
+   "dap4_03",
+   "dap4_04",
+   "dap4_05",
+   "dap4_06",
+   "dap4_07"
+  ],
+  [
+   "dap5_00",
+   "dap5_01",
+   "dap5_02",
+   "dap5_03",
+   "dap5_04",
+   "dap5_05",
+   "dap5_06",
+   "dap5_07",
+   "dap5_08",
+   "dap5_09",
+   "dap5_10",
+   "dap5_11"
+  ]
+ ],
+ "pita_settle": [
+  "pita_settle_00",
+  "pita_settle_01",
+  "pita_settle_02",
+  "landing_plate"
+ ]
+}

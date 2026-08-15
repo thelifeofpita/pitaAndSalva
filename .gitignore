@@ -1,0 +1,10 @@
+.DS_Store
+
+# Source footage — too large for GitHub (files exceed the 100 MB limit)
+videos/
+*.MOV
+*.mov
+
+# pyobjc venv used by the segmentation step
+venv/
+__pycache__/

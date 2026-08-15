@@ -1,0 +1,69 @@
+{
+ "daps": [
+  [
+   "dap0_00.png",
+   "dap0_01.png",
+   "dap0_02.png",
+   "dap0_03.png",
+   "dap0_04.png",
+   "dap0_05.png"
+  ],
+  [
+   "dap1_00.png",
+   "dap1_01.png",
+   "dap1_02.png",
+   "dap1_03.png",
+   "dap1_04.png",
+   "dap1_05.png"
+  ],
+  [
+   "dap2_00.png",
+   "dap2_01.png",
+   "dap2_02.png",
+   "dap2_03.png",
+   "dap2_04.png",
+   "dap2_05.png"
+  ],
+  [
+   "dap3_00.png",
+   "dap3_01.png",
+   "dap3_02.png",
+   "dap3_03.png",
+   "dap3_04.png",
+   "dap3_05.png"
+  ],
+  [
+   "dap4_00.png",
+   "dap4_01.png",
+   "dap4_02.png",
+   "dap4_03.png",
+   "dap4_04.png",
+   "dap4_05.png"
+  ]
+ ],
+ "pita": [
+  "pita_00.png",
+  "pita_01.png",
+  "pita_02.png",
+  "pita_03.png",
+  "pita_04.png",
+  "pita_05.png"
+ ],
+ "salva": [
+  "salva_00.png",
+  "salva_01.png",
+  "salva_02.png",
+  "salva_03.png",
+  "salva_04.png",
+  "salva_05.png"
+ ],
+ "amp": [
+  "amp_00.png",
+  "amp_01.png",
+  "amp_02.png",
+  "amp_03.png",
+  "amp_04.png",
+  "amp_05.png",
+  "amp_06.png"
+ ]
+}

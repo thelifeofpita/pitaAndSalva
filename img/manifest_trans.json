@@ -1,0 +1,27 @@
+{
+ "pita": [
+  "pita_00.png",
+  "pita_01.png",
+  "pita_02.png",
+  "pita_03.png",
+  "pita_04.png",
+  "pita_05.png"
+ ],
+ "salva": [
+  "salva_00.png",
+  "salva_01.png",
+  "salva_02.png",
+  "salva_03.png",
+  "salva_04.png",
+  "salva_05.png"
+ ],
+ "amp": [
+  "amp_00.png",
+  "amp_01.png",
+  "amp_02.png",
+  "amp_03.png",
+  "amp_04.png",
+  "amp_05.png",
+  "amp_06.png"
+ ]
+}

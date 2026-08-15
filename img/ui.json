@@ -1,0 +1,148 @@
+{
+ "assets": {
+  "amp": {
+   "src": "ui/amp.png",
+   "x": 924,
+   "y": 44,
+   "w": 72,
+   "h": 178
+  },
+  "rock": {
+   "src": "ui/rock.png",
+   "x": 837,
+   "y": 317,
+   "w": 64,
+   "h": 67
+  },
+  "paper": {
+   "src": "ui/paper.png",
+   "x": 922,
+   "y": 314,
+   "w": 78,
+   "h": 70
+  },
+  "scissors": {
+   "src": "ui/scissors.png",
+   "x": 1022,
+   "y": 312,
+   "w": 61,
+   "h": 73
+  },
+  "salva": {
+   "src": "ui/salva.png",
+   "x": 53,
+   "y": 386,
+   "w": 257,
+   "h": 76
+  },
+  "pita": {
+   "src": "ui/pita.png",
+   "x": 1666,
+   "y": 386,
+   "w": 215,
+   "h": 78
+  }
+ },
+ "campaigns": [
+  {
+   "src": "ui/camp_l1_0.png",
+   "x": 75,
+   "y": 804,
+   "w": 328,
+   "h": 90,
+   "label": "PICK A SIDE",
+   "slug": "pick-a-side"
+  },
+  {
+   "src": "ui/camp_l1_1.png",
+   "x": 513,
+   "y": 804,
+   "w": 385,
+   "h": 90,
+   "label": "ADS FROM TRASH",
+   "slug": "ads-from-trash"
+  },
+  {
+   "src": "ui/camp_l1_2.png",
+   "x": 996,
+   "y": 804,
+   "w": 449,
+   "h": 90,
+   "label": "BACK IN SMOOTHLY",
+   "slug": "back-in-smoothly"
+  },
+  {
+   "src": "ui/camp_l1_3.png",
+   "x": 1526,
+   "y": 804,
+   "w": 321,
+   "h": 90,
+   "label": "NUMPAD JAM",
+   "slug": "numpad-jam"
+  },
+  {
+   "src": "ui/camp_l2_0.png",
+   "x": 295,
+   "y": 918,
+   "w": 385,
+   "h": 89,
+   "label": "ADS FROM TRASH",
+   "slug": "ads-from-trash"
+  },
+  {
+   "src": "ui/camp_l2_1.png",
+   "x": 778,
+   "y": 918,
+   "w": 450,
+   "h": 89,
+   "label": "BACK IN SMOOTHLY",
+   "slug": "back-in-smoothly"
+  },
+  {
+   "src": "ui/camp_l2_2.png",
+   "x": 1308,
+   "y": 918,
+   "w": 321,
+   "h": 89,
+   "label": "NUMPAD JAM",
+   "slug": "numpad-jam"
+  }
+ ],
+ "stars": [
+  {
+   "src": "ui/star_l1_0.png",
+   "x": 436,
+   "y": 804,
+   "w": 36,
+   "h": 90
+  },
+  {
+   "src": "ui/star_l1_1.png",
+   "x": 930,
+   "y": 804,
+   "w": 32,
+   "h": 90
+  },
+  {
+   "src": "ui/star_l1_2.png",
+   "x": 1467,
+   "y": 804,
+   "w": 35,
+   "h": 90
+  },
+  {
+   "src": "ui/star_l2_0.png",
+   "x": 713,
+   "y": 918,
+   "w": 31,
+   "h": 89
+  },
+  {
+   "src": "ui/star_l2_1.png",
+   "x": 1249,
+   "y": 918,
+   "w": 36,
+   "h": 89
+  }
+ ]
+}
