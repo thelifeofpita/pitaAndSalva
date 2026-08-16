@@ -7,17 +7,11 @@ coordinate it sits at in `keyframes/`.
 ## Run
 
 ```
-python3 -m http.server 8777
+cd site && python3 -m http.server 8777
 open http://localhost:8777/
 ```
 
-(Needs to be served over HTTP — `app.js` fetches `img/ui.json`, and `sw.js` only
-registers over HTTP.)
-
-Live at <https://thelifeofpita.github.io/pitaAndSalva/>.
-
-The source `.MOV` footage the build reads from is not in the repo — it is too
-large for GitHub. Keep `videos/` alongside the checkout to re-run `tools/`.
+(Needs to be served over HTTP — `app.js` fetches `img/ui.json`.)
 
 ## What is where
 
@@ -33,6 +27,7 @@ large for GitHub. Keep `videos/` alongside the checkout to re-run `tools/`.
 | `img/rpsr_<combo>_*.png` | real rounds: the hold, the hands acting the result out, and the settle — whole frames from the take that actually played that combination |
 | `img/rpsback_*.png` | fallback aftermath for combinations with no real round yet — hands unclench and open back out, composited per-arm |
 | `img/ui/*` | the overlay artwork, sliced out of `assets/` |
+| `img/ui/hand_*.png` | the BACK control — each landing hand cut out of `landing_plate.png` by `tools/build_hands.py`, baked at its on-screen size; `_v` is the same hand turned to point up |
 | `img/ui.json` | position of every overlay element in 1920×1080 space |
 | `sw.js` | the frame cache — see *Playing frames over a network* below |
 
@@ -94,11 +89,17 @@ Boot waits for the landing plate and the one dap about to play — nine files, n
   Still missing a real round: `rock/paper`, `rock/scissors`, `paper/rock`,
   `paper/paper`, `scissors/paper`. Add them to `ROUNDS` in `build_rps.py`.
 - **Campaign names** — each is its own hit area and links to a placeholder page.
-- **Back** — the BACK control, or `Esc`. It sits on the edge the landing is
-  behind and points at it, so leaving reads as reversing the move that opened the
-  page: left on Pita, right on Salva, bottom centre on the &, top centre on a
-  campaign. The side is a `back-*` class on `#page`, set from `back` in
-  `PAGE_DEFS`.
+- **Back** — a hand reaching in from the edge the landing is behind, or `Esc`.
+  The edge is the one the page was opened through, so leaving reads as reversing
+  that move: left on Pita, right on Salva, bottom centre on the &, top centre on
+  a campaign. It is a `back-*` class on `#page`, set from `back` in `PAGE_DEFS`.
+
+  The hand is the *other* person's, held out for the dap that takes you home —
+  Salva's on Pita's page, Pita's on Salva's, both of them on the & and on a
+  campaign, turned to stand on the edge they come in from. All four are in the
+  markup and the `back-*` class picks which are shown, so the control never
+  waits on an image swap. Hovering rocks each hand about its own wrist, the two
+  of them at different speeds.
 
 ## Timing
 
@@ -133,6 +134,17 @@ The build scripts live in `tools/` (`build.py`, `build_rps.py`, `seg.py`,
 Transitions interpolate both the crop (anchored to the subject, exact at both
 ends) and the tone, so frame 0 matches the landing grade and the last frame
 matches the destination keyframe.
+
+### The back hands
+
+`tools/build_hands.py` cuts them straight out of `site/img/landing_plate.png`,
+so they are the landing's own hands rather than a new drawing. It reads the
+plate's dither as tone (a wide blur), keeps the largest shape in each crop —
+which drops the lettering that shares it, and is why the blur has to be wide
+enough to bridge the gap between Salva's thumb and his fingers — then bakes each
+hand at its on-screen size and re-dithers it there. Sizes are `WIDE` and `TALL`
+at the top of the file; the vertical one has to stay clear of the campaign
+title, which sits at `CAMPAIGN_TITLE_TOP` in `app.js`.
 
 ### Picking daps
 

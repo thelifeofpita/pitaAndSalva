@@ -37,19 +37,30 @@
     <div id="page">
       <img id="page-img" alt="">
       <div id="and-copy">
-        <p>One uses a PC. The other, a Mac.</p>
-        <p>One weighs his food so he doesn’t go over his limits; the other pushes his limits by weighing which burger is bigger.</p>
-        <p>One is into Rage Against the Machine. The other, Juan Luis Guerra.</p>
-        <p>One designed the portfolio. The other wrote the “About Us”.</p>
-        <p>An art director with copy headlines. A copywriter with artistic visuals.</p>
-        <p>Neither of them is on TikTok.</p>
-        <p>Both allergic to oregano, peanuts and fantasy ideas with fantasy budgets for fantasy people who live in the fantasy minds of the so-called creatives.</p>
-        <p>Ultimately, two so-called creative jerks.</p>
+        <img class="and-phrase" src="img/and_text/phrase_01.png" alt="One uses a PC. The other, a Mac.">
+        <img class="and-phrase" src="img/and_text/phrase_02.png" alt="One weighs his food so he doesn’t go over his limits. The other pushes his limits by weighing which burger is bigger.">
+        <img class="and-phrase" src="img/and_text/phrase_03.png" alt="One is into Rage Against the Machine. The other, Juan Luis Guerra.">
+        <img class="and-phrase" src="img/and_text/phrase_04.png" alt="One designed the portfolio. The other wrote the About Us.">
+        <img class="and-phrase" src="img/and_text/phrase_05.png" alt="An art director with copy headlines. A copywriter with artistic visuals.">
+        <img class="and-phrase" src="img/and_text/phrase_06.png" alt="Neither of them is on TikTok.">
+        <img class="and-phrase" src="img/and_text/phrase_07.png" alt="Both allergic to oregano, peanuts and fantasy ideas with fantasy budgets for fantasy people who live in the fantasy minds of the so-called creatives.">
+        <img class="and-phrase" src="img/and_text/phrase_08.png" alt="Ultimately, two so-called creative jerks.">
       </div>
       <div id="page-extra"></div>
-      <!-- the label lives in a span so the hover jitter can animate it without
-           fighting the centring transform on the button itself -->
-      <button id="back" type="button"><span class="back-in">BACK</span></button>
+      <!-- Back is the other person's hand reaching in from the edge the landing
+           is behind: Salva's on Pita's page, Pita's on Salva's, both of them on
+           the & and on a project. All four hands are in the markup and the
+           back-* side on #page picks which are shown, so the control never
+           waits on an image swap. The span keeps the hands' own wiggle clear of
+           the centring transform on the button. -->
+      <button id="back" type="button" aria-label="Back">
+        <span class="back-in">
+          <img class="hand h-salva"   src="img/ui/hand_salva.png" alt="">
+          <img class="hand h-pita"    src="img/ui/hand_pita.png" alt="">
+          <img class="hand h-salva-v" src="img/ui/hand_salva_v.png" alt="">
+          <img class="hand h-pita-v"  src="img/ui/hand_pita_v.png" alt="">
+        </span>
+      </button>
     </div>
 
     <div id="ghost"><img alt=""></div>

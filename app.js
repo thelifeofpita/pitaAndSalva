@@ -18,6 +18,10 @@ const PAGE_DEFS = {
   and:   { seq: 'amp',   key: 'kf_amp_plate', back: 'bottom', settleKey: true },
 };
 const CAMPAIGN_BACK = 'top';   // campaign titles sit along the bottom of the landing
+/* where the title comes to rest on a campaign page — must match
+   `#page-extra .title { top }` in style.css, or the flown title jumps when the
+   static one takes over */
+const CAMPAIGN_TITLE_TOP = 175;
 const BACK_SIDES = ['back-left', 'back-right', 'back-top', 'back-bottom'];
 
 const BEATS = 'rps';          // rock / paper / scissors
@@ -83,7 +87,7 @@ function entry(name) {
 function fetchFrame(name, tries = 3) {
   const e = entry(name);
   if (e.ready) return e.ready;
-  e.ready = new Promise((res, rej) => {
+  const p = new Promise((res, rej) => {
     const attempt = (left) => {
       const i = new Image();
       i.decoding = 'async';
@@ -96,7 +100,14 @@ function fetchFrame(name, tries = 3) {
     };
     attempt(tries);
   });
-  return e.ready;
+  e.ready = p;
+  /* Remember the frame, not the failure. Caching the rejected promise made one
+     bad minute permanent: every later request for that frame got the old
+     rejection back without touching the network, so the frame could never be
+     drawn again for the rest of the visit — and if it was the landing plate,
+     the page idled for good on whatever was painted before it. */
+  p.catch(() => { if (e.ready === p) e.ready = null; });
+  return p;
 }
 
 function load(names) {
@@ -143,14 +154,25 @@ async function prime(frames) {
   await Promise.all(head.map((n) => decodeFrame(n).catch(() => null)));
 }
 
-/* Warm frames we will want soon without blocking anything that is on screen. */
-function warm(names) {
-  for (const n of names) fetchFrame(n).catch(() => {});
+/* Warm frames we will want soon without blocking anything that is on screen.
+
+   A few at a time, in order. Asking for all 190 at once buries the handful of
+   frames the move currently playing is still waiting for — the browser opens
+   its connections in request order, not in order of need — and a warm request
+   that fails under that pile-up costs a frame nobody sees. */
+const WARM_AT_ONCE = 6;
+
+async function warm(names) {
   if (navigator.serviceWorker && navigator.serviceWorker.controller) {
     navigator.serviceWorker.controller.postMessage({
       type: 'warm',
       urls: names.map((n) => new URL(src(n), location.href).href),
     });
+  }
+  const queue = [...new Set(names)];
+  for (let i = 0; i < queue.length; i += WARM_AT_ONCE) {
+    await Promise.all(queue.slice(i, i + WARM_AT_ONCE)
+      .map((n) => fetchFrame(n).catch(() => {})));
   }
 }
 
@@ -176,8 +198,23 @@ function draw(name) {
   return true;
 }
 
+/* The frame the page currently means to be showing. A frame that is not loaded
+   yet is drawn when it arrives, and by then the sequence has usually moved on —
+   without this guard that late draw paints an old frame over the new one, and
+   whatever it lands on stays on screen. That is how the landing can end up
+   idling on the first frame of the & move, or on a stray drawing from the middle
+   of a dap: the frame was asked for during the move and arrived after it. */
+let wanted = null;
+
+/* Resolves true once `name` is actually on the canvas. Awaiting it matters at
+   the end of a move — see enterLanding — and nowhere else: inside a sequence
+   the next frame is already due. */
 function show(name) {
-  if (!draw(name)) fetchFrame(name).then(() => draw(name)).catch(() => {});
+  wanted = name;
+  if (draw(name)) return Promise.resolve(true);
+  return fetchFrame(name)
+    .then(() => (wanted === name ? draw(name) : false))
+    .catch(() => false);
 }
 
 /* Plays a list of frames. The choppiness is the point: a handful of frames,
@@ -273,16 +310,33 @@ function buildUI() {
 }
 
 /* -------------------------------------------------------------- routing */
+/* Every route back to the landing comes through here, so this is the one place
+   that has to be sure of what it leaves on screen. The landing plate is the pose
+   the whole overlay is positioned against — labels, icons, campaign names all
+   sit where they sit in that one drawing — so resting on any other frame is not
+   a dropped frame, it is a page whose buttons no longer line up with the hands
+   under them. Wait for the plate rather than firing a show() at it and hoping. */
 async function enterLanding({ dap = true, frames = null } = {}) {
   current = null;
-  page.classList.remove('on', 'extra');
+  page.classList.remove('on', 'extra', 'page-and');
   setBackSide(null);
   ui.classList.add('hidden');
   if (dap) {
     await play(frames || pickDap(), TIMING.dap, TIMING.dapLast);
   }
-  show(LANDING);
+  await settleOnLanding();
   ui.classList.remove('hidden');
+}
+
+/* The plate is loaded before the first dap ever plays, so this is normally a
+   single synchronous draw. It only has anything to do when that load failed
+   earlier in the visit, and then it keeps asking. */
+async function settleOnLanding() {
+  for (let tries = 0; tries < 3; tries++) {
+    if (await show(LANDING)) return;
+    if (wanted !== LANDING) return;   // a new move has taken the screen since
+    await wait(400);
+  }
 }
 
 let lastDap = -1;
@@ -334,7 +388,7 @@ async function campaignDepthTransition(origin, reverse = false) {
   const h = origin.offsetHeight;
   const targetScale = 1.7;
   const targetX = 960;
-  const targetY = 85 + h * targetScale / 2;
+  const targetY = CAMPAIGN_TITLE_TOP + h * targetScale / 2;
   const dx = targetX - (x + w / 2);
   const dy = targetY - (y + h / 2);
   const focusX = x + w / 2;
@@ -457,6 +511,7 @@ async function goBack() {
     const origin = campaignReturnOrigin ||
       document.querySelector(`.camp[data-slug="${slug}"]`);
     await campaignDepthTransition(origin, true);
+    await settleOnLanding();
     campaignReturnOrigin = null;
     current = null;
     busy = false;
@@ -586,10 +641,8 @@ stage.addEventListener('click', async (ev) => {
       ev.target.closest('a, button')) return;
   if (!landingHandAt(stagePoint(ev))) return;
   busy = true;
-  ui.classList.add('hidden');
-  await play(pickDap(), TIMING.dap, TIMING.dapLast);
-  show(LANDING);
-  ui.classList.remove('hidden');
+  // the same return the rest of the site uses, so it settles the same way
+  await enterLanding({ dap: true });
   busy = false;
 });
 
@@ -629,6 +682,8 @@ async function playRPS(zone, gesture) {
   await play(round.after, TIMING.after);
   await play(round.settle, TIMING.back);
   await play(rpsBridge, TIMING.back, TIMING.back + 60);
+  // the bridge ends on the plate; make sure it is the plate that is on screen
+  await settleOnLanding();
   ui.classList.remove('hidden');
   busy = false;
 }

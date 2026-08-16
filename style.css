@@ -132,85 +132,108 @@ html, body {
   image-rendering: pixelated;
 }
 
+/* Back is a hand reaching in from the edge the landing is behind — the arm runs
+   off the frame, so it sits flush against that edge rather than inset. */
 #back {
   position: absolute;
-  left: 60px;
-  top: 46px;
-  font: inherit;
-  /* the portrait pages leave a narrow gutter beside their copy, and the button
-     has to sit inside it without crowding the text */
-  font-size: 27px;
-  letter-spacing: 1px;
-  color: #fff;
   background: none;
   border: 0;
   padding: 0;
+  line-height: 0;
   cursor: pointer;
 }
 .back-in {
   display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  line-height: 1;
+  align-items: flex-end;
+  gap: 26px;
 }
-.back-in::before { content: '<-'; }
-#back:hover .back-in { animation: jitter .18s steps(2) infinite; }
+.hand {
+  display: none;
+  image-rendering: pixelated;
+  /* the wrist is the pivot: the hand swings from the edge it comes in from */
+  transform-origin: left center;
+}
+.h-pita { transform-origin: right center; }
+.h-salva-v, .h-pita-v { transform-origin: center bottom; }
 
-/* Back sits on the edge the landing is behind, and points at it: the camera
-   travels left to reach Pita, so from Pita home is back out to the left; Salva
-   is the mirror; the & is reached by pushing up into the faces, the campaigns by
-   dropping down to the titles. */
+/* A hand held out and jiggled, not a button being nudged: the whole hand rocks
+   about its wrist, in the same held two-step as everything else on the site. */
+@keyframes handwiggle {
+  0%   { transform: rotate(-3deg); }
+  50%  { transform: rotate(3.5deg); }
+  100% { transform: rotate(-1.5deg); }
+}
+#back:hover .hand { animation: handwiggle .19s steps(2) infinite; }
+/* the two hands never wiggle in lockstep */
+#back:hover .h-pita-v { animation-duration: .25s; }
+
+/* Which hand, and where. The landing is behind one edge of every page — the
+   camera travels left to reach Pita, so from Pita home is back out to the left;
+   Salva is the mirror; the & is reached by pushing up into the faces, a campaign
+   by dropping down to the titles. The hand on that edge is the other person's:
+   his hand is out, waiting for the dap that takes you back. */
 #page.back-left #back {
-  left: 24px;
+  left: 0;
   top: 50%;
   transform: translateY(-50%);
 }
+#page.back-left .h-salva { display: block; }
 
 #page.back-right #back {
   left: auto;
-  right: 24px;
+  right: 0;
   top: 50%;
   transform: translateY(-50%);
 }
-#page.back-right .back-in { flex-direction: row-reverse; }
-#page.back-right .back-in::before { content: '->'; }
+#page.back-right .h-pita { display: block; }
 
-/* the campaign title is fixed at y=85 and blown up 1.7x, so the only room above
-   it is the very top of the frame */
-#page.back-top #back {
-  left: 50%;
-  top: 12px;
-  transform: translateX(-50%);
-}
-#page.back-top .back-in { flex-direction: column; gap: 1px; }
-#page.back-top .back-in::before { content: '/\\'; }
+/* Both of them on the & and on a project, turned to stand on the horizontal
+   edge they come in from. */
+#page.back-bottom .h-salva-v, #page.back-bottom .h-pita-v,
+#page.back-top .h-salva-v, #page.back-top .h-pita-v { display: block; }
 
 #page.back-bottom #back {
   left: 50%;
   top: auto;
-  bottom: 40px;
+  bottom: 0;
   transform: translateX(-50%);
 }
-#page.back-bottom .back-in { flex-direction: column-reverse; gap: 1px; }
-#page.back-bottom .back-in::before { content: '\\/'; }
+
+/* On a campaign page they hang from the top edge instead, wrists cut off by the
+   frame. Turning the pair rather than each hand keeps every wrist against the
+   edge and puts them in the order they stand in on the landing. */
+#page.back-top #back {
+  left: 50%;
+  top: -22px;
+  transform: translateX(-50%);
+}
+#page.back-top .back-in { transform: rotate(180deg); }
 
 #and-copy {
   position: absolute;
-  left: 640px;
-  top: 205px;
-  width: 640px;
+  inset: 0;
   display: none;
-  font-size: 25px;
-  line-height: 1.08;
-  letter-spacing: .15px;
-  text-align: left;
-  user-select: text;
-  -webkit-user-select: text;
 }
 #page.page-and #and-copy { display: block; }
-#and-copy p { margin: 0 0 14px; }
-#and-copy p:last-child { margin-bottom: 0; }
+#and-copy .and-phrase {
+  position: absolute;
+  display: block;
+  width: auto;
+  height: auto;
+  image-rendering: auto;
+}
+/* The ampersand portrait leaves a tall strip of negative space between the
+   faces. The centres follow a loose, uneven curve instead of alternating on a
+   mechanical grid. Tiny rotations retain the hand-placed quality without
+   disturbing the strictly top-to-bottom reading order. */
+#and-copy .and-phrase:nth-child(1) { left: 600px; top:  52px; transform: rotate(-.5deg); }
+#and-copy .and-phrase:nth-child(2) { left: 666px; top: 128px; transform: rotate( .35deg); }
+#and-copy .and-phrase:nth-child(3) { left: 596px; top: 280px; transform: rotate(-.7deg); }
+#and-copy .and-phrase:nth-child(4) { left: 707px; top: 378px; transform: rotate( .45deg); }
+#and-copy .and-phrase:nth-child(5) { left: 630px; top: 482px; transform: rotate(-.3deg); }
+#and-copy .and-phrase:nth-child(6) { left: 768px; top: 608px; transform: rotate( .55deg); }
+#and-copy .and-phrase:nth-child(7) { left: 635px; top: 673px; transform: rotate(-.35deg); }
+#and-copy .and-phrase:nth-child(8) { left: 618px; top: 858px; width: 365px; transform: rotate(.65deg); }
 
 #page-extra {
   position: absolute;
@@ -220,10 +243,13 @@ html, body {
 }
 #page.extra #page-extra { display: block; }
 #page.extra #page-img { display: none; }
+/* Clear of the hands hanging from the top edge. The campaign transition flies
+   the clicked title to this exact spot, so `top` has to match CAMPAIGN_TITLE_TOP
+   in app.js. */
 #page-extra .title {
   position: absolute;
   left: 50%;
-  top: 85px;
+  top: 175px;
   line-height: 0;
   transform: translateX(-50%);
 }
