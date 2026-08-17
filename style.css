@@ -222,18 +222,17 @@ html, body {
   height: auto;
   image-rendering: auto;
 }
-/* The ampersand portrait leaves a tall strip of negative space between the
-   faces. The centres follow a loose, uneven curve instead of alternating on a
-   mechanical grid. Tiny rotations retain the hand-placed quality without
-   disturbing the strictly top-to-bottom reading order. */
-#and-copy .and-phrase:nth-child(1) { left: 600px; top:  52px; transform: rotate(-.5deg); }
-#and-copy .and-phrase:nth-child(2) { left: 666px; top: 128px; transform: rotate( .35deg); }
-#and-copy .and-phrase:nth-child(3) { left: 596px; top: 280px; transform: rotate(-.7deg); }
-#and-copy .and-phrase:nth-child(4) { left: 707px; top: 378px; transform: rotate( .45deg); }
-#and-copy .and-phrase:nth-child(5) { left: 630px; top: 482px; transform: rotate(-.3deg); }
-#and-copy .and-phrase:nth-child(6) { left: 768px; top: 608px; transform: rotate( .55deg); }
-#and-copy .and-phrase:nth-child(7) { left: 635px; top: 673px; transform: rotate(-.35deg); }
-#and-copy .and-phrase:nth-child(8) { left: 618px; top: 858px; width: 365px; transform: rotate(.65deg); }
+/* Follow the widening negative space around and below the two portraits. The
+   copy drifts left and right instead of forming a central column, but retains
+   a deliberate buffer wherever a line passes the edge of a face. */
+#and-copy .and-phrase:nth-child(1) { left: 510px; top:  35px; transform: rotate(-.5deg); }
+#and-copy .and-phrase:nth-child(2) { left: 650px; top: 109px; transform: rotate( .35deg); }
+#and-copy .and-phrase:nth-child(3) { left: 560px; top: 306px; transform: rotate(-.7deg); }
+#and-copy .and-phrase:nth-child(4) { left: 720px; top: 413px; transform: rotate( .45deg); }
+#and-copy .and-phrase:nth-child(5) { left: 570px; top: 521px; transform: rotate(-.3deg); }
+#and-copy .and-phrase:nth-child(6) { left: 760px; top: 624px; transform: rotate( .55deg); }
+#and-copy .and-phrase:nth-child(7) { left: 520px; top: 673px; transform: rotate(-.35deg); }
+#and-copy .and-phrase:nth-child(8) { left: 930px; top: 865px; transform: rotate(.65deg); }
 
 #page-extra {
   position: absolute;
