@@ -3,6 +3,7 @@
    is on screen and when. Timings are short and slightly irregular on purpose. */
 
 const IMG = 'img/';
+const PROJ_IMG = (slug) => `${IMG}projects/${slug}/`;
 
 /* every sequence comes from img/frames.json, written by the build — so the page
    can never point at a frame that was renamed or dropped */
@@ -49,12 +50,17 @@ const pageExtra = $('#page-extra');
 const hint = $('#hint');
 const ghost = $('#ghost');
 const ghostImg = ghost.querySelector('img');
+const project = $('#project');
+const projectScroll = $('#project-scroll');
 
 let cfg = null;
 let busy = false;
 let current = null;          // null on landing, else a page id
 let pendingCampaignOrigin = null;
 let campaignReturnOrigin = null;
+/* where the open project's title art actually sits, in stage coordinates —
+   the flight aims at it on the way in and starts from it on the way out */
+let campaignReturnTarget = null;
 
 /* --------------------------------------------------------------- helpers */
 function setBackSide(side) {
@@ -377,7 +383,18 @@ async function goPage(id) {
   busy = false;
 }
 
-async function campaignDepthTransition(origin, reverse = false) {
+/* The one "camera" this site has: a held stop-motion pan/zoom sampled at
+   these ten poses, never smoothly interpolated. `campaignDepthTransition`
+   drives it toward a clicked title's on-screen position; the in-project
+   prev/next nav below drives the exact same pose curve and threshold-to-
+   black formula sideways instead, so a "camera move" only ever means one
+   thing on this site. */
+const CAM_STOPS = [0, .08, .17, .27, .38, .50, .63, .76, .88, 1];
+const camPose = (t) => t * t * (3 - 2 * t);
+const camStep = (frame) => ({ ...frame, easing: 'steps(1, end)' });
+const CAM_DURATION = 470;
+
+async function campaignDepthTransition(origin, reverse = false, target = null) {
   if (!origin) return;
   const image = origin.querySelector('img');
   if (!image) return;
@@ -386,9 +403,16 @@ async function campaignDepthTransition(origin, reverse = false) {
   const y = origin.offsetTop;
   const w = origin.offsetWidth;
   const h = origin.offsetHeight;
-  const targetScale = 1.7;
-  const targetX = 960;
-  const targetY = CAMPAIGN_TITLE_TOP + h * targetScale / 2;
+  // Where the flight ends is the page's business, not a constant: `target` is
+  // the destination page's own title art, measured and handed over in stage
+  // coordinates, so the camera's last held pose and the project's first frame
+  // are the same picture. Only its width is used — the fly keeps the artwork's
+  // ratio — which also means a target measured before the art has decoded
+  // still lands right. Falls back to the fixed stage spot with no target.
+  const targetScale = target ? target.w / w : 1.7;
+  const targetX = target ? target.x + target.w / 2 : 960;
+  const targetY = target ? target.y + h * targetScale / 2
+                         : CAMPAIGN_TITLE_TOP + h * targetScale / 2;
   const dx = targetX - (x + w / 2);
   const dy = targetY - (y + h / 2);
   const focusX = x + w / 2;
@@ -414,9 +438,9 @@ async function campaignDepthTransition(origin, reverse = false) {
   // One camera, sampled into held stop-motion poses. All three layers share
   // these exact offsets and the same pan. The hands only receive a deeper zoom,
   // so their sweep changes naturally with the position of the clicked title.
-  const stops = [0, .08, .17, .27, .38, .50, .63, .76, .88, 1];
-  const pose = (t) => t * t * (3 - 2 * t);
-  const stepped = (frame) => ({ ...frame, easing: 'steps(1, end)' });
+  const stops = CAM_STOPS;
+  const pose = camPose;
+  const stepped = camStep;
   const titleFrames = stops.map((offset) => {
     const p = pose(offset);
     const scale = 1 + (targetScale - 1) * p;
@@ -448,7 +472,7 @@ async function campaignDepthTransition(origin, reverse = false) {
     });
   });
   const timing = {
-    duration: 470,
+    duration: CAM_DURATION,
     easing: 'linear',
     fill: 'forwards',
     direction: reverse ? 'reverse' : 'normal',
@@ -485,6 +509,420 @@ async function campaignDepthTransition(origin, reverse = false) {
   ui.style.transformOrigin = '';
 }
 
+/* --------------------------------------------------------------- project */
+/* A project page is a normal scrolling document, not more frames of the
+   stage — real footage and stills, not stop-motion. `.reveal` blocks open the
+   same way the rest of the site does, though: noisy and dark, clearing to
+   clean as they're scrolled to, the contrast/brightness move `campaign
+   DepthTransition` already plays run continuously off scroll position instead
+   of a fixed timeline. `.depth` blocks drift at their own rate under that,
+   the same layered read as the title that flew in to open the page. */
+const PROJECTS = {};
+
+/* hand-drawn pen doodles: every arrow, circle and underline on a project page
+   runs through the same feTurbulence/feDisplacementMap filter, so a plain
+   bezier reads as a loose pen stroke instead of vector-perfect line art.
+   Each doodle gets its own filter id — several of these sit in the DOM at
+   once, and a shared id is a duplicate-id bug waiting to make one arrow's
+   filter region silently apply to another's geometry. */
+/* Every doodle below is drawn in ONE shared unit system: 1 SVG user unit = 1px
+   at the 1920 layout width, and each is sized in CSS at exactly its viewBox
+   size in vw. That is what keeps them consistent — the filter's noise
+   frequency and displacement, and the pen's stroke-width, are all in user
+   units, so a doodle drawn in a 60-unit box and one drawn in a 122-unit box
+   come out of the same pen instead of the same pen scaled by two different
+   amounts. Never size one of these to a width that doesn't match its
+   viewBox's aspect: that rescales the stroke and breaks the set. */
+/* userSpaceOnUse, not the default objectBoundingBox: a perfectly horizontal
+   shaft has a zero-height bbox, and a percentage filter region off that is
+   zero-height too — the stroke silently disappears. The fixed box below
+   comfortably contains every viewBox on the page. */
+const penFilter = (id) => `<filter id="${id}" filterUnits="userSpaceOnUse" x="-20" y="-20" width="220" height="220">
+  <feTurbulence type="fractalNoise" baseFrequency="0.045" numOctaves="2" seed="7" result="n"/>
+  <feDisplacementMap in="SourceGraphic" in2="n" scale="2.6"/>
+</filter>`;
+const PEN_W = 5.2;
+const pen = (id) => `fill="none" stroke="currentColor" stroke-width="${PEN_W}" stroke-linecap="round" stroke-linejoin="round" filter="url(#${id})"`;
+
+/* The one arrowhead every arrow on the page wears: a loose open V, ~32 units
+   tall and ~26 deep, drawn as its own stroke that stops short of the shaft
+   rather than joining it — exactly how they're drawn in layout.png. */
+const headV = (id, vx, vy, ax, ay, bx, by) =>
+  `<path d="M${ax} ${ay}L${vx} ${vy}L${bx} ${by}" ${pen(id)}/>`;
+
+/* ---------------------------------------------------------- project nav */
+/* Every project (built or not) sits on the same ring — the order campaign
+   icons are laid out in on the landing, deduplicated (the landing repeats
+   some campaigns across its two star layers). Prev/next walk this ring and
+   wrap, so "move through all the projects" never dead-ends at an edge. */
+function campaignRing() {
+  const seen = new Set();
+  const ring = [];
+  for (const c of cfg.campaigns) {
+    if (seen.has(c.slug)) continue;
+    seen.add(c.slug);
+    ring.push(c);
+  }
+  return ring;
+}
+
+function campaignNeighbors(slug) {
+  const ring = campaignRing();
+  const i = ring.findIndex((c) => c.slug === slug);
+  if (i === -1) return { prev: null, next: null };
+  return {
+    prev: ring[(i - 1 + ring.length) % ring.length],
+    next: ring[(i + 1) % ring.length],
+  };
+}
+
+/* Nav arrows: same pen, same head, same 58x38 box, mirrored. `n` only exists
+   to keep the filter ids unique — the nav renders twice on a page (top and
+   bottom), and two <filter> elements sharing an id is a silent bug. */
+const navChevron = (dir, n) => {
+  const id = `navPen${dir < 0 ? 'L' : 'R'}${n}`;
+  const head = dir < 0
+    ? headV(id, 3, 17, 23, 3, 23, 31)
+    : headV(id, 41, 17, 21, 3, 21, 31);
+  const shaft = dir < 0
+    ? `<path d="M14 17H40" ${pen(id)}/>`
+    : `<path d="M4 17H30" ${pen(id)}/>`;
+  return `<svg viewBox="0 0 44 34"><defs>${penFilter(id)}</defs>${shaft}${head}</svg>`;
+};
+
+/* The chrome every project page shares: prev/next into its neighbors on the
+   ring, and — once, at the top — the close control built from the same
+   reaching-hand cutouts `#back` uses everywhere else on the site. A project
+   only ever supplies its own content; this is never redrawn per project. */
+let navInstance = 0;
+function renderProjectNav(slug, withHands) {
+  const { prev, next } = campaignNeighbors(slug);
+  const n = ++navInstance;
+  const link = (c, dir, chevron, extraClass) => c ? `
+      <button type="button" class="proj-nav-link${extraClass ? ' ' + extraClass : ''}" data-goto="${c.slug}" data-dir="${dir}">
+        ${dir < 0 ? chevron : ''}<span>${c.label.toLowerCase()}</span>${dir > 0 ? chevron : ''}
+      </button>` : '<span></span>';
+  return `
+    <div class="proj-nav">
+      ${link(prev, -1, navChevron(-1, n))}
+      ${withHands ? `<button type="button" class="proj-nav-hands" data-close aria-label="Close">
+        <span class="back-in">
+          <img class="hand h-salva-v" src="${IMG}ui/hand_salva_v.png" alt="">
+          <img class="hand h-pita-v" src="${IMG}ui/hand_pita_v.png" alt="">
+        </span>
+      </button>` : ''}
+      ${link(next, 1, navChevron(1, n), 'next')}
+    </div>`;
+}
+
+PROJECTS['back-in-smoothly'] = function () {
+  const p = PROJ_IMG('back-in-smoothly');
+  const yt = 'ZOVg5GCUxqs';
+  const GAME_URL = 'https://thelifeofpita.github.io/backingame/';
+  const nav = (withHands) => renderProjectNav('back-in-smoothly', withHands);
+
+  /* All five arrows below are traced off layout.png at 1920: same pen, same
+     stroke, same open-V head (~32 tall, ~26 deep, always a separate stroke
+     that stops short of the line it terminates, legs ~24 units long). Only the
+     tail differs — straight for the nav-style pointers, a long left-hand hook
+     for the two that drop from a caption into the artwork under it. Each
+     viewBox is the traced ink box from layout.png, geometry inset by 3 (half
+     the pen) so the stroke lands exactly on that box. */
+  const descArrow = `<svg viewBox="0 0 74 31"><defs>${penFilter('bisRough1')}</defs>
+    <path d="M3 17C11 6 22 2 33 4C47 7 55 13 60 19" ${pen('bisRough1')}/>
+    ${headV('bisRough1', 68, 27, 45, 22, 70, 3)}
+  </svg>`;
+
+  const printsArrow = `<svg viewBox="0 0 79 117"><defs>${penFilter('bisRough2')}</defs>
+    <path d="M75 3C58 1 22 6 8 34C1 52 12 82 30 98" ${pen('bisRough2')}/>
+    ${headV('bisRough2', 45, 113, 22, 108, 47, 89)}
+  </svg>`;
+
+  const arrowLeft = `<svg viewBox="0 0 94 33"><defs>${penFilter('bisRough3')}</defs>
+    <path d="M24 16.5H91" ${pen('bisRough3')}/>
+    ${headV('bisRough3', 3, 16.5, 23, 3, 23, 30)}
+  </svg>`;
+  const arrowRight = `<svg viewBox="0 0 94 33"><defs>${penFilter('bisRough4')}</defs>
+    <path d="M3 16.5H70" ${pen('bisRough4')}/>
+    ${headV('bisRough4', 91, 16.5, 71, 3, 71, 30)}
+  </svg>`;
+
+  const tapArrow = `<svg class="bis-arrow-down" viewBox="0 0 54 91"><defs>${penFilter('bisRough5')}</defs>
+    <path d="M51 3C34 1 12 12 7 38C4 55 12 74 23 80" ${pen('bisRough5')}/>
+    ${headV('bisRough5', 35, 88, 12, 83, 37, 64)}
+  </svg>`;
+
+  const circleThis = `<svg viewBox="0 0 52 45"><defs>${penFilter('bisRough6')}</defs>
+    <path d="M27 3C41 3 49 11 49 22C49 33 40 42 26 42C13 42 3 34 3 22C3 11 13 3 27 3Z" ${pen('bisRough6')}/>
+  </svg>`;
+
+  return `
+    <div class="proj proj-bis">
+      ${nav(true)}
+
+      <div class="proj-head">
+        <img class="proj-title-art" src="${IMG}ui/camp_l1_2.png" alt="Back in smoothly">
+        <p class="bis-subtitle">use the rear view camera of cars to position PlatanoMelón’s relaxant lubricant as the smoooothest solution for your <small>tightest</small> maneuvers.</p>
+      </div>
+
+      <div class="proj-block bis-b-spot">
+        <p class="bis-desc">
+          tv and digital spot showcasing the struggle of backing in, unless you are using PlatanoMelón’s relaxant lubricant.
+          ${descArrow}
+        </p>
+        <div class="proj-media bis-yt">
+          <iframe src="https://www.youtube.com/embed/${yt}?rel=0" title="Back in smoothly" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen loading="lazy"></iframe>
+        </div>
+      </div>
+
+      <div class="proj-block bis-b-duo">
+        <div class="proj-duo">
+          <div class="proj-media">
+            <video autoplay muted loop playsinline poster="${p}gif1.jpg"><source src="${p}gif1.mp4" type="video/mp4"></video>
+          </div>
+          <div class="proj-media">
+            <video autoplay muted loop playsinline poster="${p}gif2.jpg"><source src="${p}gif2.mp4" type="video/mp4"></video>
+          </div>
+        </div>
+      </div>
+
+      <div class="proj-block bis-b-cap">
+        <p class="bis-caption">
+          ${printsArrow}
+          prints glued in hotel and motel parking spots, strategically placed to be seen while parking in reverse previous to having fun.
+        </p>
+      </div>
+
+      <div class="proj-block bis-b-stick">
+        <div class="bis-sticker-row">
+          <img src="${p}stick1.webp" alt="Back in smoothly sticker — star">
+          <img src="${p}stick2.webp" alt="Back in smoothly sticker — flower">
+          <img src="${p}stick3.webp" alt="Back in smoothly sticker — burst">
+        </div>
+      </div>
+
+      <div class="bis-park-row">
+        <img src="${p}park1.webp" alt="Sticker on a parking garage rear-view screen — star">
+        <img src="${p}park2.webp" alt="Sticker on a parking garage rear-view screen — flower">
+        <img src="${p}park3.webp" alt="Sticker on a parking garage rear-view screen — burst">
+      </div>
+
+      <div class="proj-block bis-b-mobile">
+        <div class="bis-mobile-row">
+          <div class="proj-media">
+            <video autoplay muted loop playsinline poster="${p}gif3.jpg"><source src="${p}gif3.mp4" type="video/mp4"></video>
+          </div>
+          <div class="bis-mobile-center">
+            <div class="bis-interactive">
+              ${arrowLeft}
+              <p>interactive pop-up<br>game ad on mobile.</p>
+              ${arrowRight}
+            </div>
+            <div class="bis-tap-wrap">
+              <a class="bis-tap" href="${GAME_URL}" target="_blank" rel="noopener">
+                <span>tap <span class="bis-circle">this${circleThis}</span> or scan</span>
+                <span>here to play</span>
+              </a>
+              <div class="bis-qr-wrap">
+                ${tapArrow}
+                <a class="bis-qr" href="${GAME_URL}" target="_blank" rel="noopener">
+                  <img src="${p}qr.svg" alt="Scan to play Back in smoothly on your phone">
+                </a>
+              </div>
+            </div>
+          </div>
+          <div class="proj-media">
+            <video autoplay muted loop playsinline poster="${p}gif4.jpg"><source src="${p}gif4.mp4" type="video/mp4"></video>
+          </div>
+        </div>
+      </div>
+
+      ${nav(false)}
+    </div>`;
+};
+
+function clamp01(n) { return n < 0 ? 0 : n > 1 ? 1 : n; }
+
+/* Chrome's autoplay heuristics sometimes leave an off-screen `autoplay` video
+   paused rather than actually playing it, so a clip below the fold can sit on
+   its poster frame forever. Driving play/pause off intersection instead of
+   trusting the attribute fixes that and, as a side effect, stops paying for
+   decode on clips that have scrolled away. */
+let projectVideoObserver = null;
+function watchProjectVideos() {
+  if (projectVideoObserver) projectVideoObserver.disconnect();
+  projectVideoObserver = new IntersectionObserver((entries) => {
+    for (const e of entries) {
+      if (e.isIntersecting) e.target.play().catch(() => {});
+      else e.target.pause();
+    }
+  }, { rootMargin: '200px 0px' });
+  for (const v of projectScroll.querySelectorAll('video')) projectVideoObserver.observe(v);
+}
+
+/* Every campaign opens into #project, whether or not it has a build yet —
+   one destination per slug, reached the same way whether you clicked its
+   icon on the landing or arrived via prev/next from a neighbor. A campaign
+   without a project gets the shared COMING SOON stub instead of a project
+   page, but it's still #project that opens, with the same nav around it. */
+function buildProject(slug) {
+  const build = PROJECTS[slug];
+  if (build) {
+    projectScroll.innerHTML = build();
+  } else {
+    const c = cfg.campaigns.find((x) => x.slug === slug);
+    projectScroll.innerHTML = `<div class="proj proj-soon">
+      ${renderProjectNav(slug, true)}
+      <div class="proj-soon-body">
+        <img src="${IMG}${c.src}" alt="${c.label}">
+        <div class="soon">COMING SOON</div>
+      </div>
+      ${renderProjectNav(slug, false)}
+    </div>`;
+  }
+  projectScroll.scrollTop = 0;
+  watchProjectVideos();
+  return true;
+}
+
+/* The title the transition flies is the same artwork the project page opens
+   with, so the two have to agree on where that is. #project is display:none
+   until it opens; `probing` lays it out without showing it, long enough to
+   read the real rect. Returned in the stage's own 1920x1080 coordinates,
+   because that is the space the flying clone animates in. */
+function projectTitleRect() {
+  const wasOn = project.classList.contains('on');
+  if (!wasOn) project.classList.add('probing');
+  const art = projectScroll.querySelector('.proj-title-art, .proj-soon-body img');
+  const rect = art && art.getBoundingClientRect();
+  if (!wasOn) project.classList.remove('probing');
+  if (!rect || !rect.width) return null;
+  const stageRect = stage.getBoundingClientRect();
+  const s = stageRect.width / 1920;
+  return {
+    x: (rect.left - stageRect.left) / s,
+    y: (rect.top - stageRect.top) / s,
+    w: rect.width / s,
+  };
+}
+
+/* Scroll-scrubbed, not a one-shot entrance: a block starts resolving as its
+   top clears 92% of viewport height and reads clean by 45%, so the noise
+   dissolves at the pace of the scroll itself rather than on a timer. */
+let projectRaf = null;
+function updateProject() {
+  projectRaf = null;
+  const vh = innerHeight;
+  for (const el of projectScroll.querySelectorAll('.reveal')) {
+    const top = el.getBoundingClientRect().top;
+    const p = clamp01((vh * .92 - top) / (vh * .47));
+    el.style.setProperty('--p', p.toFixed(3));
+  }
+  for (const el of projectScroll.querySelectorAll('.depth')) {
+    const r = el.getBoundingClientRect();
+    const depth = parseFloat(el.dataset.depth || '0');
+    const y = (vh / 2 - (r.top + r.height / 2)) * depth;
+    el.style.setProperty('--y', y.toFixed(1) + 'px');
+  }
+}
+function scheduleProjectUpdate() {
+  if (projectRaf) return;
+  projectRaf = requestAnimationFrame(updateProject);
+}
+projectScroll.addEventListener('scroll', scheduleProjectUpdate, { passive: true });
+addEventListener('resize', scheduleProjectUpdate);
+
+function openProject(slug, prebuilt = false) {
+  if (!prebuilt && !buildProject(slug)) return false;
+  project.classList.add('on');
+  project.setAttribute('aria-hidden', 'false');
+  // two frames: one for the new layout to land, one for the first paint at
+  // the correct scroll-driven --p/--y instead of the CSS-default noisy state.
+  requestAnimationFrame(() => requestAnimationFrame(updateProject));
+  return true;
+}
+
+function closeProject() {
+  if (!project.classList.contains('on')) return;
+  project.classList.remove('on');
+  project.setAttribute('aria-hidden', 'true');
+  if (projectVideoObserver) { projectVideoObserver.disconnect(); projectVideoObserver = null; }
+  for (const v of projectScroll.querySelectorAll('video')) v.pause();
+  projectScroll.innerHTML = '';
+}
+
+$('#project-close').addEventListener('click', goHome);
+
+/* project-page chrome that isn't part of the .reveal/.depth scroll system:
+   a project's own prev/next campaign nav, and a close control built from
+   the same reaching-hand artwork the rest of the site uses for "back". */
+projectScroll.addEventListener('click', (ev) => {
+  if (ev.target.closest('[data-close]')) { goHome(); return; }
+  const nav = ev.target.closest('[data-goto]');
+  if (nav) {
+    ev.preventDefault();
+    projectTransitionTo(nav.dataset.goto, Number(nav.dataset.dir));
+  }
+});
+
+/* Prev/next never leaves #project or touches the landing/hands stage, but it
+   is the same camera move as clicking a title, not a different effect: one
+   held stop-motion pan (CAM_STOPS/camPose/camStep, the exact curve and
+   contrast/brightness-to-black formula `campaignDepthTransition` uses for
+   its `worldFrames`), aimed sideways at "the next place" instead of at an
+   icon's position. The outgoing project plays it forward — the disappear
+   read the rest of the site uses — and, once swapped, the incoming one
+   plays the identical keyframes in reverse: the appear read is the disappear
+   read undone, never a separate animation. */
+function cameraPanFrames(pan) {
+  return CAM_STOPS.map((offset) => {
+    const p = camPose(offset);
+    const brightness = Math.max(0, 1 - 1.28 * p);
+    return camStep({
+      offset,
+      transform: `translate3d(${pan * p}px,0,0)`,
+      filter: `contrast(${1 + 7 * p}) brightness(${brightness})`,
+      opacity: Math.max(0, 1 - Math.pow(p, 1.7)),
+    });
+  });
+}
+
+async function projectTransitionTo(slug, dir) {
+  if (busy || !projectScroll.querySelector('.proj')) return;
+  busy = true;
+  const distance = Math.max(140, innerWidth * .22);
+  const timing = { duration: CAM_DURATION, easing: 'linear', fill: 'forwards' };
+
+  // A logical pan, not a mirror: "next" (dir 1) pans the camera rightward,
+  // so the outgoing project — behind the camera now — exits left, and the
+  // incoming one arrives from the right it just panned toward. "prev" is
+  // the same read flipped. Two different offsets, not one played backwards.
+  const outFrames = cameraPanFrames(-dir * distance);
+  const inFrames = cameraPanFrames(dir * distance);
+
+  const out = projectScroll.animate(outFrames, timing);
+  await out.finished.catch(() => {});
+
+  if (projectVideoObserver) { projectVideoObserver.disconnect(); projectVideoObserver = null; }
+  for (const v of projectScroll.querySelectorAll('video')) v.pause();
+  buildProject(slug);
+  current = 'c/' + slug;
+  campaignReturnOrigin = document.querySelector(`.camp[data-slug="${slug}"]`) || campaignReturnOrigin;
+
+  // `out` ends at opacity 0 and `in`'s reverse start (its own p:1) is also
+  // opacity 0 — both offsets are invisible, so the swap above never flashes
+  // even though the two poses sit on opposite sides.
+  const inAnim = projectScroll.animate(inFrames, { ...timing, direction: 'reverse' });
+  out.cancel();
+  await inAnim.finished.catch(() => {});
+  inAnim.cancel();
+  // measured only now the pan is off the element — mid-animation the scroller
+  // still carries the camera's transform, and the title would read as being
+  // wherever that pose left it rather than where the page puts it
+  campaignReturnTarget = projectTitleRect();
+  busy = false;
+}
+
 async function goCampaign(slug, origin = null) {
   if (busy) return;
   busy = true;
@@ -494,10 +932,16 @@ async function goCampaign(slug, origin = null) {
   origin = origin || document.querySelector(`.camp[data-slug="${slug}"]`);
   campaignReturnOrigin = origin;
   pageImg.removeAttribute('src');
-  pageExtra.innerHTML =
-    `<div class="title"><img src="${IMG}${c.src}" alt="${c.label}"></div>` +
-    '<div class="soon">COMING SOON</div>';
-  await campaignDepthTransition(origin);
+  // just the landing target for the flying title — #project opens on top of
+  // it either way, so this never needs its own COMING SOON copy any more.
+  pageExtra.innerHTML = `<div class="title"><img src="${IMG}${c.src}" alt="${c.label}"></div>`;
+  // built before the flight, not after: the camera needs somewhere real to
+  // aim, and the page it aims at is this one. Kept for the way out too, since
+  // by then the page is gone and cannot be measured again.
+  buildProject(slug);
+  campaignReturnTarget = projectTitleRect();
+  await campaignDepthTransition(origin, false, campaignReturnTarget);
+  openProject(slug, true);
   current = 'c/' + slug;
   busy = false;
 }
@@ -508,11 +952,19 @@ async function goBack() {
   const id = current;
   if (id.startsWith('c/')) {
     const slug = id.slice(2);
+    // read while the page is still standing, so a resize since it opened is
+    // accounted for — but only from the top, where the title is the thing the
+    // camera is actually looking at. Scrolled away, the pose it landed on is
+    // still the truer place to start the flight back from.
+    const target = (projectScroll.scrollTop < 2 && projectTitleRect())
+      || campaignReturnTarget;
+    closeProject();
     const origin = campaignReturnOrigin ||
       document.querySelector(`.camp[data-slug="${slug}"]`);
-    await campaignDepthTransition(origin, true);
+    await campaignDepthTransition(origin, true, target);
     await settleOnLanding();
     campaignReturnOrigin = null;
+    campaignReturnTarget = null;
     current = null;
     busy = false;
     return;

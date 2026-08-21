@@ -1,4 +1,19 @@
 /* ---------------------------------------------------------------- base */
+@font-face {
+  font-family: 'CossetteTexte';
+  src: url('fonts/CossetteTexte-Regular.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'CossetteTexte';
+  src: url('fonts/CossetteTexte-Bold.ttf') format('truetype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root { --scale: 1; }
 
 * { box-sizing: border-box; }
@@ -9,7 +24,7 @@ html, body {
   background: #000;
   overflow: hidden;
   color: #fff;
-  font-family: "Chalkboard SE", "Comic Sans MS", "Segoe Print", cursive;
+  font-family: 'CossetteTexte', "Helvetica Neue", Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
 }
 
@@ -242,9 +257,10 @@ html, body {
 }
 #page.extra #page-extra { display: block; }
 #page.extra #page-img { display: none; }
-/* Clear of the hands hanging from the top edge. The campaign transition flies
-   the clicked title to this exact spot, so `top` has to match CAMPAIGN_TITLE_TOP
-   in app.js. */
+/* Clear of the hands hanging from the top edge. This is the fallback landing
+   spot for a flown campaign title — `top` has to match CAMPAIGN_TITLE_TOP in
+   app.js — used only when the destination page has no title art of its own to
+   aim at; normally the flight ends on that page's real title instead. */
 #page-extra .title {
   position: absolute;
   left: 50%;
@@ -264,6 +280,499 @@ html, body {
   top: 505px;
   font-size: 30px;
   letter-spacing: 2px;
+  opacity: .75;
+}
+
+/* ------------------------------------------------------------ project */
+/* A real project's content. Independent of the 1920x1080 stage: a normal
+   scrolling page, laid out in viewport units, that opens on top of everything
+   once a campaign's depth transition lands on black. */
+#project {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: none;
+  background: #000;
+}
+#project.on { display: block; }
+/* laid out but not shown — the campaign transition has to read the project
+   page's real title position before it can fly a title to it */
+#project.probing { display: block; visibility: hidden; }
+
+#project-scroll {
+  position: absolute;
+  inset: 0;
+  overflow-y: scroll;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+}
+
+#project-close {
+  position: fixed;
+  top: max(22px, env(safe-area-inset-top));
+  right: max(26px, env(safe-area-inset-right));
+  z-index: 61;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+}
+#project-close span {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 28px;
+  height: 2px;
+  background: #f2f2ea;
+  transform-origin: center;
+}
+#project-close span:first-child { transform: translate(-50%, -50%) rotate(45deg); }
+#project-close span:last-child  { transform: translate(-50%, -50%) rotate(-45deg); }
+#project-close:hover span { background: #ff2f9f; }
+
+.proj {
+  color: #f2f2ea;
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 90px 6vw 140px;
+}
+
+.proj-head {
+  text-align: center;
+  margin: 0 0 42px;
+}
+.proj-eyebrow {
+  display: block;
+  font-size: 15px;
+  letter-spacing: .28em;
+  text-transform: uppercase;
+  color: #ff2f9f;
+  margin: 0 0 14px;
+}
+.proj-title {
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 0;
+  line-height: 1;
+  font-size: clamp(34px, 7vw, 78px);
+  margin: 0 0 22px;
+}
+.proj-sub {
+  font-size: clamp(15px, 2vw, 19px);
+  line-height: 1.5;
+  max-width: 640px;
+  margin: 0 auto;
+  color: #cfcfc6;
+}
+
+.proj-block { margin: 64px 0; }
+.proj-block:first-of-type { margin-top: 0; }
+
+.proj-duo {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 22px;
+}
+.proj-trio {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2vw;
+  flex-wrap: wrap;
+  padding: 10px 0;
+}
+.proj-trio img { width: clamp(150px, 20vw, 260px); height: auto; }
+.proj-trio .t2 { margin-top: 5vw; }
+
+/* The edge is never a clean rectangle: the same noise.svg dither used for the
+   scroll reveal below is unioned with a solid inset core, so the last ~24px
+   of every media block is decided pixel-by-pixel by that same speckle instead
+   of a hard cut — a rough, printed-halftone edge fading into the background.
+   Permanent, independent of `--p`: on whether or not the block has resolved. */
+.proj-media {
+  position: relative;
+  overflow: hidden;
+  background: #0a0a0a;
+  mask-image: linear-gradient(#000, #000), url("img/noise.svg");
+  mask-size: calc(100% - 46px) calc(100% - 46px), 34px 34px;
+  mask-position: center, center;
+  mask-repeat: no-repeat, repeat;
+  mask-composite: add, add;
+}
+.proj-media img, .proj-media video {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.proj-caption {
+  font-size: 14px;
+  letter-spacing: .04em;
+  color: #8a8a82;
+  text-align: center;
+  margin-top: 14px;
+}
+
+/* -------------------------------------------------- reveal / depth */
+/* Every media block starts noisy and dark, exactly the site's own
+   noise-plus-threshold dither look run at runtime instead of baked into a
+   frame, and clears as it is scrolled into view. `--p` (0..1) is driven from
+   JS on scroll; nothing here moves on its own. */
+.reveal { --p: 0; }
+.reveal .proj-media img,
+.reveal .proj-media video,
+.reveal .proj-media iframe,
+.reveal.proj-solo {
+  /* the exact contrast/brightness the campaign title's own dissolve plays on
+     the way in, run backwards: crushed to black and thresholded at --p:0,
+     clean at --p:1 */
+  filter: contrast(calc(1 + 7 * (1 - var(--p))))
+          brightness(max(0, calc(1 - 1.15 * (1 - var(--p)))));
+  opacity: calc(.15 + .85 * var(--p));
+}
+.reveal .noise {
+  position: absolute;
+  inset: -20%;
+  background-image: url("img/noise.svg");
+  background-size: 140px 140px;
+  opacity: calc((1 - var(--p)) * (1 - var(--p)));
+  mix-blend-mode: screen;
+  pointer-events: none;
+}
+.reveal-text {
+  opacity: calc(.15 + .85 * var(--p));
+  filter: blur(calc((1 - var(--p)) * 4px));
+}
+
+/* Depth: elements drift at different speeds as the page scrolls, the same
+   layered read as the title flying in over the landing hands. `--y` is set
+   from JS each frame; positive values are further back, negative sit closer
+   and move more. */
+.depth { transform: translate3d(0, var(--y, 0px), 0); will-change: transform; }
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal { --p: 1 !important; }
+  .depth { transform: none !important; }
+}
+
+@media (max-width: 720px) {
+  .proj { padding: 76px 6vw 110px; }
+  .proj-duo { grid-template-columns: 1fr; }
+  .proj-trio { gap: 0; }
+  .proj-trio .t2 { margin-top: 8vw; }
+}
+
+/* ------------------------------------------------------- project: nav */
+/* Every project shares this chrome — prev/next around the same campaign
+   ring the landing lays out, and a close control. Not one project's look:
+   this is sitewide infrastructure, styled once here. */
+/* no font-family here on purpose — nav is chrome, not content, so it wears
+   whichever voice the project it's attached to declares (the site's own
+   CossetteTexte by default, a project's own type where one sets one). */
+.proj-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: clamp(13px, 1.6vw, 17px);
+  color: #f2f2ea;
+}
+.proj-nav-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  color: inherit;
+  background: none;
+  border: 0;
+  padding: 6px 2px;
+  font: inherit;
+  cursor: pointer;
+}
+.proj-nav-link:hover { animation: jitter .18s steps(2) infinite; }
+/* 58x38 viewBox — every doodle on a project page is sized at its own viewBox
+   aspect so the shared pen (stroke-width and filter, both in user units)
+   scales identically across all of them. Changing one axis alone re-weights
+   this arrow's line against every other arrow's. */
+.proj-nav-link svg { width: 22px; height: 17px; overflow: visible; flex: none; }
+
+/* The project's own close control — not a new drawing: the exact `#back`
+   hands (the vertical cut, meant to hang from a top edge, wrists cut off by
+   the frame) and its wrist-wiggle hover, reused rather than reinvented.
+   `#back` itself can't show through here — #project sits in its own fixed
+   stacking context above the whole stage — so this repeats its markup and
+   the sitewide `handwiggle` keyframes instead of the element. */
+.proj-nav-hands {
+  background: none;
+  border: 0;
+  padding: 8px 14px;
+  margin: -8px 0;
+  cursor: pointer;
+  line-height: 0;
+}
+.proj-nav-hands .back-in { display: flex; align-items: flex-end; gap: 26px; transform: rotate(180deg); }
+.proj-nav-hands .hand { display: block; width: clamp(38px, 5vw, 60px); height: auto; image-rendering: pixelated; }
+.proj-nav-hands .h-salva-v, .proj-nav-hands .h-pita-v { transform-origin: center bottom; }
+.proj-nav-hands:hover .hand { animation: handwiggle .19s steps(2) infinite; }
+.proj-nav-hands:hover .h-pita-v { animation-duration: .25s; }
+
+/* the flown-in campaign title, repeated here so the page it opens onto never
+   needs a font to fake it — every project's own copy of this art starts
+   the page at its one definitive position, already settled. */
+.proj-title-art { display: block; width: clamp(280px, 44vw, 560px); margin: 0 auto 26px; }
+
+/* ------------------------------------------------ project: back in smoothly */
+/* PlatanoMelón's own type, set once at the project root — everything under
+   it, nav included, inherits it rather than repeating the font stack, so
+   the nav always reads as the same voice as the copy it sits above. */
+/* The mockup is a 1920-wide drawing and the rest of the site is a 1920x1080
+   stage scaled to fit, so this page is sized the same way: every length below
+   is the mockup's own pixel measurement divided by 19.2, in vw. No px caps —
+   a max-width would hold the page at ~49% of a 1920 viewport where the
+   mockup's content column is 86% of it. 27.1px of body copy at 1920 is the
+   one text size the whole mockup uses: 1.41vw. */
+.proj-bis {
+  --bis-ink: #f2f2ea;
+  --bis-copy: 1.411vw;      /* 27.1px @1920 — nav, desc, caption, all of it */
+  font-family: 'CossetteTexte', "Helvetica Neue", Helvetica, Arial, sans-serif;
+  max-width: none;
+  padding: 0 7.031vw 6.3vw; /* content column x135->1784 of 1920 */
+  font-size: var(--bis-copy);
+}
+.proj-bis .proj-head { margin-top: 3.07vw; }
+.proj-bis .proj-block { margin: 0; }
+
+/* the mockup's own close control is the pair of hands hanging off the top
+   edge — the shared chrome's corner "x" is not in the drawing, and would be
+   a second way to do the one thing the hands already do */
+#project:has(.proj-bis) #project-close { display: none; }
+
+/* nav sits a hair outside the content column in the mockup (arrow ink at
+   x121 against a x135 column) and wears the same 27.1px as the copy */
+.proj-bis .proj-nav { font-size: var(--bis-copy); margin: 0 -0.729vw; }
+.proj-bis .proj-nav-link { gap: 0.573vw; padding: 0 0.104vw; }
+.proj-bis .proj-nav-link svg { width: 2.292vw; height: 1.771vw; }
+.proj-bis .proj-nav-hands { padding: 0; margin: 0; }
+.proj-bis .proj-nav-hands .back-in { gap: 1.823vw; }
+.proj-bis .proj-nav-hands .hand { width: 6.615vw; }
+.proj-bis .proj-title-art { width: 42.14vw; margin: 0 auto; }
+.proj-bis .proj-duo { gap: 2.604vw; }   /* 50px @1920 between the two spots */
+/* the box is the mockup's box, not the video's: declaring the ratio up front
+   means the page is laid out before a single frame of mp4 has arrived, so
+   nothing below it jumps once the clips decode */
+.proj-bis .proj-duo .proj-media { aspect-ratio: 16 / 9; }
+.proj-bis .proj-duo .proj-media video { height: 100%; object-fit: cover; }
+
+/* every video/image block in this project reads as a plain flat rectangle,
+   like the mockup's own placeholder boxes — the shared .proj-media speckle
+   mask is tuned for stills and reads as a broken/noisy frame on top of a
+   playing video, so this project opts out of it entirely. */
+.proj-bis .proj-media { mask-image: none; }
+
+/* same size as the body copy below it, per the brand spec — bold is what
+   sets it apart, not a bigger point size */
+.bis-subtitle {
+  font-weight: 700;
+  font-size: var(--bis-copy);
+  line-height: 1.15;
+  max-width: 47vw;      /* the mockup breaks this line after "relaxant"; 870px is
+                           exactly that line, so the cap sits just clear of it */
+  margin: 0 auto;
+  color: var(--bis-ink);
+}
+.bis-subtitle small { font-size: .65em; letter-spacing: .01em; }
+
+/* the description hugs the left edge, its arrow immediately trailing the
+   text rather than pinned to the far right; the caption is the mirror of
+   that — a narrower column hugging the right edge, its arrow immediately
+   leading the text. Both full white, the same ink as everything else. */
+.bis-desc {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 1.25vw;
+  flex-wrap: wrap;
+  font-size: var(--bis-copy);
+  color: var(--bis-ink);
+  text-align: left;
+  margin: 4.58vw 0 1.77vw;
+}
+.bis-desc svg { width: 3.854vw; height: 1.615vw; overflow: visible; flex: none; color: var(--bis-ink); }
+
+.bis-caption {
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-end;
+  flex-wrap: nowrap;
+  gap: 1.042vw;
+  font-size: var(--bis-copy);
+  white-space: nowrap;
+  color: var(--bis-ink);
+}
+/* the mockup's arrow is a long hook: it starts level with the line and drops
+   ~100px past it, into the sticker below. The negative bottom margin keeps
+   that overhang from adding its height to the caption row. */
+.bis-caption svg {
+  width: 4.115vw; height: 6.094vw;
+  overflow: visible; flex: none; color: var(--bis-ink);
+  margin: 0.677vw 0 -6.094vw;
+}
+
+/* measured off the mockup itself: the three stickers are NOT one shared
+   width — each is placed at its own artwork's natural size at 1920 (525,
+   ~500 and 545px wide), so they read as three different die-cuts rather
+   than three things scaled to a grid. Center-aligned as a group, never on
+   a shared baseline: their outlines are each a different height. */
+.bis-sticker-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  /* the die-cuts break the content column in the mockup — their white
+     outlines run a little past it on both sides rather than tucking in */
+  margin: 0 -0.625vw 0 -1.719vw;
+}
+.bis-sticker-row img { height: auto; display: block; }
+.bis-sticker-row img:nth-child(1) { width: 27.34vw; }
+.bis-sticker-row img:nth-child(2) { width: 26.07vw; }
+.bis-sticker-row img:nth-child(3) { width: 28.39vw; }
+
+.bis-park-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0; background: #0a0a0a; }
+.bis-park-row img { display: block; width: 100%; aspect-ratio: 4 / 5; object-fit: cover; }
+.bis-park-row.reveal img {
+  filter: contrast(calc(1 + 7 * (1 - var(--p)))) brightness(max(0, calc(1 - 1.15 * (1 - var(--p)))));
+  opacity: calc(.15 + .85 * var(--p));
+}
+
+/* the mockup's vertical rhythm is not one repeated gap — every seam between
+   blocks is its own measurement off the drawing, so they are set one by one
+   rather than by a single .proj-block margin */
+.proj-bis .bis-b-duo    { margin-top: 2.917vw; }   /* spot -> the two gifs */
+.proj-bis .bis-b-cap    { margin-top: 3.125vw; }   /* gifs -> prints line */
+.proj-bis .bis-b-stick  { margin-top: 2.239vw; }   /* prints line -> stickers */
+.proj-bis .bis-park-row { margin-top: 3.490vw; }   /* stickers -> parking cams */
+.proj-bis .bis-b-mobile { margin-top: 3.021vw; }   /* parking cams -> mobile */
+.proj-bis .bis-b-mobile + .proj-nav { margin-top: 5.938vw; }
+
+/* measured off the mockup: gif3, the center text/QR gap and gif4 are three
+   genuinely equal thirds sharing the full content column, edge to edge with
+   no gutter — the air around the center text is the center third itself */
+.bis-mobile-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0; align-items: center; }
+.bis-mobile-row .proj-media { aspect-ratio: 608 / 1080; }
+.bis-mobile-row .proj-media img,
+.bis-mobile-row .proj-media video { height: 100%; object-fit: cover; }
+.bis-mobile-center { text-align: center; }
+
+.bis-interactive {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1.172vw;
+  font-size: var(--bis-copy);
+  color: var(--bis-ink);
+}
+.bis-interactive svg { width: 4.896vw; height: 1.719vw; overflow: visible; flex: none; }
+/* the one line the mockup sets larger than the rest of the copy — 29px @1920 */
+.bis-interactive p { margin: 0; line-height: 1.15; font-size: 1.514vw; }
+
+/* the center column does not sit on the row's midline in the mockup — it
+   rides ~6% of the clip's height below it */
+.bis-mobile-center { position: relative; top: 2.97vw; }
+
+/* Measured off the mockup: the two text lines and the QR share one center
+   axis — this is a centered column, not a left-flush block. The arrow sits
+   just outside the QR's top-left corner, hooking into it from up and to
+   the left, independent of the (centered) text above. */
+.bis-tap-wrap { display: flex; flex-direction: column; align-items: center; text-align: center; margin-top: 5.781vw; }
+.bis-tap {
+  display: block;
+  font-size: var(--bis-copy);
+  color: var(--bis-ink);
+  line-height: 1.2;
+  text-decoration: underline;
+  text-underline-offset: .19em;
+  cursor: pointer;
+}
+.bis-tap:hover { animation: jitter .18s steps(2) infinite; }
+.bis-tap > span { display: block; }
+.bis-circle { position: relative; display: inline-block; }
+.bis-circle svg { position: absolute; left: 50%; top: 46%; transform: translate(-50%, -50%); width: 2.708vw; height: 2.344vw; overflow: visible; pointer-events: none; }
+
+/* 27px @1920 between the "here to play" line and the QR, measured off the
+   mockup — the arrow has to span that gap, tail level with "here" and tip
+   landing on the code, so opening it up leaves the arrow pointing at nothing. */
+.bis-qr-wrap { position: relative; display: inline-block; margin-top: 1.406vw; }
+/* Anchored on the QR's top-left corner. The offsets are traced: the tip sits
+   9px left of the code's left edge and 41px down from its top, and the tail
+   comes out level with "here" above it. */
+.bis-arrow-down {
+  position: absolute; left: 0; top: 0;
+  transform: translate(-77%, -48%);
+  width: 2.813vw; height: 4.740vw; overflow: visible; color: var(--bis-ink);
+}
+
+.bis-qr { display: block; width: 9.74vw; }
+.bis-qr img { display: block; width: 100%; height: auto; }
+
+/* a real YouTube embed — the video's own custom thumbnail already is the
+   mockup's yellow key art, and the play button/watch-on-YouTube chrome is
+   YouTube's own player UI, not anything drawn here */
+.bis-yt { position: relative; aspect-ratio: 16 / 9; }
+.bis-yt iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; display: block; }
+
+/* Below the mockup's own territory the vw scale stops being a size and starts
+   being a legibility problem (1.41vw is 10px on a phone), so the whole page
+   falls off the drawing's proportions and back onto readable px here. */
+@media (max-width: 720px) {
+  .proj-bis { padding: 24px 6vw 110px; --bis-copy: 14px; }
+  .proj-bis .proj-head { margin-top: 26px; }
+  .proj-bis .proj-nav { margin: 0; }
+  .proj-bis .proj-nav-link { gap: 9px; }
+  .proj-bis .proj-nav-link svg { width: 22px; height: 17px; }
+  .proj-bis .proj-nav-hands .back-in { gap: 26px; }
+  .proj-bis .proj-nav-hands .hand { width: 48px; }
+  .proj-bis .proj-title-art { width: 72vw; }
+  .bis-subtitle { max-width: 100%; }
+  .bis-sticker-row { margin: 0; }
+  .bis-desc { margin: 26px 0 18px; gap: 10px; }
+  .bis-desc svg { width: 37px; height: 16px; }
+  .bis-caption svg { width: 40px; height: 59px; margin: 4px 0 0; }
+  .proj-bis .bis-b-duo, .proj-bis .bis-b-cap, .proj-bis .bis-b-stick,
+  .proj-bis .bis-park-row, .proj-bis .bis-b-mobile { margin-top: 44px; }
+  .proj-bis .bis-b-mobile + .proj-nav { margin-top: 56px; }
+  .proj-bis .proj-duo { gap: 16px; }
+  .bis-mobile-row { grid-template-columns: 1fr; gap: 20px; }
+  .bis-mobile-row .proj-media { max-width: 260px; margin: 0 auto; }
+  .bis-park-row { grid-template-columns: 1fr; }
+  .bis-sticker-row { flex-wrap: wrap; gap: 5%; justify-content: center; }
+  .bis-sticker-row img:nth-child(1),
+  .bis-sticker-row img:nth-child(2),
+  .bis-sticker-row img:nth-child(3) { width: 42%; }
+  .bis-interactive { gap: 10px; }
+  .bis-interactive svg { width: 47px; height: 17px; }
+  .bis-interactive p { font-size: 15px; }
+  .bis-mobile-center { top: 0; }
+  .bis-tap-wrap { margin-top: 20px; }
+  .bis-circle svg { width: 26px; height: 23px; }
+  .bis-qr-wrap { margin-top: 14px; }
+  .bis-arrow-down { width: 27px; height: 46px; }
+  .bis-qr { width: 96px; }
+  /* the mockup's single right-flush line only fits a screen that wide */
+  .bis-caption { white-space: normal; justify-content: flex-start; align-items: center; }
+  .bis-caption svg { margin: 0; }
+}
+
+/* a campaign reached by prev/next before it has a project of its own —
+   the same title art + COMING SOON the landing shows, replayed inside
+   #project so lateral nav never has to know whether the target is built */
+.proj-soon { display: flex; flex-direction: column; min-height: 100vh; }
+.proj-soon-body { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+.proj-soon-body img { width: clamp(220px, 34vw, 420px); height: auto; }
+.proj-soon .soon {
+  margin-top: 26px;
+  font-size: 22px;
+  letter-spacing: 2px;
+  color: #f2f2ea;
   opacity: .75;
 }
 

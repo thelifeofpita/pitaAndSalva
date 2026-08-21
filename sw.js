@@ -13,7 +13,7 @@
    Bump VERSION after rebuilding frames to force every client onto the new art in
    one step. Without a bump the stale-while-revalidate path below still picks up
    changes, just one visit later. */
-const VERSION = 'pitalva-v16';
+const VERSION = 'pitalva-v21';
 const CACHE = VERSION;
 
 /* Enough to boot and play the first dap. The rest of the frames land in the
@@ -61,7 +61,11 @@ self.addEventListener('fetch', (e) => {
     const cache = await caches.open(CACHE);
     const hit = await cache.match(req, { ignoreSearch: false });
 
-    const fresh = fetch(req).then((res) => {
+    // `reload` bypasses the browser's own HTTP cache, not just this worker's
+    // Cache Storage — without it a revalidation here can silently hand back
+    // the browser's own stale copy of a URL whose bytes changed, and Cache
+    // Storage happily overwrites itself with that same stale response.
+    const fresh = fetch(req, { cache: 'reload' }).then((res) => {
       // Opaque and error responses would poison the cache for a frame that is
       // currently playing fine from it.
       if (res && res.ok && res.type === 'basic') cache.put(req, res.clone());
@@ -96,7 +100,7 @@ self.addEventListener('message', (e) => {
     for (const u of data.urls) {
       try {
         if (await cache.match(u)) continue;
-        const res = await fetch(u);
+        const res = await fetch(u, { cache: 'reload' });
         if (res && res.ok && res.type === 'basic') await cache.put(u, res.clone());
       } catch (err) { /* a frame that fails here is retried by the page */ }
     }

@@ -66,6 +66,16 @@
     <div id="ghost"><img alt=""></div>
   </div>
 </div>
+
+<!-- a real project's content: full-page scroll, independent of the 1920x1080
+     stage above. Opens on top of it once a campaign's depth transition lands. -->
+<div id="project" aria-hidden="true">
+  <button id="project-close" type="button" aria-label="Close">
+    <span></span><span></span>
+  </button>
+  <div id="project-scroll"></div>
+</div>
+
 <script src="app.js"></script>
 <script>
 /* Keeps the frames in Cache Storage, where the host's ten-minute max-age does

@@ -135,6 +135,14 @@ Transitions interpolate both the crop (anchored to the subject, exact at both
 ends) and the tone, so frame 0 matches the landing grade and the last frame
 matches the destination keyframe.
 
+### The ampersand copy
+
+`python3 tools/build_and_text.py` turns `assets/and_text_2.jpeg` into the eight
+1-bit phrase images in `site/img/and_text/`. It removes the photographed paper
+and lighting, keeps the original pen strokes, crops each paragraph, and scales
+the pieces to their live on-stage sizes. Their loose curve, gaps and small
+rotations are set under `#and-copy` in `style.css`.
+
 ### The back hands
 
 `tools/build_hands.py` cuts them straight out of `site/img/landing_plate.png`,
