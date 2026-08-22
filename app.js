@@ -1033,6 +1033,75 @@ PROJECTS['numpad-jam'] = function () {
     </div>`;
 };
 
+/* Same campaign-mockup system as the other two project pages (nav, title art,
+   one bold idea line, then the work) — its own block rather than a shared one
+   so each page can drift from the others' numbers.
+
+   The work here is nine photographs and nothing else, so the page is the
+   contact sheet itself: a 3x3 of squares, all cropped to the same size so no
+   one shot outranks another. The layout is the argument — the four corners
+   are the four garments hung in the street as ads, the four sides are the
+   patched-on lettering those ads are made of, and the middle is the pile they
+   all came out of. Full scene, detail, full scene, detail, round the ring,
+   with the source at the centre of it. */
+PROJECTS['ads-from-trash'] = function () {
+  const p = PROJ_IMG('ads-from-trash');
+  const nav = (withHands) => renderProjectNav('ads-from-trash', withHands);
+
+  /* Same pen, same open-V head and the same 74x31 box as the caption arrows
+     on Numpad Jam, so the two pages read as one hand — drawn rather than
+     copied, with its own curve and its own seed, because a doodle repeated
+     stroke for stroke across the site reads as a pasted asset. This one runs
+     almost flat and dips into its head, trailing the caption down into the
+     grid under it. */
+  const gridArrow = `<svg viewBox="0 0 74 31"><defs>${penFilter('aftRough1', 31)}</defs>
+    <path d="M3 8C13 9 23 12 33 16C43 20 52 23 61 24" ${pen('aftRough1')}/>
+    ${headV('aftRough1', 70, 26, 58, 19, 61, 31)}
+  </svg>`;
+
+  /* Reading order IS the ring: corners are the four hung garments, the four
+     edges between them are the close-ups of their lettering, and the pile
+     sits in the middle. Cropped square off the originals at the point of
+     interest (tools/crop_aft.py), so the grid is nine equal squares and
+     nothing is letterboxed into one. */
+  const CELLS = [
+    { img: 'full-tshirt.webp',    alt: 'Worn-out t-shirt hung on a wall: "We tried to make the most of it, and the most turned out to be an ad."' },
+    { img: 'close-tshirt.webp',   alt: 'Close-up of the patched letters "WE TR" stitched onto the t-shirt' },
+    { img: 'full-dress.webp',     alt: 'Sequin dress hung on a wall: "We did our best, and it turned out to be this ugly ad."' },
+    { img: 'close-dress.webp',    alt: 'Close-up of the patched letters "D I" stitched onto the sequin dress' },
+    { img: 'pile.webp',           alt: 'The four garments in a pile on the floor in window light' },
+    { img: 'close-hoodie.webp',   alt: 'Close-up of the patched letters "AR" stitched onto the hoodie' },
+    { img: 'full-hoodie.webp',    alt: 'Blue hoodie hung on a wall: "The best clothes end up in our stores. The most worn-out ones are our ads."' },
+    { img: 'close-overalls.webp', alt: 'Close-up of the patched letters "NO" stitched onto the overalls' },
+    { img: 'full-overalls.webp',  alt: 'Grease-stained overalls hung on a wall: "We had no choice but to recycle these worn-out overalls into a worn-out ad."' },
+  ];
+
+  return `
+    <div class="proj proj-aft">
+      ${nav(true)}
+
+      <div class="proj-head">
+        <img class="proj-title-art" src="${IMG}ui/camp_l1_1.png" alt="Ads from trash">
+        <p class="aft-idea">[idea sentence — placeholder]</p>
+      </div>
+
+      <div class="proj-block aft-b-grid">
+        <p class="aft-caption">
+          [caption — placeholder]
+          ${gridArrow}
+        </p>
+        <div class="aft-grid">
+          ${CELLS.map((c) => `
+            <figure class="aft-cell">
+              <img src="${p}${c.img}" alt="${c.alt}" loading="lazy">
+            </figure>`).join('')}
+        </div>
+      </div>
+
+      ${nav(false)}
+    </div>`;
+};
+
 function clamp01(n) { return n < 0 ? 0 : n > 1 ? 1 : n; }
 
 /* Chrome's autoplay heuristics sometimes leave an off-screen `autoplay` video
