@@ -762,6 +762,503 @@ html, body {
   .bis-caption svg { margin: 0; }
 }
 
+/* ------------------------------------------------ project: numpad jam */
+/* Same system as Back in Smoothly above — same type, same nav/title-art
+   sizing — kept as its own block rather than shared with .proj-bis so each
+   project can drift from the other's numbers once either one actually
+   builds out. Numpad Jam has no content blocks yet, just the head. */
+.proj-numpad {
+  --np-ink: #f2f2ea;
+  --np-copy: 1.411vw;
+  font-family: 'CossetteTexte', "Helvetica Neue", Helvetica, Arial, sans-serif;
+  max-width: none;
+  padding: 0 7.031vw 6.3vw;
+  font-size: var(--np-copy);
+}
+.proj-numpad .proj-head { margin-top: 3.07vw; }
+#project:has(.proj-numpad) #project-close { display: none; }
+.proj-numpad .proj-nav { font-size: var(--np-copy); margin: 0 -0.729vw; }
+.proj-numpad .proj-nav-link { gap: 0.573vw; padding: 0 0.104vw; }
+.proj-numpad .proj-nav-link svg { width: 2.292vw; height: 1.771vw; }
+.proj-numpad .proj-nav-hands { padding: 0; margin: 0; }
+.proj-numpad .proj-nav-hands .back-in { gap: 1.823vw; }
+.proj-numpad .proj-nav-hands .hand { width: 6.615vw; }
+/* Narrower than Back in Smoothly's 42.14vw, to come out the same size.
+   Matching the two titles' WIDTHS is what made them look inconsistent: they
+   are the same hand at the same size in the artwork, but "NUMPAD JAM" is a
+   much shorter string than "BACK IN SMOOTHLY", so filling the same width
+   blows its letters up — 0.153 of the width against 0.111, half again as
+   tall. What has to match is the lettering, so this is the width at which
+   this title's letters stand as tall as that one's. */
+.proj-numpad .proj-title-art { width: 30.75vw; margin: 0 auto; }
+
+.numpad-idea {
+  font-weight: 700;
+  font-size: var(--np-copy);
+  line-height: 1.15;
+  max-width: 34vw;    /* tuned to break the sentence into two similar-length lines */
+  margin: 0 auto;
+  color: var(--np-ink);
+}
+
+.proj-numpad .np-b-case { margin-top: 4.58vw; }
+
+/* text hugging the left edge, arrow immediately trailing it — same read as
+   Back in Smoothly's bis-desc, pointing down into the video under it */
+.np-case {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 1.25vw;
+  flex-wrap: wrap;
+  font-size: var(--np-copy);
+  color: var(--np-ink);
+  text-align: left;
+  margin: 0 0 1.77vw;
+}
+.np-case svg { width: 3.854vw; height: 1.615vw; overflow: visible; flex: none; color: var(--np-ink); }
+
+.np-yt { position: relative; aspect-ratio: 16 / 9; }
+.np-yt iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; display: block; }
+
+/* The clip keeps the shared .proj-media speckle mask turned off — it is
+   tuned for stills and reads as a broken frame on top of playing video.
+
+   One clip now, not two: it sits on the left at its own native ~2.93:1
+   (208/71), uncropped, because all ten timeline covers being visible is
+   what the shot is for. The columns are sized so the clip gets the width
+   its aspect needs and the invitation takes the rest — 2.93fr against 1fr
+   puts the clip at about 62vw and leaves ~21vw for the ring, which is
+   wider than the ring itself so it can centre in its own column. */
+.proj-numpad .np-b-duo { margin-top: 2.917vw; }
+.np-duo {
+  display: grid;
+  grid-template-columns: 2.93fr 1fr;
+  gap: 2.604vw;
+  align-items: center;
+}
+.np-duo-clip { aspect-ratio: 208 / 71; }
+/* contain, not cover: the box matches the footage's own aspect, so this is
+   a no-op that guards against the two ever drifting apart and cropping. */
+.np-duo-clip video { height: 100%; object-fit: contain; }
+
+/* The ringed invitation. The ring is a fixed-aspect box (350x220 viewBox at
+   the page's own unit-≈-px-at-1920 scale, i.e. viewBox/19.2 in vw) because
+   every doodle on this page has to be: stretch one to a different aspect
+   and its stroke width stretches with it, and it stops being the same pen
+   as the arrows. So the text sizes itself to fit the ring rather than the
+   ring growing to fit the text. */
+/* the cell, so the arrow can be placed against the ring rather than against
+   the grid: the ring is centred in a taller column, and what the arrow has
+   to aim at is the ring's own lower-left corner */
+.np-duo-try {
+  position: relative;
+  display: flex;
+  justify-content: center;
+}
+/* Box is the svg's own viewBox at the page's unit-≈-px-at-1920 scale
+   (150/19.2 x 90/19.2, in vw) — like every other doodle here, sized any
+   other way it stretches its own stroke.
+
+   It starts ON the clip, not in the gutter beside it. The gutter is ~60px
+   and the arrow is ~116px long, so anything that fits between the two
+   either shrinks the doodle out of the family or ends up aimed at the ring
+   from on top of it. Overlapping costs nothing here: white ink on the part
+   of the frame that is black anyway — below the timeline strip, right of
+   the drawn keyboard — so the stroke reads as cleanly over the clip as it
+   does over the page. Left and bottom put the tail in that dead corner,
+   pointing out of the keyboard's side of the frame, and leave the head
+   short of the ring's lower-left arc rather than crossing it. */
+.np-try-arrow {
+  position: absolute;
+  left: -9vw;
+  bottom: -1.65vw;
+  width: 7.81vw;
+  height: 4.69vw;
+  color: var(--np-ink);
+  pointer-events: none;
+}
+.np-try-arrow svg { display: block; width: 100%; height: 100%; overflow: visible; }
+
+.np-try {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18.23vw;    /* 350 units */
+  height: 11.46vw;   /* 220 units */
+  color: var(--np-ink);
+  text-decoration: none;
+}
+.np-try-ring {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;   /* the whole box is the link; the ring is just ink */
+}
+/* 62% of the ring's width: inside a circle the usable line length is well
+   short of the full diameter, and this is what keeps the three lines clear
+   of the stroke on both sides. */
+.np-try-label {
+  position: relative;
+  max-width: 62%;
+  text-align: center;
+  font-size: var(--np-copy);
+  line-height: 1.2;
+  text-decoration: underline;
+  text-underline-offset: 0.16vw;
+}
+/* the site's one hover read: the same stepped vibration every nav and
+   campaign title uses, on the whole link so ring and words shake together */
+.np-try:hover { animation: jitter .18s steps(2) infinite; }
+
+.proj-numpad .proj-media { mask-image: none; }
+
+/* ---- community jams: the player is the campaign's own, not a generic
+   one — the case study's numpadSim already shows a track playing inside a
+   Spotify-shaped mini player (dark rounded card, cover, number-string
+   title, artist under it, round white button, a thin white bar with its
+   times at either end and a green ring while it plays), so these cards are
+   that same player with a community handle where the mockup's artist line
+   sits. Its numbers, its type — Arial standing in for Circular, the same
+   stand-in the shop cards below make for the store's own font — rather
+   than the page's --np-copy/CossetteTexte ink, because the point is the
+   campaign's output showing up inside somebody else's product. */
+.proj-numpad .np-b-jams { margin-top: 4.58vw; }
+.np-jams-caption { margin-bottom: 1.25vw; }
+/* the doodle dips below its own baseline, so it needs the same optical
+   nudge down that puts its head level with the line of text it trails */
+.np-jams-caption svg { transform: translateY(0.16vw); }
+
+.np-jams {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.2vw;   /* same gap as the shop row below, so the two blocks rhyme */
+}
+
+.np-jam {
+  --jam-p: 0;   /* 0..1 playhead, written by app.js each frame while playing */
+  background: #141414;
+  /* a ring, not a border swap: transparent at rest and green while playing,
+     so the card never changes size between the two states */
+  border: 0.104vw solid transparent;
+  border-radius: 0.833vw;
+  padding: 0.833vw;
+  font-family: Arial, "Helvetica Neue", Helvetica, sans-serif;
+  transition: background .2s, border-color .2s;
+}
+.np-jam:hover { background: #1c1c1c; }
+.np-jam.on { border-color: #1ed760; }
+
+.np-jam-top {
+  display: flex;
+  align-items: center;
+  gap: 0.83vw;
+}
+
+.np-jam-art {
+  width: 3.646vw;   /* 70px @1920 */
+  aspect-ratio: 1 / 1;
+  flex: none;
+  border-radius: 0.417vw;
+  overflow: hidden;
+  background: #000;
+}
+.np-jam-art img { display: block; width: 100%; height: 100%; object-fit: cover; }
+
+/* min-width:0 so a long title ellipsises inside the flex row instead of
+   pushing the play button off the card's right edge */
+.np-jam-body { flex: 1 1 auto; min-width: 0; }
+/* the jam's title IS the keys it presses, set the way the album sets its
+   track titles: one run of digits, tabular so the run stays even, tracked
+   out so it reads as presses rather than as one long number */
+.np-jam-name {
+  font-size: 0.99vw;   /* 19px @1920 */
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: 0.04em;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.np-jam-by {
+  margin-top: 0.16vw;
+  font-size: 0.677vw;   /* 13px @1920 */
+  color: #b3b3b3;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.np-jam-row {
+  display: flex;
+  align-items: center;
+  gap: 0.73vw;
+  margin-top: 0.42vw;
+}
+/* the hit target, not the line: 8px of padding above and below a 4px bar so
+   scrubbing doesn't demand pixel aim. The line itself is .np-jam-track. */
+.np-jam-bar {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 0.417vw 0;
+  cursor: pointer;
+}
+/* overflow stays visible so the knob can sit centred on the fill's end
+   instead of being clipped in half by its own track */
+.np-jam-track {
+  position: relative;
+  height: 0.208vw;
+  border-radius: 0.208vw;
+  background: #3f3f3f;
+}
+.np-jam-fill {
+  height: 100%;
+  width: calc(var(--jam-p) * 100%);
+  background: #fff;
+  border-radius: inherit;
+}
+.np-jam-knob {
+  position: absolute;
+  top: 50%;
+  left: calc(var(--jam-p) * 100%);
+  width: 0.573vw;
+  height: 0.573vw;
+  margin: 0;
+  border-radius: 50%;
+  background: #fff;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+/* green while this card is the one sounding — the same tell the mockup's
+   own player uses for the track you are hearing */
+.np-jam.on .np-jam-fill, .np-jam.on .np-jam-knob { background: #1ed760; }
+
+.np-jam-time {
+  flex: none;
+  font-size: 0.625vw;   /* 12px @1920 */
+  color: #b3b3b3;
+  font-variant-numeric: tabular-nums;   /* so the clock doesn't jitter */
+}
+
+.np-jam-play {
+  flex: none;
+  width: 2.396vw;   /* 46px @1920 */
+  height: 2.396vw;
+  border: 0;
+  border-radius: 50%;
+  background: #fff;
+  color: #000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0;
+  transition: transform .1s, background .2s;
+}
+.np-jam-play:hover { background: #1ed760; transform: scale(1.06); }
+.np-jam-play svg { width: 42%; height: 42%; fill: currentColor; display: block; }
+/* one button, two icons, swapped on the card's own playing state — no
+   markup rewrite per frame and no icon to keep in sync from JS */
+.np-jam-play .np-jam-i-pause,
+.np-jam.on .np-jam-play .np-jam-i-play { display: none; }
+.np-jam.on .np-jam-play .np-jam-i-pause { display: block; }
+
+/* position:relative anchors .np-shop-arrow to this block's own width — the
+   row of 5 equal cards, same box the caption spans — in percentages, not
+   pixels, so both stay correct if the row ever reflows. */
+.proj-numpad .np-b-shop { margin-top: 4.58vw; position: relative; }
+
+.np-shop-caption {
+  font-size: var(--np-copy);
+  color: var(--np-ink);
+  text-align: right;
+  white-space: nowrap;
+  margin: 0 0 1.77vw;
+}
+
+/* width/height are the svg's own viewBox (410x70) at the same
+   unit-≈-px-at-1920 scale as every other doodle's box on the page
+   (viewBox-units/19.2, in vw) — see the long comment on the svg itself in
+   app.js for why: a box sized any other way stretches the curve and the
+   stroke width off the drawn proportions. Because the box's own size is
+   fixed by that, only `left` and `top` are free to place it, so only one
+   end of the curve can be solved for exactly — that's the start, put
+   0.948 (mirrored from local x15/410) of the box's width from `left` so
+   it lands beside the caption text, the same 1.25vw gap as np-case's own
+   arrow. The caption is right-aligned and nowrap, so its left edge — the
+   end this gap is measured against — moves whenever the line's wording
+   changes: `left` has to be re-solved with the copy, and 50.78% was the
+   answer for a line four characters shorter than the one there now.
+   The vertex (mirrored local x372/410) falls out of that same left+width
+   wherever it falls, which is over the hat card (card 3 of 5) but not
+   dead-centered on it, which reads as a natural hand-aimed drop rather
+   than a measured one.
+   Vertically, local y20 (the start) lands level with the middle of the
+   "t" in "the", and local y52 (the vertex) comes out ~18px clear above
+   the card row's own top edge — comfortably not touching it — because
+   top solves for the start alone: top+0.286×height=0.91vw. */
+.np-shop-arrow {
+  position: absolute;
+  left: 47.65%;
+  top: -0.13vw;
+  width: 21.35vw;
+  height: 3.65vw;
+  color: var(--np-ink);
+  pointer-events: none;
+  transform: scaleX(-1);
+}
+.np-shop-arrow svg { display: block; width: 100%; height: 100%; overflow: visible; }
+
+/* Traced 1:1 off shop.jpegmafia.net's own product tile: white square,
+   square corners (no radius), soft drop shadow, Arial name in store grey,
+   Arial price in store blue — not the site's own CossetteTexte/proj-numpad
+   ink, this card is a screenshot of someone else's UI living on the page. */
+.np-shop {
+  display: flex;
+  gap: 1.2vw;
+  /* no margin-top here on purpose: the caption's own margin-bottom (1.77vw)
+     is the only gap, same tight rhythm as Back in Smoothly's caption-into-
+     content spacing. The arrow's drop-shadow (above) is what keeps it
+     legible landing on a card, not extra dead air above the row. */
+}
+.np-shop-card {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.np-shop-tile {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  background: #fff;
+  box-shadow: 0 8px 9px -2px rgba(0, 0, 0, .2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4%;
+  box-sizing: border-box;
+}
+.np-shop-tile img { display: block; max-width: 100%; max-height: 100%; object-fit: contain; }
+.np-shop-name {
+  margin-top: 0.9vw;
+  font-family: Arial, "Helvetica Neue", Helvetica, sans-serif;
+  font-size: 0.677vw;   /* 13px @1920, the store's own size */
+  color: #666;
+  text-align: center;
+}
+.np-shop-price {
+  margin-top: 0.25vw;
+  font-family: Arial, "Helvetica Neue", Helvetica, sans-serif;
+  font-size: 0.552vw;   /* 10.6px @1920, the store's own size */
+  color: #1aaef1;
+  text-align: center;
+}
+
+/* ---- the product, closing the page. Copy left, one steady turn right: the
+   clip is 768x560 and runs at its own aspect, and the two columns are sized so
+   the copy gets a comfortable measure while the pad still reads at speed. */
+.proj-numpad .np-b-pad { margin-top: 4.58vw; }
+/* Three across, hinged on the arrow. The outer columns are equal, so the
+   arrow's own column lands dead centre of the block whatever the line and the
+   clip happen to measure; the line is pushed to the end of the column left of
+   it and the clip to the start of the column right of it, which leaves both
+   of them hugging the arrow instead of drifting off to the margins. */
+.np-pad {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 1.25vw;
+  align-items: center;
+}
+/* text and arrow as one row, the arrow centred against the whole block of
+   copy rather than trailing its last line — same read as np-case, turned
+   sideways because what it points at is beside it, not under it */
+
+.np-pad-copy {
+  justify-self: end;
+  margin: 0 2.6vw 0 0;   /* sits off the arrow rather than up against it */
+  font-size: var(--np-copy);
+  line-height: 1.25;
+  color: var(--np-ink);
+}
+.np-pad-arrow {
+  flex: none;
+  width: 3.854vw;    /* the svg's own 74x31 viewBox at unit-≈-px-at-1920 */
+  height: 1.615vw;
+  color: var(--np-ink);
+}
+.np-pad-arrow svg { display: block; width: 100%; height: 100%; overflow: visible; }
+/* the clip's own ground is crushed to #000 in the render, so the box
+   under it has to be too or its edges show as a panel */
+.np-pad-clip { justify-self: start; width: 30vw; aspect-ratio: 768 / 560; background: #000; }
+.np-pad-clip video { height: 100%; object-fit: contain; }
+
+@media (max-width: 720px) {
+  .proj-numpad { padding: 24px 6vw 110px; --np-copy: 14px; }
+  .proj-numpad .proj-head { margin-top: 26px; }
+  .proj-numpad .proj-nav { margin: 0; }
+  .proj-numpad .proj-nav-link { gap: 9px; }
+  .proj-numpad .proj-nav-link svg { width: 22px; height: 17px; }
+  .proj-numpad .proj-nav-hands .back-in { gap: 26px; }
+  .proj-numpad .proj-nav-hands .hand { width: 48px; }
+  .proj-numpad .proj-title-art { width: 52.5vw; }   /* 72vw scaled the same way */
+  .numpad-idea { max-width: 100%; }
+  .proj-numpad .np-b-case { margin-top: 26px; }
+  .np-case { margin: 0 0 18px; gap: 10px; }
+  .np-case svg { width: 37px; height: 16px; }
+  .proj-numpad .np-b-duo { margin-top: 44px; }
+  /* clip over invitation at phone width: side by side, the ring would be
+     about 90px across and the clip would lose the timeline covers that are
+     the whole reason it runs uncropped */
+  .np-duo { grid-template-columns: 1fr; gap: 22px; }
+  /* the gap it crosses on desktop doesn't exist once the row stacks */
+  .np-try-arrow { display: none; }
+  .np-try { width: 250px; height: 157px; }
+  .np-try-label { font-size: 14px; text-underline-offset: 3px; }
+  /* one column: two of these side by side at phone width leaves the name
+     with about a word of room before it ellipsises */
+  .proj-numpad .np-b-jams { margin-top: 44px; }
+  .np-jams-caption { margin-bottom: 18px; }
+  .np-jams-caption svg { transform: none; }
+  .np-jams { grid-template-columns: 1fr; gap: 10px; }
+  .np-jam { padding: 12px; border-radius: 12px; border-width: 2px; }
+  .np-jam-top { gap: 12px; }
+  .np-jam-art { width: 54px; border-radius: 6px; }
+  .np-jam-name { font-size: 16px; }
+  .np-jam-by { font-size: 12px; margin-top: 2px; }
+  .np-jam-row { gap: 10px; margin-top: 8px; }
+  .np-jam-bar { padding: 8px 0; }
+  .np-jam-track { height: 4px; border-radius: 4px; }
+  .np-jam-knob { width: 11px; height: 11px; }
+  .np-jam-time { font-size: 11px; }
+  .np-jam-play { width: 38px; height: 38px; }
+
+  .proj-numpad .np-b-shop { margin-top: 44px; }
+  .np-shop-caption { text-align: left; margin: 0 0 18px; }
+  /* the gap it targets on desktop isn't a fixed spot once the row scrolls —
+     simpler to drop the arrow here than chase a moving target */
+  .np-shop-arrow { display: none; }
+  /* five tiles cannot read at phone width — scroll the row instead of
+     crushing each card past the point its own name/price still fit */
+  .np-shop { overflow-x: auto; gap: 14px; padding-bottom: 6px; -webkit-overflow-scrolling: touch; }
+  .np-shop-card { flex: 0 0 128px; }
+  .np-shop-name { font-size: 12px; margin-top: 8px; }
+  .np-shop-price { font-size: 11px; margin-top: 2px; }
+
+  /* copy over product once the row stacks; the arrow pointed across a gap
+     that no longer exists, so it goes rather than turning to point down */
+  .proj-numpad .np-b-pad { margin-top: 44px; }
+  .np-pad { grid-template-columns: 1fr; gap: 18px; }
+  .np-pad-copy { justify-self: start; }
+  .np-pad-clip { width: 100%; }
+  .np-pad-arrow { display: none; }
+}
+
 /* a campaign reached by prev/next before it has a project of its own —
    the same title art + COMING SOON the landing shows, replayed inside
    #project so lateral nav never has to know whether the target is built */

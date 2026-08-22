@@ -499,6 +499,16 @@ async function campaignDepthTransition(origin, reverse = false, target = null) {
     page.classList.remove('page-and');
     setBackSide(CAMPAIGN_BACK);
     page.classList.add('on', 'extra');
+    // #project opens right here, the same tick as the #page backdrop above,
+    // not after goCampaign's later openProject() call — that extra await
+    // was a second reveal step reverse never has (it shows the landing it's
+    // returning to immediately, before the flight even starts), and the gap
+    // between #page's own title stand-in and #project's real, precisely
+    // measured one is exactly the jump this closes. openProject() still
+    // runs afterward too; re-adding an already-set class is a no-op.
+    project.classList.add('on');
+    project.setAttribute('aria-hidden', 'false');
+    requestAnimationFrame(() => requestAnimationFrame(updateProject));
   }
   for (const animation of [titleMove, worldMove, handsMove]) animation.cancel();
   flying.remove();
@@ -537,8 +547,11 @@ const PROJECTS = {};
    shaft has a zero-height bbox, and a percentage filter region off that is
    zero-height too — the stroke silently disappears. The fixed box below
    comfortably contains every viewBox on the page. */
-const penFilter = (id) => `<filter id="${id}" filterUnits="userSpaceOnUse" x="-20" y="-20" width="220" height="220">
-  <feTurbulence type="fractalNoise" baseFrequency="0.045" numOctaves="2" seed="7" result="n"/>
+/* `seed` only reshuffles the same noise, it doesn't change its character —
+   it's there so two doodles that sit near each other on one page don't wear
+   the identical wobble stroke for stroke. */
+const penFilter = (id, seed = 7) => `<filter id="${id}" filterUnits="userSpaceOnUse" x="-20" y="-20" width="220" height="220">
+  <feTurbulence type="fractalNoise" baseFrequency="0.045" numOctaves="2" seed="${seed}" result="n"/>
   <feDisplacementMap in="SourceGraphic" in2="n" scale="2.6"/>
 </filter>`;
 const PEN_W = 5.2;
@@ -741,6 +754,285 @@ PROJECTS['back-in-smoothly'] = function () {
     </div>`;
 };
 
+/* Same campaign-mockup system as Back in Smoothly (nav, title art, one bold
+   idea line) — Numpad Jam has no build yet beyond its premise and a case
+   study clip, so the page stops there instead of carrying content blocks
+   the project doesn't have. */
+PROJECTS['numpad-jam'] = function () {
+  const p = PROJ_IMG('numpad-jam');
+  const nav = (withHands) => renderProjectNav('numpad-jam', withHands);
+  const yt = 'yY9nMKmyxvQ';
+
+  /* same pen, same open-V head as every other doodle on a project page —
+     traced at the descArrow's own viewBox so the two read as one family. */
+  const caseArrow = `<svg viewBox="0 0 74 31"><defs>${penFilter('npRough1')}</defs>
+    <path d="M3 17C11 6 22 2 33 4C47 7 55 13 60 19" ${pen('npRough1')}/>
+    ${headV('npRough1', 68, 27, 45, 22, 70, 3)}
+  </svg>`;
+
+  /* Same pen, same box and the same job as caseArrow above — text on the
+     left, a doodle trailing it, both pointing down into the media the
+     caption introduces — but drawn rather than reused: a second identical
+     copy of that curve on one page reads as a pasted duplicate. This one
+     bows the opposite way (sagging under its own start instead of arcing
+     over it) and runs its own filter seed, so the roughness doesn't repeat
+     stroke for stroke either. */
+  const jamArrow = `<svg viewBox="0 0 74 31"><defs>${penFilter('npRough3', 11)}</defs>
+    <path d="M3 5C12 12 20 15 30 15C42 15 53 19 62 24" ${pen('npRough3')}/>
+    ${headV('npRough3', 69, 30, 56, 28, 67, 17)}
+  </svg>`;
+
+  /* Points sideways, not down: the copy it trails sits to the left of the
+     product rather than above it, so this one runs almost flat and lifts
+     slightly into its head. Its own seed again, so three arrows in the same
+     box on one page don't wear the same wobble. */
+  const padArrow = `<svg viewBox="0 0 74 31"><defs>${penFilter('npRough6', 23)}</defs>
+    <path d="M3 23C14 20 26 16 38 13C46 11 55 9 62 8" ${pen('npRough6')}/>
+    ${headV('npRough6', 71, 7, 59, 2, 59, 16)}
+  </svg>`;
+
+  /* The invitation, ringed by hand. Same pen as every arrow on the page, so
+     it reads as the same marker — but a circle drawn in one stroke is never
+     closed and never round: this one starts up the left side, comes round,
+     and runs PAST its own start before it stops, which is what a real pen
+     does when someone rings something on a page. The quarters are
+     deliberately unequal (the top bulges right, the bottom sags left) for
+     the same reason.
+
+     It carries its own filter rather than penFilter(), for two reasons. The
+     region: that helper's is a fixed x:-20..200, sized for the small arrow
+     boxes, and this path runs out to x332, so the shared region would clip
+     the right half of the ring clean off. And the roughness: penFilter's
+     0.045/2.6 is 2.6 units of wobble across a 74-unit arrow, which is ~3.5%
+     of the drawing. The same numbers on a box five times bigger come out
+     five times smoother — a clean ellipse, not a pen. So the noise is
+     scaled to the shape instead of copied from it: a lower frequency for a
+     wave that runs the length of the curve rather than buzzing along it,
+     and a displacement that keeps the same proportion of the box. */
+  const tryFilter = `<filter id="npRough4" filterUnits="userSpaceOnUse" x="-30" y="-30" width="410" height="280">
+    <feTurbulence type="fractalNoise" baseFrequency="0.013" numOctaves="3" seed="3" result="n"/>
+    <feDisplacementMap in="SourceGraphic" in2="n" scale="9"/>
+  </filter>`;
+  const tryCircle = `<svg class="np-try-ring" viewBox="0 0 350 220"><defs>${tryFilter}</defs>
+    <path d="M24 104C24 52 96 16 180 12C262 8 332 42 330 104C328 160 254 206 168 202C86 198 20 174 20 118C20 88 32 60 56 40" ${pen('npRough4')}/>
+  </svg>`;
+
+  /* The arrow that connects the two halves of the row: it comes off the
+     bottom-right of the clip — the corner nearest the drawn keyboard in the
+     footage — and climbs to the ring, stopping well short of both. Same pen
+     and same 1-unit-≈-1px scale as the rest; its box is 150x90, so it is a
+     mid-size doodle between the small caption arrows and the long shop one,
+     and it keeps penFilter's own roughness since that region (x:-20..200)
+     still covers a path this size. */
+  const tryArrow = `<svg viewBox="0 0 150 90"><defs>${penFilter('npRough5', 19)}</defs>
+    <path d="M6 84C32 79 64 70 94 53C114 42 127 31 134 21" ${pen('npRough5')}/>
+    ${headV('npRough5', 142, 10, 126, 13, 139, 27)}
+  </svg>`;
+
+  /* Purpose-drawn for this exact gap. Its box (.np-shop-arrow in the CSS)
+     starts BELOW the caption's own text line, not level with it — an
+     earlier version started at the text's own top and only stayed clear
+     of the letters by x-position while the curve was still low enough to
+     share the text's y-range, which meant the curve's sweep cut straight
+     across the word "the". Starting the whole box past the text's bottom
+     removes that risk structurally.
+
+     This viewBox is sized to the real travel distance from the text to
+     the hat card — 410x70, at the same "1 unit ≈ 1px at 1920 layout
+     width" scale as every other doodle on the page (.np-shop-arrow's own
+     width/height are viewBox-units/19.2, in vw, exactly like np-case's
+     arrow). A cramped viewBox force-stretched across that whole distance
+     tried once before and clipped its own arrowhead; the opposite mistake
+     was tried after that — a viewBox close to square, stretched by
+     preserveAspectRatio:none across a box roughly 10x wider than tall —
+     which squashed the curve flat and warped the stroke width along the
+     way. Matching the viewBox to the real box's own proportions is what
+     actually avoids both: the SVG scales close to 1:1 in both axes, so
+     PEN_W and the arrowhead render at their drawn size instead of being
+     stretched or squeezed by the box around them.
+
+     Can't use the shared penFilter() for it, though: that helper's filter
+     region is a fixed x:-20..200, sized on the assumption every doodle's
+     viewBox stays under ~180 units (true for the rest of the page, per
+     its own comment). This path ranges over x0-410 and dips above y0, so
+     the shared region would clip it — this is that same filter with its
+     region widened to cover the whole path plus roughness margin. */
+  const npFilterWide = `<filter id="npRough2" filterUnits="userSpaceOnUse" x="-30" y="-30" width="470" height="140">
+    <feTurbulence type="fractalNoise" baseFrequency="0.045" numOctaves="2" seed="7" result="n"/>
+    <feDisplacementMap in="SourceGraphic" in2="n" scale="2.6"/>
+  </filter>`;
+  /* The head's wings are rotated to the stem's own final tangent (the
+     last segment dives toward 372,52, a 45° angle) instead of sitting
+     vertically-symmetric under the vertex — a vertical V under a
+     diagonal stem reads as pasted-on, not as the same stroke continuing
+     into its own point. headV() is already its own stroke everywhere
+     else on the page — "stops short of the shaft rather than joining
+     it" — so the stem here has to stop short of the vertex (372,52) too,
+     not run all the way into it: it now ends at 364,44, ~11 units back
+     along that same 45° line, leaving the same open gap caseArrow's stem
+     leaves before its own head. */
+  const shopArrow = `<svg viewBox="0 0 410 70"><defs>${npFilterWide}</defs>
+    <path d="M15 20C130 2 230 -4 305 20C338 30 360 40 364 44" ${pen('npRough2')}/>
+    ${headV('npRough2', 372, 52, 371, 39, 359, 51)}
+  </svg>`;
+
+  /* Cards traced 1:1 off shop.jpegmafia.net's own product tile — white
+     square, soft drop shadow, grey Arial name, blue Arial price, square
+     corners (no radius). Every name/price is confirmed off an actual video
+     frame except "honor", which follows the same [motif] + garment +
+     colorway pattern as the five that were. */
+  const PRODUCTS = [
+    { img: 'cowboy.jpg', name: 'Red Dot Tee Black', price: '€42.95' },
+    { img: 'sunburst.jpg', name: 'MAFIA Intl. Crewneck Ash', price: '€63.95' },
+    { img: 'cap.jpg', name: 'MAFIA International Hat Black', price: '€31.95' },
+    { img: 'honor.jpg', name: 'Honor Power Blood Tee Black', price: '€42.95' },
+    { img: 'goat.jpg', name: 'Mafia Goat Longsleeve Tee', price: '€58.95' },
+  ];
+
+  /* The album: 15s off each of four tracks. In mixThemUp the digit keys are
+     YouTube's decile seek, and each decile of that video is a 30s sample off
+     a different JPEGMAFIA record — so what the community submits is a key
+     sequence, every press restarting its own sample from that sample's top
+     and holding until the next press. That sequence is the bed of each
+     track here, cut exactly the way the keys would cut it (see
+     tools/build_beats.py), with drums, bass and effects written on top of
+     it, different for each one: the community's sequence is the idea, and
+     the record is that idea produced.
+
+     A track is titled by the only name it has, the keys themselves — digits
+     and nothing else, because a numpad has nothing else on it. Nobody names
+     these; you play a sequence and the sequence is the track. They share one
+     sleeve for the same reason: it is one album, and its cover is the
+     instrument it was played on — the nine number keys, close up, nothing
+     else in frame.
+
+     Every one is credited to JPEGMAFIA, exactly like the track in the case
+     video's own player: the community composed these by mixing his back
+     catalogue with the number keys, but what comes out the other end is his
+     album, released under his name. The listener's fingerprint is in the
+     title, not in the byline. */
+  const JAMS = [
+    { id: 'beat1', keys: '04070477' },
+    { id: 'beat2', keys: '11588361' },
+    { id: 'beat3', keys: '92596' },
+    { id: 'beat4', keys: '2628268286' },
+  ];
+  const ARTIST = 'JPEGMAFIA';
+
+  /* Spotify's own mini player, same borrowed-UI move as the shop cards
+     below: their card, their type, their green — a second real product
+     surface the campaign's output shows up inside of. */
+  const playIcon = `<svg class="np-jam-i-play" viewBox="0 0 16 16" aria-hidden="true"><path d="M4.5 2.6 13 8l-8.5 5.4z"/></svg>`;
+  const pauseIcon = `<svg class="np-jam-i-pause" viewBox="0 0 16 16" aria-hidden="true"><path d="M4.2 2.5h2.6v11H4.2zm5 0h2.6v11H9.2z"/></svg>`;
+
+  return `
+    <div class="proj proj-numpad">
+      ${nav(true)}
+
+      <div class="proj-head">
+        <img class="proj-title-art" src="${IMG}ui/camp_l1_3.png" alt="Numpad jam">
+        <p class="numpad-idea">JPEGMAFIA releases a new album composed by his community through an obscure YouTube feature.</p>
+      </div>
+
+      <div class="proj-block np-b-case">
+        <p class="np-case">
+          case study
+          ${caseArrow}
+        </p>
+        <div class="proj-media np-yt">
+          <iframe src="https://www.youtube.com/embed/${yt}?rel=0" title="Numpad Jam" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen loading="lazy"></iframe>
+        </div>
+      </div>
+
+      <!-- Real footage cut straight from the case-study video itself, not
+           recreated — the mockup already shows the tool doing its thing at
+           the right speed, so there was nothing to rebuild. This is the
+           fast, varied keyboard-jump section (mixThemUp's number keys
+           landing on different album samples), cut before the camera pushes
+           in on it later in the source. It runs at its own full width here,
+           uncropped: showing all ten timeline covers is the point of the
+           shot. Beside it, the invitation — the clip shows somebody doing
+           it, and the circle is where you go to do it yourself. -->
+      <div class="proj-block np-b-duo">
+        <div class="np-duo">
+          <div class="proj-media np-duo-clip">
+            <video autoplay muted loop playsinline poster="${p}gif2.jpg"><source src="${p}gif2.mp4" type="video/mp4"></video>
+          </div>
+          <!-- the arrow lives outside the <a>, not in it: it points AT the
+               link, so it shouldn't be part of the link's hit area or shake
+               with it on hover -->
+          <div class="np-duo-try">
+            <div class="np-try-arrow">${tryArrow}</div>
+            <a class="np-try" href="https://www.youtube.com/watch?v=HlXeVnXsTjc" target="_blank" rel="noopener">
+              ${tryCircle}
+              <span class="np-try-label">click to mix with your keyboard</span>
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <div class="proj-block np-b-jams">
+        <p class="np-case np-jams-caption">
+          the comments composed the album, hear it for yourself
+          ${jamArrow}
+        </p>
+        <div class="np-jams">
+          ${JAMS.map((j) => `
+            <div class="np-jam">
+              <div class="np-jam-top">
+                <div class="np-jam-art"><img src="${p}beats/cover.jpg" alt=""></div>
+                <div class="np-jam-body">
+                  <div class="np-jam-name">${j.keys}</div>
+                  <div class="np-jam-by">${ARTIST}</div>
+                </div>
+                <button class="np-jam-play" type="button" data-jam-play aria-label="Play ${j.keys} by ${ARTIST}">${playIcon}${pauseIcon}</button>
+              </div>
+              <div class="np-jam-row">
+                <div class="np-jam-time" data-jam-now>0:00</div>
+                <!-- the bar is the click target for scrubbing, so it carries
+                     the padding that makes a 4px line hittable rather than
+                     being a 4px line you have to hit exactly -->
+                <div class="np-jam-bar" data-jam-seek><div class="np-jam-track"><div class="np-jam-fill"></div><div class="np-jam-knob"></div></div></div>
+                <div class="np-jam-time">0:15</div>
+              </div>
+              <audio preload="none" src="${p}beats/${j.id}.mp3"></audio>
+            </div>`).join('')}
+        </div>
+      </div>
+
+      <div class="proj-block np-b-shop">
+        <p class="np-shop-caption">the shop filled up with numbers too</p>
+        <div class="np-shop-arrow">${shopArrow}</div>
+        <div class="np-shop">
+          ${PRODUCTS.map((item) => `
+            <div class="np-shop-card">
+              <div class="np-shop-tile"><img src="${p}products/${item.img}" alt="${item.name}"></div>
+              <div class="np-shop-name">${item.name}</div>
+              <div class="np-shop-price">${item.price}</div>
+            </div>`).join('')}
+        </div>
+      </div>
+
+      <!-- The product itself, last: one continuous turn on black. The take it
+           was cut from doesn't loop — it eases up, turns, and stops on a
+           different pose — so tools/build_pad_loop.py stabilises it, retimes
+           it to one steady rate and closes the seam. Copy on the left with an
+           arrow off the end of it, because the pad is the thing being pointed
+           at here, not something the copy introduces. -->
+      <div class="proj-block np-b-pad">
+        <div class="np-pad">
+          <p class="np-pad-copy">numpad? samplepad? both.</p>
+          <div class="np-pad-arrow">${padArrow}</div>
+          <div class="proj-media np-pad-clip">
+            <video autoplay muted loop playsinline poster="${p}pad.jpg"><source src="${p}pad.mp4" type="video/mp4"></video>
+          </div>
+        </div>
+      </div>
+
+      ${nav(false)}
+    </div>`;
+};
+
 function clamp01(n) { return n < 0 ? 0 : n > 1 ? 1 : n; }
 
 /* Chrome's autoplay heuristics sometimes leave an off-screen `autoplay` video
@@ -760,12 +1052,95 @@ function watchProjectVideos() {
   for (const v of projectScroll.querySelectorAll('video')) projectVideoObserver.observe(v);
 }
 
+/* ------------------------------------------- numpad jam mini players */
+/* One jam at a time, like a real player: starting a second card stops the
+   first rather than stacking two beats on top of each other. The page's
+   own clips are muted, so the jams are the only sound the site ever makes
+   and nothing can start one but a click. */
+let jamCurrent = null;   // the <audio> that is currently sounding, if any
+let jamRaf = null;
+
+function jamClock(sec) {
+  const s = Math.max(0, Math.round(sec || 0));
+  return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+}
+
+/* timeupdate only fires ~4x a second, which reads as a bar that steps
+   rather than one that moves, so the fill is driven off rAF while a jam
+   plays and left alone the rest of the time. The loop runs on jamCurrent
+   being set, not on the element being unpaused: play() resolves a beat
+   later than it's called, so a paused check here would see the audio still
+   stopped on the first frame and end the loop before it ever started.
+   stopJams() is the only thing that ends it. */
+function jamFrame() {
+  jamRaf = null;
+  if (!jamCurrent) return;
+  jamPaint(jamCurrent);
+  jamRaf = requestAnimationFrame(jamFrame);
+}
+
+function jamPaint(audio) {
+  const card = audio.closest('.np-jam');
+  if (!card) return;
+  // duration is NaN until metadata lands; the beats are all 15s by
+  // construction, so the bar can be honest from the first frame.
+  const total = Number.isFinite(audio.duration) ? audio.duration : 15;
+  card.style.setProperty('--jam-p', clamp01((audio.currentTime || 0) / total));
+  card.querySelector('[data-jam-now]').textContent = jamClock(audio.currentTime);
+}
+
+function stopJams() {
+  if (jamRaf) { cancelAnimationFrame(jamRaf); jamRaf = null; }
+  jamCurrent = null;
+  for (const a of projectScroll.querySelectorAll('audio')) {
+    a.pause();
+    try { a.currentTime = 0; } catch (e) { /* not seekable yet: nothing to reset */ }
+  }
+  for (const c of projectScroll.querySelectorAll('.np-jam')) c.classList.remove('on');
+}
+
+projectScroll.addEventListener('click', (ev) => {
+  const card = ev.target.closest('.np-jam');
+  if (!card) return;
+  const audio = card.querySelector('audio');
+
+  const seek = ev.target.closest('[data-jam-seek]');
+  if (seek) {
+    const r = seek.getBoundingClientRect();
+    const total = Number.isFinite(audio.duration) ? audio.duration : 15;
+    try { audio.currentTime = clamp01((ev.clientX - r.left) / r.width) * total; } catch (e) {}
+    jamPaint(audio);
+    return;
+  }
+
+  if (!ev.target.closest('[data-jam-play]')) return;
+  const wasPlaying = audio === jamCurrent && !audio.paused;
+  stopJams();
+  if (wasPlaying) { jamPaint(audio); return; }
+  jamCurrent = audio;
+  card.classList.add('on');
+  audio.play().catch(() => { stopJams(); });
+  jamFrame();
+});
+
+/* A jam that runs out goes back to its own start rather than sitting spent
+   at the end: 15s is a loop someone played, and the card should be ready to
+   play it again the next time it's clicked. */
+projectScroll.addEventListener('ended', (ev) => {
+  if (ev.target.tagName !== 'AUDIO') return;
+  stopJams();
+  jamPaint(ev.target);
+}, true);
+
 /* Every campaign opens into #project, whether or not it has a build yet —
    one destination per slug, reached the same way whether you clicked its
    icon on the landing or arrived via prev/next from a neighbor. A campaign
    without a project gets the shared COMING SOON stub instead of a project
    page, but it's still #project that opens, with the same nav around it. */
 function buildProject(slug) {
+  // before the innerHTML below detaches them — a detached <audio> keeps
+  // sounding, so the page it belongs to has to silence it on its way out
+  stopJams();
   const build = PROJECTS[slug];
   if (build) {
     projectScroll.innerHTML = build();
@@ -848,6 +1223,7 @@ function closeProject() {
   project.setAttribute('aria-hidden', 'true');
   if (projectVideoObserver) { projectVideoObserver.disconnect(); projectVideoObserver = null; }
   for (const v of projectScroll.querySelectorAll('video')) v.pause();
+  stopJams();
   projectScroll.innerHTML = '';
 }
 
@@ -905,6 +1281,7 @@ async function projectTransitionTo(slug, dir) {
 
   if (projectVideoObserver) { projectVideoObserver.disconnect(); projectVideoObserver = null; }
   for (const v of projectScroll.querySelectorAll('video')) v.pause();
+  stopJams();
   buildProject(slug);
   current = 'c/' + slug;
   campaignReturnOrigin = document.querySelector(`.camp[data-slug="${slug}"]`) || campaignReturnOrigin;
