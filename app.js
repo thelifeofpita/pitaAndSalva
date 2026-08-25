@@ -1273,7 +1273,7 @@ PROJECTS['ads-from-trash'] = function () {
 
       <div class="proj-head">
         <img class="proj-title-art" src="${IMG}ui/camp_l1_1.png" alt="Ads from trash">
-        <p class="aft-idea">giving a use to the 8% of unreciclable donated clothes that Humana eliminates as ads.</p>
+        <p class="aft-idea">giving a use to the 8% of unrecyclable donated clothes that Humana eliminates, as ads.</p>
       </div>
 
       <div class="proj-block aft-b-grid">
