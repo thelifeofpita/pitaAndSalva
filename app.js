@@ -289,6 +289,8 @@ function buildUI() {
   put($('#ico-paper'), a.paper);
   put($('#ico-scissors'), a.scissors);
 
+  buildStreaks();
+
   const wrap = $('#campaigns');
   for (const s of cfg.stars) {
     const i = document.createElement('img');
@@ -364,6 +366,203 @@ function pickDap() {
   ];
 }
 
+/* The sky over the & page. Four shooting stars were drawn; each is a run of
+   separate marks laid along the path one takes, and a path's frames light those
+   marks in turn — so the head runs the length of the path with the tail two
+   marks behind it, and the streak comes up short, draws out long, then goes
+   short again as it burns out.
+
+   A star is thrown fresh every time it falls: somewhere in the black, at some
+   size, travelling in some direction. The drawing is aimed by rotating it about
+   the point it arrives at, which is why the whole set is cut on one canvas with
+   that point in the same place in every frame. */
+const STREAK_SLOTS = 28;     // stars that can be in the air at once
+
+/* written by tools/build_magic.py — the box the drawings are cut on, the point
+   in it a star arrives at, and each path's own direction of travel and reach */
+const STREAK_ART = { w: 440, h: 400, tipX: 9.3, tipY: 388.7 };
+const STREAK_PATHS = [
+  { angle: 117.7, chord: 433 },
+  { angle: 137.2, chord: 396 },
+  { angle: 149.9, chord: 285 },
+  { angle: 170.6, chord: 428 },
+];
+const STREAK_LENGTH = 14;    // frames in a fall
+
+/* Where a star can cross. The plate is dark far past the gap between the two
+   faces — into the hair, down the shadow on one cheek — and white ink reads
+   anywhere it is, so the sky is measured off the plate rather than boxed: one
+   bit per 32px cell, written by tools/build_magic.py. */
+const STREAK_CELL = 32;
+const STREAK_COLS = 60;
+const STREAK_DARK = 'ffffffffff0f0003fffffffff0f800003fffffff0f800001fffffffd80000007ffffffe00000003ffffffe00000001ffffffe1c000001fffffffcc000001ffffffb0c000001ffffff9bc800001ffffff9fffc8001ffffff8ff3e8701ffffff8fe3f07e1ffffff9fc730481ffffff9fcc30001ffffffffcc30020ffffffffc670000fffffff7c7f0001ffffffffc020001ffffffffe000001ffffffffe000003fffffffff000007fffffffff00800ffffffffff80801ffffffffff80003ffffffffffc0003ffffffffff82007ffffffffff8000fffffffffff8008fffffffffff821ffffffffffff837ffffffffffff83fffffffffffff83fffffffffffff83';
+/* what the sky is not: the word, the two eyes, and the hands waiting at the
+   bottom edge — all drawn on top of the dark, so the map cannot see them */
+const STREAK_CLEAR = [
+  { x: 669, y: 398, w: 582, h: 283 },    // the word, with room for an arc's bow
+  { x: 210, y: 415, w: 115, h: 112 },    // his eye
+  { x: 1716, y: 392, w: 115, h: 112 },   // his
+  { x: 836, y: 916, w: 248, h: 164 },    // the hands
+];
+/* Enough that two stars do not read as one smudge, and no more: spaced any
+   further they stop clustering, and evenly spread stars ring the word like an
+   orbit instead of falling past it. */
+const STREAK_APART = 90;
+const STREAK_BOW = .14;      // how far an arc leans off its own chord
+
+const rand = (lo, hi) => lo + Math.random() * (hi - lo);
+const chance = (p) => Math.random() < p;
+
+const streakFrame = (path, f) => `ui/trail_${path}_${f}`;
+
+/* Fifty-six drawings across four paths, and a star can be on any of them, so a
+   slot carries one image and changes what it is showing. Every frame is fetched
+   and decoded here, once, and held for the life of the page — the same reason
+   the dap frames are held: a released one is re-requested, and a star that has
+   to wait for the network is a star that never appears. */
+function buildStreaks() {
+  const sky = $('#streaks');
+  for (let n = 0; n < STREAK_SLOTS; n++) {
+    const slot = document.createElement('span');
+    slot.className = 'streak';
+    const i = document.createElement('img');
+    i.alt = '';
+    i.decoding = 'sync';
+    slot.appendChild(i);
+    sky.appendChild(slot);
+  }
+  const every = [];
+  for (let path = 0; path < STREAK_PATHS.length; path++) {
+    for (let f = 0; f < STREAK_LENGTH; f++) every.push(streakFrame(path, f));
+  }
+  load(every);
+}
+
+/* the cells the sky is made of, and a point in it */
+const SKY_CELLS = (() => {
+  const cells = [];
+  for (let i = 0; i < STREAK_DARK.length * 4; i++) {
+    if ((parseInt(STREAK_DARK[i >> 2], 16) >> (3 - (i & 3))) & 1) {
+      cells.push({ x: (i % STREAK_COLS) * STREAK_CELL, y: Math.floor(i / STREAK_COLS) * STREAK_CELL });
+    }
+  }
+  return cells;
+})();
+
+function skyTakes(x, y) {
+  const col = Math.floor(x / STREAK_CELL);
+  const row = Math.floor(y / STREAK_CELL);
+  if (col < 0 || col >= STREAK_COLS || row < 0) return false;
+  const i = row * STREAK_COLS + col;
+  if (i >= STREAK_DARK.length * 4) return false;
+  if (!((parseInt(STREAK_DARK[i >> 2], 16) >> (3 - (i & 3))) & 1)) return false;
+  return !STREAK_CLEAR.some((c) => x >= c.x && x <= c.x + c.w && y >= c.y && y <= c.y + c.h);
+}
+
+/* Somewhere in the dark, pointing somewhere, clear of what is drawn on top of
+   it and of the other stars in the air — or nowhere, if the sky is too full to
+   take one. The whole of the star has to land in the dark, bow included: a
+   streak that runs onto a lit cheek half disappears. */
+function throwStreak(slot, taken) {
+  for (let tries = 0; tries < 40; tries++) {
+    const path = Math.floor(Math.random() * STREAK_PATHS.length);
+    const scale = chance(.18) ? rand(.9, 1.5) : rand(.32, .8);
+    const travel = rand(0, 360) * Math.PI / 180;
+    const cell = SKY_CELLS[Math.floor(Math.random() * SKY_CELLS.length)];
+    const tip = { x: cell.x + rand(0, STREAK_CELL), y: cell.y + rand(0, STREAK_CELL) };
+    const reach = STREAK_PATHS[path].chord * scale;
+    const back = { x: -Math.cos(travel), y: -Math.sin(travel) };
+    const side = { x: -back.y, y: back.x };
+
+    // walk the star's own line, head to tip, and the two arcs it could bow into
+    let fits = true;
+    for (let k = 0; k <= 6 && fits; k++) {
+      const t = k / 6;
+      const bow = STREAK_BOW * reach * 4 * t * (1 - t);
+      const x = tip.x + back.x * reach * t;
+      const y = tip.y + back.y * reach * t;
+      fits = skyTakes(x, y) &&
+        skyTakes(x + side.x * bow, y + side.y * bow) &&
+        skyTakes(x - side.x * bow, y - side.y * bow);
+    }
+    if (!fits) continue;
+    if (taken.some((t) => Math.hypot(t.x - tip.x, t.y - tip.y) < STREAK_APART)) continue;
+
+    const mirror = chance(.5);
+    const degrees = travel * 180 / Math.PI;
+    const base = mirror ? 180 - STREAK_PATHS[path].angle : STREAK_PATHS[path].angle;
+    const w = STREAK_ART.w * scale;
+    const h = STREAK_ART.h * scale;
+    slot.style.cssText =
+      `left:${(tip.x - STREAK_ART.tipX * scale).toFixed(1)}px;` +
+      `top:${(tip.y - STREAK_ART.tipY * scale).toFixed(1)}px;` +
+      `width:${w.toFixed(1)}px;height:${h.toFixed(1)}px;` +
+      `transform:rotate(${(degrees - base).toFixed(1)}deg)${mirror ? ' scaleX(-1)' : ''}`;
+    return { path, scale, tip };
+  }
+  return null;
+}
+
+async function fallStreak(slot, thrown, taken, alive) {
+  const img = slot.firstElementChild;
+  // a big one is close, and a close one goes past fast
+  const hold = rand(-6, 6) + 74 - 24 * Math.min(thrown.scale, 1.2);
+  // not every star burns the whole way down
+  const last = chance(.16) ? Math.round(rand(6, 10)) : STREAK_LENGTH - 1;
+  for (let f = 0; f <= last && alive(); f++) {
+    img.src = src(streakFrame(thrown.path, f));
+    // the bytes are already here; this is only to be sure the frame is ready to
+    // paint before it is shown, so a swap can never flash the one before it
+    await img.decode().catch(() => {});
+    if (!alive()) break;
+    slot.classList.add('on');
+    await wait(jitter(hold, 6));
+  }
+  slot.classList.remove('on');
+  const held = taken.indexOf(thrown.tip);
+  if (held >= 0) taken.splice(held, 1);
+}
+
+/* One sky at a time: leaving the page ends the running one, but it only notices
+   at its next held frame, so a quick return has to be able to start a new one
+   and have the old one stand down when it wakes. */
+let streakToken = 0;
+async function streakLoop() {
+  const mine = ++streakToken;
+  const alive = () => current === 'and' && streakToken === mine;
+  const slots = [...$('#streaks').children];
+  const falling = new Set();
+  const taken = [];
+  while (alive()) {
+    const free = slots.filter((s) => !falling.has(s));
+    const slot = free.length ? free[Math.floor(Math.random() * free.length)] : null;
+    const thrown = slot && throwStreak(slot, taken);
+    if (thrown) {
+      taken.push(thrown.tip);
+      falling.add(slot);
+      fallStreak(slot, thrown, taken, alive).then(() => falling.delete(slot));
+      // mostly a shower, and now and then it thins out for a moment
+      await wait(chance(.08) ? rand(300, 700) : rand(30, 80));
+    } else {
+      // the sky had no room for that one: try again rather than skip a turn
+      await wait(12);
+    }
+  }
+  for (const slot of slots) slot.classList.remove('on');
+}
+
+/* Star, heart or flame on each eye, a fresh pair every time the & is opened.
+   The two eyes step through the three at different rates, so the pair is a
+   different pair on each of the next two visits before it comes round again. */
+const EYE_SYMBOLS = ['star', 'heart', 'flame'];
+let eyeTurn = 0;
+function dressEyes() {
+  const eyes = $('#and-eyes');
+  eyes.dataset.l = EYE_SYMBOLS[eyeTurn % 3];
+  eyes.dataset.r = EYE_SYMBOLS[(eyeTurn * 2 + 1) % 3];
+  eyeTurn++;
+}
+
 async function goPage(id) {
   if (busy || current === id) return;
   busy = true;
@@ -378,9 +577,12 @@ async function goPage(id) {
   setBackSide(p.back);
   page.classList.remove('extra', 'page-and');
   page.classList.toggle('page-and', id === 'and');
+  if (id === 'and') dressEyes();
   page.classList.add('on');
   current = id;
   busy = false;
+  /* after `current`, which is the flag the loop runs on */
+  if (id === 'and') streakLoop();
 }
 
 /* The one "camera" this site has: a held stop-motion pan/zoom sampled at

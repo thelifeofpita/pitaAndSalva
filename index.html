@@ -36,15 +36,32 @@
     <!-- destination pages -->
     <div id="page">
       <img id="page-img" alt="">
+      <!-- Both eyes carry all three symbols, four drawings each; the page picks
+           a pair on the way in by setting data-l / data-r, so nothing waits on
+           an image swap. -->
+      <div id="and-eyes" data-l="star" data-r="heart" aria-hidden="true">
+        <span class="eye eye-l">
+          <span class="sym s-star"><img src="img/ui/eye_star_0.png" alt=""><img src="img/ui/eye_star_1.png" alt=""><img src="img/ui/eye_star_2.png" alt=""><img src="img/ui/eye_star_3.png" alt=""></span>
+          <span class="sym s-heart"><img src="img/ui/eye_heart_0.png" alt=""><img src="img/ui/eye_heart_1.png" alt=""><img src="img/ui/eye_heart_2.png" alt=""><img src="img/ui/eye_heart_3.png" alt=""></span>
+          <span class="sym s-flame"><img src="img/ui/eye_flame_0.png" alt=""><img src="img/ui/eye_flame_1.png" alt=""><img src="img/ui/eye_flame_2.png" alt=""><img src="img/ui/eye_flame_3.png" alt=""></span>
+        </span>
+        <span class="eye eye-r">
+          <span class="sym s-star"><img src="img/ui/eye_star_0.png" alt=""><img src="img/ui/eye_star_1.png" alt=""><img src="img/ui/eye_star_2.png" alt=""><img src="img/ui/eye_star_3.png" alt=""></span>
+          <span class="sym s-heart"><img src="img/ui/eye_heart_0.png" alt=""><img src="img/ui/eye_heart_1.png" alt=""><img src="img/ui/eye_heart_2.png" alt=""><img src="img/ui/eye_heart_3.png" alt=""></span>
+          <span class="sym s-flame"><img src="img/ui/eye_flame_0.png" alt=""><img src="img/ui/eye_flame_1.png" alt=""><img src="img/ui/eye_flame_2.png" alt=""><img src="img/ui/eye_flame_3.png" alt=""></span>
+        </span>
+      </div>
+      <!-- The & page's copy: the word, drawn three times so it boils in place,
+           and the sky of shooting stars falling through the black around it.
+           buildStreaks() fills #streaks with slots that already hold every
+           frame of every path, so a star never waits on an image. -->
       <div id="and-copy">
-        <img class="and-phrase" src="img/and_text/phrase_01.png" alt="One uses a PC. The other, a Mac.">
-        <img class="and-phrase" src="img/and_text/phrase_02.png" alt="One weighs his food so he doesn’t go over his limits. The other pushes his limits by weighing which burger is bigger.">
-        <img class="and-phrase" src="img/and_text/phrase_03.png" alt="One is into Rage Against the Machine. The other, Juan Luis Guerra.">
-        <img class="and-phrase" src="img/and_text/phrase_04.png" alt="One designed the portfolio. The other wrote the About Us.">
-        <img class="and-phrase" src="img/and_text/phrase_05.png" alt="An art director with copy headlines. A copywriter with artistic visuals.">
-        <img class="and-phrase" src="img/and_text/phrase_06.png" alt="Neither of them is on TikTok.">
-        <img class="and-phrase" src="img/and_text/phrase_07.png" alt="Both allergic to oregano, peanuts and fantasy ideas with fantasy budgets for fantasy people who live in the fantasy minds of the so-called creatives.">
-        <img class="and-phrase" src="img/and_text/phrase_08.png" alt="Ultimately, two so-called creative jerks.">
+        <span class="magic">
+          <img src="img/ui/magic_0.png" alt="MAGIC">
+          <img src="img/ui/magic_1.png" alt="">
+          <img src="img/ui/magic_2.png" alt="">
+        </span>
+        <div id="streaks"></div>
       </div>
       <div id="page-extra"></div>
       <!-- Back is the other person's hand reaching in from the edge the landing

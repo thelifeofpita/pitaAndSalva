@@ -224,30 +224,71 @@ html, body {
 }
 #page.back-top .back-in { transform: rotate(180deg); }
 
+/* --------------------------------------------------------- the & page */
+/* The page's copy is one word: MAGIC, drawn three times, held in the gap
+   between the two faces. A drawing held and then the next one — the same
+   stop-motion the hands are shot in, not a tween. Every frame starts hidden
+   and takes its own slot in the cycle. */
+/* Stepped, not faded: each drawing holds its exact third or quarter of the
+   cycle and hands straight over to the next. Written as a ramp it spends a
+   sliver of every cycle part-way between two drawings — and where the last
+   frame handed back to the first, the word blinked out in the seam. */
+@keyframes boil3 { 0% { opacity: 1 } 33.333% { opacity: 0 } }
+@keyframes boil4 { 0% { opacity: 1 } 25% { opacity: 0 } }
+
 #and-copy {
   position: absolute;
   inset: 0;
   display: none;
+  pointer-events: none;
 }
 #page.page-and #and-copy { display: block; }
-#and-copy .and-phrase {
-  position: absolute;
-  display: block;
-  width: auto;
-  height: auto;
-  image-rendering: auto;
-}
-/* Follow the widening negative space around and below the two portraits. The
-   copy drifts left and right instead of forming a central column, but retains
-   a deliberate buffer wherever a line passes the edge of a face. */
-#and-copy .and-phrase:nth-child(1) { left: 510px; top:  35px; transform: rotate(-.5deg); }
-#and-copy .and-phrase:nth-child(2) { left: 650px; top: 109px; transform: rotate( .35deg); }
-#and-copy .and-phrase:nth-child(3) { left: 560px; top: 306px; transform: rotate(-.7deg); }
-#and-copy .and-phrase:nth-child(4) { left: 720px; top: 413px; transform: rotate( .45deg); }
-#and-copy .and-phrase:nth-child(5) { left: 570px; top: 521px; transform: rotate(-.3deg); }
-#and-copy .and-phrase:nth-child(6) { left: 760px; top: 624px; transform: rotate( .55deg); }
-#and-copy .and-phrase:nth-child(7) { left: 520px; top: 673px; transform: rotate(-.35deg); }
-#and-copy .and-phrase:nth-child(8) { left: 930px; top: 865px; transform: rotate(.65deg); }
+
+#and-copy .magic { position: absolute; left: 699px; top: 428px; width: 521px; height: 223px; }
+#and-copy .magic img { position: absolute; left: 0; top: 0; opacity: 0; animation: boil3 .39s steps(1, end) infinite; }
+#and-copy .magic img:nth-child(2) { animation-delay: .13s; }
+#and-copy .magic img:nth-child(3) { animation-delay: .26s; }
+
+/* Every frame of every shooting star is stacked on the point it arrives at, so
+   a frame is a swap and never a move. A slot is a star's place in the sky —
+   streakLoop() throws it somewhere new each time it falls, which is why the
+   box is sized and positioned from script rather than here. */
+#streaks { position: absolute; inset: 0; }
+/* the point a star arrives at, in the drawing's own box: rotating and flipping
+   about it is what aims the star without moving where it lands */
+.streak { position: absolute; transform-origin: 2.11% 97.18%; }
+.streak img { position: absolute; left: 0; top: 0; width: 100%; height: 100%; display: none; }
+.streak.on img { display: block; }
+
+/* One symbol burning on each eye. They sit on the iris, and carry their own
+   black outline, because the left face is white there and the right one is
+   black. */
+#and-eyes { position: absolute; inset: 0; display: none; pointer-events: none; }
+#page.page-and #and-eyes { display: block; }
+.eye { position: absolute; width: 62px; height: 62px; }
+.eye img { width: 100%; height: 100%; }
+.eye-l { left: 237px; top: 440px; }
+/* Centred on the widest clear black inside each eye, found by distance
+   transform on the plate rather than by eye — the right face is looking off to
+   one side, so its dark sits high and left of where the eye looks like it is. */
+.eye-r { left: 1743px; top: 417px; }
+.sym { display: none; }
+.sym img { position: absolute; left: 0; top: 0; opacity: 0; animation: boil4 .48s steps(1, end) infinite; }
+.sym img:nth-child(2) { animation-delay: .12s; }
+.sym img:nth-child(3) { animation-delay: .24s; }
+.sym img:nth-child(4) { animation-delay: .36s; }
+/* the two eyes never boil in lockstep */
+.eye-r .sym img { animation-duration: .56s; }
+.eye-r .sym img:nth-child(2) { animation-delay: .14s; }
+.eye-r .sym img:nth-child(3) { animation-delay: .28s; }
+.eye-r .sym img:nth-child(4) { animation-delay: .42s; }
+
+#and-eyes[data-l="star"]  .eye-l .s-star,
+#and-eyes[data-r="star"]  .eye-r .s-star,
+#and-eyes[data-l="heart"] .eye-l .s-heart,
+#and-eyes[data-r="heart"] .eye-r .s-heart,
+#and-eyes[data-l="flame"] .eye-l .s-flame,
+#and-eyes[data-r="flame"] .eye-r .s-flame { display: block; }
 
 #page-extra {
   position: absolute;
