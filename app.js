@@ -1250,17 +1250,6 @@ PROJECTS['ads-from-trash'] = function () {
   const p = PROJ_IMG('ads-from-trash');
   const nav = (withHands) => renderProjectNav('ads-from-trash', withHands);
 
-  /* Same pen, same open-V head and the same 74x31 box as the caption arrows
-     on Numpad Jam, so the two pages read as one hand — drawn rather than
-     copied, with its own curve and its own seed, because a doodle repeated
-     stroke for stroke across the site reads as a pasted asset. This one runs
-     almost flat and dips into its head, trailing the caption down into the
-     grid under it. */
-  const gridArrow = `<svg viewBox="0 0 74 31"><defs>${penFilter('aftRough1', 31)}</defs>
-    <path d="M3 8C13 9 23 12 33 16C43 20 52 23 61 24" ${pen('aftRough1')}/>
-    ${headV('aftRough1', 70, 26, 58, 19, 61, 31)}
-  </svg>`;
-
   /* Reading order IS the ring: corners are the four hung garments, the four
      edges between them are the close-ups of their lettering, and the pile
      sits in the middle. Cropped square off the originals at the point of
@@ -1284,14 +1273,10 @@ PROJECTS['ads-from-trash'] = function () {
 
       <div class="proj-head">
         <img class="proj-title-art" src="${IMG}ui/camp_l1_1.png" alt="Ads from trash">
-        <p class="aft-idea">[idea sentence — placeholder]</p>
+        <p class="aft-idea">Giving a use to the 8% of unreciclable donated clothes that Humana eliminates, ads.</p>
       </div>
 
       <div class="proj-block aft-b-grid">
-        <p class="aft-caption">
-          [caption — placeholder]
-          ${gridArrow}
-        </p>
         <div class="aft-grid">
           ${CELLS.map((c) => `
             <figure class="aft-cell">

@@ -1338,21 +1338,6 @@ html, body {
 
 .proj-aft .aft-b-grid { margin-top: 4.58vw; }
 
-/* text hugging the left edge, arrow immediately trailing it, both pointing
-   down into the grid under them — the same read as np-case */
-.aft-caption {
-  display: flex;
-  align-items: center;
-  justify-content: flex-start;
-  gap: 1.25vw;
-  flex-wrap: wrap;
-  font-size: var(--aft-copy);
-  color: var(--aft-ink);
-  text-align: left;
-  margin: 0 0 1.77vw;
-}
-.aft-caption svg { width: 3.854vw; height: 1.615vw; overflow: visible; flex: none; color: var(--aft-ink); }
-
 /* Nine equal squares. The columns are `1fr` and each cell is forced to
    aspect-ratio 1, so the grid stays square at every width instead of
    inheriting whatever the images happen to measure — they are already
@@ -1384,8 +1369,6 @@ html, body {
   .proj-aft .proj-title-art { width: 61.5vw; }   /* 72vw scaled the same way */
   .aft-idea { max-width: 100%; }
   .proj-aft .aft-b-grid { margin-top: 26px; }
-  .aft-caption { margin: 0 0 18px; gap: 10px; }
-  .aft-caption svg { width: 37px; height: 16px; }
   /* still three across: the grid IS the layout here — the ring of corners,
      sides and centre only reads as one while it stays 3x3 */
   .aft-grid { gap: 8px; }
