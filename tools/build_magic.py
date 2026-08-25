@@ -66,6 +66,7 @@ MAGIC_HEIGHT = 223     # the hero of the & page, set inside the gap between the 
 SYMBOL_HEIGHT = 54     # across an eye, on the iris
 SYMBOL_HALO = 4        # black separation, so the ink never merges with a sclera
 TRAIL_HEIGHT = 400     # the steepest trail, stood up from its tip
+TRAIL_HEAD = 54        # the star burning at the head of a trail, on that canvas
 
 
 def ink_of(source: Path) -> np.ndarray:
@@ -138,11 +139,15 @@ def build_word(ink: np.ndarray) -> None:
     print(f"magic: {size[0]}x{size[1]}")
 
 
-def build_symbols(ink: np.ndarray) -> None:
-    drawings = {
+def symbol_drawings(ink: np.ndarray) -> dict[str, list[np.ndarray]]:
+    return {
         name: [crop(ink, (x0, y0, x1, y1)) for y0, y1 in rows]
         for name, (x0, x1, rows) in SYMBOLS.items()
     }
+
+
+def build_symbols(ink: np.ndarray) -> None:
+    drawings = symbol_drawings(ink)
     # one scale for all three, off the tallest drawing on the sheet, so a heart
     # stays a heart's size next to a star
     every = [f for group in drawings.values() for f in group]
@@ -156,7 +161,22 @@ def build_symbols(ink: np.ndarray) -> None:
     print(f"eye symbols: {side}x{side}")
 
 
-def build_trails(ink: np.ndarray) -> None:
+def burn(mask: np.ndarray, star: np.ndarray, cx: float, cy: float, side: int) -> None:
+    """Set a star into `mask`, centred, clipped to what fits."""
+    width = max(1, round(star.shape[1] * side / max(star.shape)))
+    height = max(1, round(star.shape[0] * side / max(star.shape)))
+    small = cv2.resize(star, (width, height), interpolation=cv2.INTER_AREA)
+    left, top = int(cx - width / 2), int(cy - height / 2)
+    x0, y0 = max(0, left), max(0, top)
+    x1 = min(mask.shape[1], left + width)
+    y1 = min(mask.shape[0], top + height)
+    if x1 <= x0 or y1 <= y0:
+        return
+    patch = small[y0 - top:y1 - top, x0 - left:x1 - left]
+    np.maximum(mask[y0:y1, x0:x1], patch, out=mask[y0:y1, x0:x1])
+
+
+def build_trails(ink: np.ndarray, heads: list[np.ndarray]) -> None:
     count, labels, stats, _ = cv2.connectedComponentsWithStats((ink > 0).astype(np.uint8), 8)
     corners = [(int(stats[i, 0]), int(stats[i, 1])) for i in range(1, count)]
 
@@ -202,8 +222,14 @@ def build_trails(ink: np.ndarray) -> None:
         ux, uy = tx - hx, ty - hy
         span = math.hypot(ux, uy)
         ux, uy = ux / span, uy / span
-        along = ((xs - hx) * ux + (ys - hy) * uy)
-        along = (along - along.min()) / (along.max() - along.min())
+        vx, vy = -uy, ux
+        run = ((xs - hx) * ux + (ys - hy) * uy)
+        off = ((xs - hx) * vx + (ys - hy) * vy)
+        # the path itself, so the head can be found between two marks as well as
+        # on one — an arc this shallow is a parabola to within a pen width
+        bend = np.polyfit(run, off, 2)
+        first, last = run.min(), run.max()
+        along = (run - first) / (last - first)
         along = along + rng.normal(0, TRAIL_TEAR, along.shape)
 
         x0 = int(tx - reach[0])
@@ -215,6 +241,16 @@ def build_trails(ink: np.ndarray) -> None:
             alight = (along <= head) & (along > head - TRAIL_TAIL)
             mask = np.zeros(ink.shape, dtype=np.uint8)
             mask[ys[alight], xs[alight]] = 255
+            # The star itself, burning at the head — one of the four drawn on
+            # the sheet, a different one each frame so it turns as it goes. Once
+            # the head has run off the end of the path there is no star left to
+            # draw: what is still alight is the trail burning out behind it.
+            if head <= 1:
+                run_at = first + head * (last - first)
+                burn(mask, heads[f % len(heads)],
+                     hx + run_at * ux + np.polyval(bend, run_at) * vx,
+                     hy + run_at * uy + np.polyval(bend, run_at) * vy,
+                     round(TRAIL_HEAD / scale))
             cut = mask[y0:y0 + cut_h, x0:x0 + cut_w]
             small = cv2.resize(cut, size, interpolation=cv2.INTER_AREA)
             _, small = cv2.threshold(small, 96, 255, cv2.THRESH_BINARY)
@@ -275,7 +311,7 @@ def main() -> None:
     ink = ink_of(SOURCE)
     build_word(ink)
     build_symbols(ink)
-    build_trails(ink)
+    build_trails(ink, symbol_drawings(ink)["star"])
     build_sky()
 
 
