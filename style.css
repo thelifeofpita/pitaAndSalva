@@ -290,6 +290,108 @@ html, body {
 #and-eyes[data-l="flame"] .eye-l .s-flame,
 #and-eyes[data-r="flame"] .eye-r .s-flame { display: block; }
 
+/* ------------------------------------------------------- member: bio + cv */
+/* Both keyframes mock a block of lorem into the negative space beside each of
+   them — 557 wide, on a 32.3px leading. That block is the bio and CV, so this
+   sets real type into it: CossetteTexte, the voice a project page is set in,
+   rather than the Futura the mocks were drawn with. The plate under it is
+   `kf_*_plate`, the keyframe with the lorem erased, the same way the & page's
+   plate has its own placeholder erased.
+
+   One size for both halves, and one 557 measure for the whole block — the
+   mock's own. Nothing here competes with the photograph: the copy is a single
+   quiet column, and the room around it is the point. Every edge is held well
+   clear of the artwork it sits beside; the two `padding` values below are
+   where that clearance is actually set. */
+.member-copy {
+  position: absolute;
+  inset: 0;
+  display: none;
+  /* The mock's block is 484 tall and sits at y293 — centred on the frame, not
+     hung from a fixed top. That is the decision worth keeping, because the
+     real copy is a different length than the lorem: the column centres itself
+     against the figure whatever it ends up holding, so Salva's own bio and CV
+     can be a different length again and still sit right. */
+  flex-direction: column;
+  justify-content: center;
+  gap: 34px;             /* a line and a half — the two halves are one size now */
+  /* one size for the whole block, bio and colophon alike; nothing under here
+     sets its own, so the two halves can never drift apart */
+  font-size: 19px;
+  line-height: 23px;
+  /* copy, not chrome: the stage bans selection so a drag never highlights a
+     hand, but a CV is text someone should be able to take with them */
+  user-select: text;
+  -webkit-user-select: text;
+}
+#page.page-pita #pita-copy,
+#page.page-salva #salva-copy { display: flex; }
+
+/* Each of them stands on the opposite side of his own frame, so the copy takes
+   the other one, held 60px clear of the reaching "back" hand on that edge.
+   Both columns are flush left: the mock sets Salva's that way too, so his page
+   rags toward the frame edge rather than mirroring into right-aligned type.
+     Pita  — hand ends x150, so x210-767; his arms come in at x837, 70px clear.
+     Salva — hand starts x1770, so x1153-1710; his own ink stops at x803. */
+#pita-copy  { padding-left: 210px; }
+#salva-copy { padding-left: 1153px; }
+
+.member-bio, .member-cv { margin: 0; }
+/* The bio is set at the CV's own size, so a member page reads as one column of
+   copy rather than a headline with a footnote under it. */
+.member-bio { width: 557px; }
+
+/* A colophon: a quiet label in its own gutter and the entries running on in
+   one measure beside it, inside the same 557 the bio uses. 120 leaves 14px
+   after "experience", the longest label. Entries that outrun the measure wrap
+   onto the hanging indent below rather than getting their own column. */
+.member-cv {
+  width: 557px;
+  display: grid;
+  grid-template-columns: 120px 437px;
+}
+.member-cv dt {
+  grid-column: 1;
+  letter-spacing: 1.4px;
+  opacity: .5;
+}
+/* A date range is one word as far as the line breaker is concerned — without
+   this a wrap can land inside it and strand "2026" on a line of its own. */
+.member-cv .nw { white-space: nowrap; }
+
+/* hanging indent: an entry that runs past the measure carries its overflow in
+   a step, so a wrapped second line can't be mistaken for a second entry */
+.member-cv dd {
+  grid-column: 2;
+  margin: 0;
+  padding-left: 14px;
+  text-indent: -14px;
+}
+/* the label sits on the first line of its own group, and each group is held
+   off the one above it — the gap is what separates them, there are no rules */
+.member-cv dt:not(:first-of-type) { margin-top: 9px; }
+.member-cv dt:not(:first-of-type) + dd { margin-top: 9px; }
+
+/* The only clickable text on the stage. Underlined at the same weight as the
+   copy's own grey so it reads as a link without shouting, and it jitters on
+   hover — the one hover the whole site has. */
+/* inline-block so the hover jitter has a box to move, and text-indent reset
+   because a block container inherits the hanging indent above and would drag
+   each link back over the separator before it */
+.member-cv a {
+  display: inline-block;
+  text-indent: 0;
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+  text-decoration-color: rgba(255, 255, 255, .38);
+}
+.member-cv a:hover {
+  text-decoration-color: currentColor;
+  animation: jitter .18s steps(2) infinite;
+}
+
 #page-extra {
   position: absolute;
   inset: 0;

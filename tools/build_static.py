@@ -78,6 +78,24 @@ def main():
     Image.fromarray(amp).convert('1').save(f'{IMG}/kf_amp_plate.png',
                                            optimize=True, bits=1)
 
+    # same for Pita: the lorem block his keyframe mocks up is where his bio and
+    # CV are actually set, live, so the plate under them is erased there. The
+    # box is the ink box of that lorem (165,293)-(722,777) with a few pixels of
+    # margin; his figure's own ink starts at x=837, well clear of it.
+    pita = np.array(Image.open(f'{K}/pita.png').convert('L').crop((0, 0, 1920, 1080)))
+    pita[283:790, 155:735] = 0
+    Image.fromarray(pita).convert('1').save(f'{IMG}/kf_pita_plate.png',
+                                            optimize=True, bits=1)
+
+    # and for Salva, whose keyframe mocks the same block on the other side of
+    # the frame. Not a mirror of Pita's box — his lorem is its own ink box,
+    # (1115,281)-(1672,765), measured rather than assumed. His figure's ink
+    # never passes x803, so the margin below is his alone.
+    salva = np.array(Image.open(f'{K}/salva.png').convert('L').crop((0, 0, 1920, 1080)))
+    salva[271:779, 1105:1682] = 0
+    Image.fromarray(salva).convert('1').save(f'{IMG}/kf_salva_plate.png',
+                                             optimize=True, bits=1)
+
     # how close is the recomposited landing to the original keyframe?
     base = Image.open(f'{IMG}/landing_plate.png').convert('RGBA')
     for d in list(cfg['assets'].values()) + cfg['campaigns'] + cfg['stars']:

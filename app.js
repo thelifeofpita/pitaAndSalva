@@ -14,8 +14,11 @@ const LANDING = 'landing_plate';
 /* `back` is the edge the landing lies behind, so leaving a page always reads as
    reversing the move that opened it. */
 const PAGE_DEFS = {
-  pita:  { seq: 'pita',  key: 'kf_pita',  back: 'left' },
-  salva: { seq: 'salva', key: 'kf_salva', back: 'right' },
+  /* `*_plate`, not the raw keyframe: both of their keyframes mock a bio and CV
+     in lorem, and that block is set as live type over the plate instead, so
+     the plate has it erased — exactly what `kf_amp_plate` is to the & page. */
+  pita:  { seq: 'pita',  key: 'kf_pita_plate',  back: 'left' },
+  salva: { seq: 'salva', key: 'kf_salva_plate', back: 'right' },
   and:   { seq: 'amp',   key: 'kf_amp_plate', back: 'bottom', settleKey: true },
 };
 const CAMPAIGN_BACK = 'top';   // campaign titles sit along the bottom of the landing
@@ -24,6 +27,10 @@ const CAMPAIGN_BACK = 'top';   // campaign titles sit along the bottom of the la
    static one takes over */
 const CAMPAIGN_TITLE_TOP = 175;
 const BACK_SIDES = ['back-left', 'back-right', 'back-top', 'back-bottom'];
+/* Which destination #page is showing, for the copy that belongs to only one of
+   them: the & page's phrases, Pita's bio and CV. Campaign pages set none of
+   these — they run on `extra` instead. */
+const PAGE_KINDS = ['page-pita', 'page-salva', 'page-and'];
 
 const BEATS = 'rps';          // rock / paper / scissors
 
@@ -66,6 +73,11 @@ let campaignReturnTarget = null;
 function setBackSide(side) {
   page.classList.remove(...BACK_SIDES);
   if (side) page.classList.add('back-' + side);
+}
+
+function setPageKind(id) {
+  page.classList.remove(...PAGE_KINDS);
+  if (id) page.classList.add('page-' + id);
 }
 
 const src = (name) => `${IMG}${name}.png`;
@@ -326,7 +338,7 @@ function buildUI() {
    under them. Wait for the plate rather than firing a show() at it and hoping. */
 async function enterLanding({ dap = true, frames = null } = {}) {
   current = null;
-  page.classList.remove('on', 'extra', 'page-and');
+  page.classList.remove('on', 'extra', ...PAGE_KINDS);
   setBackSide(null);
   ui.classList.add('hidden');
   if (dap) {
@@ -575,8 +587,8 @@ async function goPage(id) {
   await dest;
   pageImg.src = src(p.key);
   setBackSide(p.back);
-  page.classList.remove('extra', 'page-and');
-  page.classList.toggle('page-and', id === 'and');
+  page.classList.remove('extra');
+  setPageKind(id);
   if (id === 'and') dressEyes();
   page.classList.add('on');
   current = id;
@@ -689,7 +701,7 @@ async function campaignDepthTransition(origin, reverse = false, target = null) {
     // first held pose without a flash of the normal landing state.
     show(LANDING);
     ui.classList.remove('hidden');
-    page.classList.remove('on', 'extra', 'page-and');
+    page.classList.remove('on', 'extra', ...PAGE_KINDS);
     setBackSide(null);
   }
 
@@ -698,7 +710,7 @@ async function campaignDepthTransition(origin, reverse = false, target = null) {
 
   if (!reverse) {
     ui.classList.add('hidden');
-    page.classList.remove('page-and');
+    setPageKind(null);
     setBackSide(CAMPAIGN_BACK);
     page.classList.add('on', 'extra');
     // #project opens right here, the same tick as the #page backdrop above,
@@ -1602,7 +1614,7 @@ async function goBack() {
     busy = false;
     return;
   }
-  page.classList.remove('on', 'extra', 'page-and');
+  page.classList.remove('on', 'extra', ...PAGE_KINDS);
   setBackSide(null);
   if (PAGES[id]) {
     await play([...PAGES[id].frames].reverse(), TIMING.trans, TIMING.transLast);
@@ -1811,7 +1823,7 @@ document.addEventListener('click', (e) => {
   await decodeFrame(LANDING).catch(() => {});
   document.body.classList.remove('booting');
 
-  const rest = [LANDING, 'kf_pita', 'kf_salva', 'kf_amp_plate',
+  const rest = [LANDING, 'kf_pita_plate', 'kf_salva_plate', 'kf_amp_plate',
                 ...SEQ.daps.flat(), ...SEQ.pita, ...SEQ.pita_settle,
                 ...SEQ.salva, ...SEQ.amp,
                 ...SEQ.rps.pump];
