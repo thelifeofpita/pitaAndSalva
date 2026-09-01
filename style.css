@@ -298,79 +298,131 @@ html, body {
    `kf_*_plate`, the keyframe with the lorem erased, the same way the & page's
    plate has its own placeholder erased.
 
-   One size for both halves, and one 557 measure for the whole block — the
-   mock's own. Nothing here competes with the photograph: the copy is a single
-   quiet column, and the room around it is the point. Every edge is held well
-   clear of the artwork it sits beside; the two `padding` values below are
-   where that clearance is actually set. */
+   One size for both halves, and no measure carried over from the mock: its 557
+   rectangle sat in the middle of the negative space with black above, below and
+   beside it. Each column now takes the space its own photograph leaves — a
+   plain wide box on Salva's page, where the figure is small and its edge is
+   nearly straight, and a shaped one on Pita's, where the copy runs the width of
+   the frame beside his head and narrows as his elbow swings in under it. */
 .member-copy {
   position: absolute;
   inset: 0;
   display: none;
-  /* The mock's block is 484 tall and sits at y293 — centred on the frame, not
-     hung from a fixed top. That is the decision worth keeping, because the
-     real copy is a different length than the lorem: the column centres itself
-     against the figure whatever it ends up holding, so Salva's own bio and CV
-     can be a different length again and still sit right. */
-  flex-direction: column;
-  justify-content: center;
-  gap: 34px;             /* a line and a half — the two halves are one size now */
-  /* one size for the whole block, bio and colophon alike; nothing under here
-     sets its own, so the two halves can never drift apart */
-  font-size: 19px;
-  line-height: 23px;
+  /* The bio's size, and the block's default. 27px is what every project page
+     sets its copy at (`--bis-copy` and its siblings, 1.411vw = 27.1px at 1920);
+     a member page is the same voice one step under it, and the colophon below
+     is one step under that again — a bio is read, a CV is scanned. */
+  font-size: 24px;
+  line-height: 28px;     /* 1.15, the projects' own leading */
   /* copy, not chrome: the stage bans selection so a drag never highlights a
      hand, but a CV is text someone should be able to take with them */
   user-select: text;
   -webkit-user-select: text;
 }
-#page.page-pita #pita-copy,
-#page.page-salva #salva-copy { display: flex; }
 
 /* Each of them stands on the opposite side of his own frame, so the copy takes
-   the other one, held 60px clear of the reaching "back" hand on that edge.
-   Both columns are flush left: the mock sets Salva's that way too, so his page
-   rags toward the frame edge rather than mirroring into right-aligned type.
-     Pita  — hand ends x150, so x210-767; his arms come in at x837, 70px clear.
-     Salva — hand starts x1770, so x1153-1710; his own ink stops at x803. */
-#pita-copy  { padding-left: 210px; }
-#salva-copy { padding-left: 1153px; }
+   the other one, held 60px clear of the reaching "back" hand on that edge and
+   60px clear of his own ink on the other.
+     Pita  — hand ends x150, so the column opens at x210 and could run to x1180;
+             his ink stops it at x1160 by his head and at x838 by his elbow, and
+             `.member-shape` below is what actually cuts that edge.
+     Salva — hand starts x1770, so the column ends at x1710, and his ink reaches
+             x731 at its widest, so it opens at x880 — 150 clear of him, since
+             at 60 the column read as leaning on him. His figure never intrudes
+             any further than that, so his box is a rectangle: a shape there
+             would manufacture a ragged left margin out of a body that is not
+             actually in the way. */
+#page.page-pita #pita-copy { display: block; }
+#pita-copy {
+  padding-left: 210px;
+  padding-right: 740px;
+  /* A shape traced off a photograph has to be nailed to that photograph: the
+     moment the block centres itself, its own length decides where the shape
+     lands and the copy slides off the body it is wrapping. So this is a
+     measured number — the one that centres the block the shape produces (the
+     copy runs y202-850 as it stands), and it has to be re-measured if his copy
+     is ever rewritten at length. Expect it to settle a few px off dead centre:
+     the shape feeds back on itself, since moving the block down pushes more of
+     the CV into the narrow part under his elbow and grows it a line. */
+  padding-top: 199px;
+}
+/* Salva's has no shape to stay in register with, so it centres itself the way
+   the mock's did, whatever length his copy ends up being. */
+#page.page-salva #salva-copy { display: flex; }
+#salva-copy {
+  padding-left: 880px;
+  padding-right: 210px;
+  flex-direction: column;
+  justify-content: center;
+}
+#salva-copy .member-shape { display: none; }
+
+/* The figure, as a hole in the copy: a float shaped like Pita's own silhouette,
+   so his ink is the right margin of every line rather than something the copy
+   is set beside. The polygon is the plate sampled every 40px down the frame and
+   traced in the float's own coordinates; `shape-margin` is the safety margin
+   between ink and type — the one number to touch if the copy ever reads as
+   crowding the photograph. The trace is deliberately conservative rather than
+   literal: each sample takes the nearest ink of the three around it, so a notch
+   in the silhouette can never open a pocket a line would run into. */
+.member-shape {
+  display: block;
+  float: right;
+  width: 400px;
+  height: 820px;
+  shape-margin: 60px;
+  shape-outside: polygon(400px 0px, 380px 0px, 380px 40px, 380px 80px, 382px 120px, 390px 160px, 398px 200px, 400px 240px, 392px 280px, 344px 320px, 284px 360px, 226px 400px, 166px 440px, 98px 480px, 72px 520px, 60px 560px, 58px 600px, 58px 640px, 58px 680px, 76px 720px, 400px 760px, 400px 800px, 400px 820px);
+}
 
 .member-bio, .member-cv { margin: 0; }
 /* The bio is set at the CV's own size, so a member page reads as one column of
-   copy rather than a headline with a footnote under it. */
-.member-bio { width: 557px; }
+   copy rather than a headline with a footnote under it. It has no width of its
+   own either: whatever bounds the column bounds it. */
+.member-bio { margin-bottom: 36px; }
 
-/* A colophon: a quiet label in its own gutter and the entries running on in
-   one measure beside it, inside the same 557 the bio uses. 120 leaves 14px
-   after "experience", the longest label. Entries that outrun the measure wrap
-   onto the hanging indent below rather than getting their own column. */
+/* A colophon: a quiet label in its own gutter and the entries running on beside
+   it, in whatever the column leaves them, one step under the bio. 138 is 119
+   for "experience", the longest label, and 19 after it. Entries that outrun the line wrap onto the
+   hanging indent below rather than getting their own column.
+   Normal flow, not a grid: a grid box is a formatting context of its own, so it
+   would step around Pita's shape as one rectangle instead of letting it cut
+   each line. The label sits in its gutter as a float, which is also what holds
+   the entries beside it — so the gutter travels with the line rather than with
+   the block. */
 .member-cv {
-  width: 557px;
-  display: grid;
-  grid-template-columns: 120px 437px;
+  font-size: 21px;
+  line-height: 25px;
 }
 .member-cv dt {
-  grid-column: 1;
-  letter-spacing: 1.4px;
+  float: left;
+  width: 138px;
+  letter-spacing: 1.6px;
   opacity: .5;
 }
+/* Each group is its own box, so a label can never float up beside the last
+   line of the group above it. */
+.cv-group + .cv-group { margin-top: 11px; }
 /* A date range is one word as far as the line breaker is concerned — without
    this a wrap can land inside it and strand "2026" on a line of its own. */
 .member-cv .nw { white-space: nowrap; }
 
-/* hanging indent: an entry that runs past the measure carries its overflow in
-   a step, so a wrapped second line can't be mistaken for a second entry */
+/* No hanging indent, because nothing here wraps by accident any more. An entry
+   is a title and, under it, where and when — a break the markup makes, not one
+   the measure happens to make — and the second line is told apart by its tone
+   rather than by a step in from the left. */
 .member-cv dd {
-  grid-column: 2;
-  margin: 0;
-  padding-left: 14px;
-  text-indent: -14px;
+  margin: 0 0 0 138px;
 }
-/* the label sits on the first line of its own group, and each group is held
-   off the one above it — the gap is what separates them, there are no rules */
-.member-cv dt:not(:first-of-type) { margin-top: 9px; }
-.member-cv dt:not(:first-of-type) + dd { margin-top: 9px; }
+.member-cv dd + dd { margin-top: 6px; }
+.member-cv .at {
+  display: block;
+  opacity: .5;         /* the labels' own grey: this is the entry's colophon */
+}
+/* A run of items separated by "·" breaks between its items and never inside
+   one — "Basic French" is one thing, and a line that ends on "Basic" reads as
+   a mistake. The separator is inside the item before it, so a break can never
+   strand a dot at the head of the next line either. */
+.member-cv .li { white-space: nowrap; }
 
 /* The only clickable text on the stage. Underlined at the same weight as the
    copy's own grey so it reads as a link without shouting, and it jitters on
