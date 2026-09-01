@@ -162,25 +162,38 @@ html, body {
   align-items: flex-end;
   gap: 26px;
 }
+/* Three drawings, not one: the hand held open, its fingers halfway in, and
+   drawn in over the palm. They are cut from a real gesture and registered on
+   the back of the hand, so hovering plays something photographed rather than a
+   rotation invented in CSS. Every frame is stacked on the first, which is the
+   one that gives the span its size, and none of them fade — the site holds a
+   drawing and then shows the next one, and a hand caught between two poses is a
+   hand nobody's arm ever made. */
 .hand {
   display: none;
+  position: relative;
+  line-height: 0;
+}
+.hand img {
+  display: block;
   image-rendering: pixelated;
-  /* the wrist is the pivot: the hand swings from the edge it comes in from */
-  transform-origin: left center;
+  position: absolute;
+  left: 0;
+  top: 0;
+  visibility: hidden;
 }
-.h-pita { transform-origin: right center; }
-.h-salva-v, .h-pita-v { transform-origin: center bottom; }
-
-/* A hand held out and jiggled, not a button being nudged: the whole hand rocks
-   about its wrist, in the same held two-step as everything else on the site. */
-@keyframes handwiggle {
-  0%   { transform: rotate(-3deg); }
-  50%  { transform: rotate(3.5deg); }
-  100% { transform: rotate(-1.5deg); }
+.hand img:first-child {
+  position: relative;
+  visibility: visible;
 }
-#back:hover .hand { animation: handwiggle .19s steps(2) infinite; }
-/* the two hands never wiggle in lockstep */
-#back:hover .h-pita-v { animation-duration: .25s; }
+/* `data-beckon` is the frame the control is holding, stepped by app.js on the
+   site's own jittered cadence. Both hands on a two-hand page beckon together:
+   they are one control, and the pair reads as two people waving you over rather
+   than as a crowd. */
+[data-beckon="1"] .hand img:first-child,
+[data-beckon="2"] .hand img:first-child { visibility: hidden; }
+[data-beckon="1"] .hand img:nth-child(2),
+[data-beckon="2"] .hand img:nth-child(3) { visibility: visible; }
 
 /* Which hand, and where. The landing is behind one edge of every page — the
    camera travels left to reach Pita, so from Pita home is back out to the left;
@@ -694,10 +707,12 @@ html, body {
 
 /* The project's own close control — not a new drawing: the exact `#back`
    hands (the vertical cut, meant to hang from a top edge, wrists cut off by
-   the frame) and its wrist-wiggle hover, reused rather than reinvented.
-   `#back` itself can't show through here — #project sits in its own fixed
-   stacking context above the whole stage — so this repeats its markup and
-   the sitewide `handwiggle` keyframes instead of the element. */
+   the frame), beckoning on hover the same way. `#back` itself can't show
+   through here — #project sits in its own fixed stacking context above the
+   whole stage — so this repeats its markup, and app.js drives the beckon by
+   delegation so this copy needs no wiring of its own. Only the size is this
+   control's own: the hands are drawn small here, so they are the one place on
+   the site where the art is scaled in the browser rather than baked. */
 .proj-nav-hands {
   background: none;
   border: 0;
@@ -707,10 +722,8 @@ html, body {
   line-height: 0;
 }
 .proj-nav-hands .back-in { display: flex; align-items: flex-end; gap: 26px; transform: rotate(180deg); }
-.proj-nav-hands .hand { display: block; width: clamp(38px, 5vw, 60px); height: auto; image-rendering: pixelated; }
-.proj-nav-hands .h-salva-v, .proj-nav-hands .h-pita-v { transform-origin: center bottom; }
-.proj-nav-hands:hover .hand { animation: handwiggle .19s steps(2) infinite; }
-.proj-nav-hands:hover .h-pita-v { animation-duration: .25s; }
+.proj-nav-hands .hand { display: block; width: clamp(38px, 5vw, 60px); }
+.proj-nav-hands .hand img { width: 100%; height: auto; }
 
 /* the flown-in campaign title, repeated here so the page it opens onto never
    needs a font to fake it — every project's own copy of this art starts

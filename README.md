@@ -27,7 +27,7 @@ open http://localhost:8777/
 | `img/rpsr_<combo>_*.png` | real rounds: the hold, the hands acting the result out, and the settle — whole frames from the take that actually played that combination |
 | `img/rpsback_*.png` | fallback aftermath for combinations with no real round yet — hands unclench and open back out, composited per-arm |
 | `img/ui/*` | the overlay artwork, sliced out of `assets/` |
-| `img/ui/hand_*.png` | the BACK control — each landing hand cut out of `landing_plate.png` by `tools/build_hands.py`, baked at its on-screen size; `_v` is the same hand turned to point up |
+| `img/ui/hand_*_{0,1,2}.png` | the BACK control, as the three frames of a beckon — the hand open, halfway in, drawn in over the palm — cut out of the footage by `tools/build_beckon.py` and baked at their on-screen size; `_v` is the same hand turned to point up |
 | `img/ui.json` | position of every overlay element in 1920×1080 space |
 | `sw.js` | the frame cache — see *Playing frames over a network* below |
 
@@ -98,8 +98,11 @@ Boot waits for the landing plate and the one dap about to play — nine files, n
   Salva's on Pita's page, Pita's on Salva's, both of them on the & and on a
   campaign, turned to stand on the edge they come in from. All four are in the
   markup and the `back-*` class picks which are shown, so the control never
-  waits on an image swap. Hovering rocks each hand about its own wrist, the two
-  of them at different speeds.
+  waits on an image swap. Hovering makes the hand beckon: three frames of the
+  same hand — held open, halfway in, drawn in over the palm — asked twice and
+  then held, on the site's own jittered cadence. They come from the count-in of
+  a rock-paper-scissors round, so the gesture is one that was performed rather
+  than invented; see *The back hands* below.
 
 ## Timing
 
@@ -114,6 +117,11 @@ not slideshow — each pose has to be readable before the next one lands:
 | `result` | 950 — how long the thrown hands are held before they react |
 | `after` | 112 — the hands acting the result out |
 | `back` | 138 — the aftermath, hands opening back out |
+The back hand's beckon is not one hold but a pattern of them, in `BECKON`
+under the table: in, all the way in, back out, open — twice, and then the hand
+is held open for 430 before asking again. Going in and out on an even count is
+what makes a hand read as grabbing at something; asking twice and waiting is
+what makes it read as calling you over.
 
 Each hold is jittered ±18% so the cadence never locks to a metronome.
 
@@ -145,7 +153,40 @@ rotations are set under `#and-copy` in `style.css`.
 
 ### The back hands
 
-`tools/build_hands.py` cuts them straight out of `site/img/landing_plate.png`,
+`tools/build_beckon.py` cuts them out of `rpspump_00` and `rpspump_01`, the two
+frames at the head of a rock-paper-scissors round where the hand is held open
+and then closes over the palm.
+
+Three poses each, because two read as a hand grabbing at something: between
+open and shut there is nothing but the cut, and the cut is the grab. The middle
+pose is what turns it into a curl.
+
+Pita's middle pose is photographed — `dap4_06`, from the dap take, catches his
+fingers mid-bend. **Salva's is built, and it is the only frame on this site that
+was not.** The count-in shuts his hand between one frame and the next, and every
+other frame in the footage was searched for one that registers on his arm and
+catches his fingers partway: there is nothing between his fingers extended and
+his fingers in. So `SQUASH` in `build_beckon.py` makes one out of his open hand.
+Everything past the knuckles is squashed towards them and lifted — the two
+things a bending finger does to its own shape, seen from the back of the hand:
+it foreshortens, and its tip rides up. The hand behind the knuckles comes
+through exactly as shot, and the numbers are read off his own two poses (tips at
+x747 open, x621 in, knuckles at x600, so halfway is 0.57 of the open finger).
+The two hands have to keep the same time, and an invented middle frame is a
+smaller lie than a hand that grabs. Shooting a beckon properly would retire it.
+
+Registration is the rest of the job: the count-in is a
+pump, so the arms travel through it, and the same window taken from both frames
+would read as a hand crossing the screen rather than fingers closing. Each
+frame's window is therefore slid by the shift that lines up a strip of the arm
+just behind the knuckles — taken further down the forearm the forearm holds
+still and the whole hand tips instead, which is a wrist flick, not a beckon. The
+overlap it settles on is printed when the tool runs; if it drops off ~0.9 the
+two frames are no longer the same arm in the same place and the beckon will
+swim.
+
+`tools/build_hands.py` is the earlier, still version of the same control. It
+cuts them straight out of `site/img/landing_plate.png`,
 so they are the landing's own hands rather than a new drawing. It reads the
 plate's dither as tone (a wide blur), keeps the largest shape in each crop —
 which drops the lettering that shares it, and is why the blur has to be wide

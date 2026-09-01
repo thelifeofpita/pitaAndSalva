@@ -1,6 +1,12 @@
 #!/usr/bin/env python3
 """Cuts the BACK control's hands out of the landing plate.
 
+Superseded for the site itself by `build_beckon.py`, which cuts the same two
+hands out of the rock-paper-scissors count-in as the two frames of a beckon —
+the control now waves rather than being jiggled in CSS. This is kept as what it
+always was: the still, straight off the landing, and the record of how that cut
+was found.
+
 The back control is the other person's hand reaching in from the edge the
 landing is behind, so the art has to be the same two hands the landing shows —
 Salva's from the left, Pita's from the right — not a new drawing.

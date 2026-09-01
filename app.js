@@ -47,6 +47,16 @@ const TIMING = {
   back: 112,       // the aftermath: hands unclench and open back out
 };
 
+/* The beckon, as beats: which frame, and how long it is held.
+   In, all the way in, back out, open — asked twice and then held. Coming and
+   going on an even count reads as a hand grabbing at something; what reads as a
+   summons is asking twice, quickly, and then waiting long enough that the next
+   pair is a new sentence rather than more of the same one. */
+const BECKON = [
+  [1, 88], [2, 84], [1, 86], [0, 132],
+  [1, 88], [2, 84], [1, 86], [0, 430],
+];
+
 const $ = (s) => document.querySelector(s);
 const stage = $('#stage');
 const plate = $('#plate');
@@ -73,6 +83,10 @@ let campaignReturnTarget = null;
 function setBackSide(side) {
   page.classList.remove(...BACK_SIDES);
   if (side) page.classList.add('back-' + side);
+  /* A page change under a resting pointer never fires pointerout, so a hand
+     left mid-beckon would come back to the next page with its fingers still
+     drawn in. The control opens on the same page every time. */
+  stopBeckon(back);
 }
 
 function setPageKind(id) {
@@ -834,8 +848,8 @@ function renderProjectNav(slug, withHands) {
       ${link(prev, -1, navChevron(-1, n))}
       ${withHands ? `<button type="button" class="proj-nav-hands" data-close aria-label="Close">
         <span class="back-in">
-          <img class="hand h-salva-v" src="${IMG}ui/hand_salva_v.png" alt="">
-          <img class="hand h-pita-v" src="${IMG}ui/hand_pita_v.png" alt="">
+          <span class="hand h-salva-v"><img src="${IMG}ui/hand_salva_v_0.png" alt=""><img src="${IMG}ui/hand_salva_v_1.png" alt=""><img src="${IMG}ui/hand_salva_v_2.png" alt=""></span>
+          <span class="hand h-pita-v"><img src="${IMG}ui/hand_pita_v_0.png" alt=""><img src="${IMG}ui/hand_pita_v_1.png" alt=""><img src="${IMG}ui/hand_pita_v_2.png" alt=""></span>
         </span>
       </button>` : ''}
       ${link(next, 1, navChevron(1, n), 'next')}
@@ -1786,8 +1800,55 @@ async function playRPS(zone, gesture) {
 }
 
 /* ----------------------------------------------------------------- wiring */
-$('#back').addEventListener('click', goHome);
+const back = $('#back');
+back.addEventListener('click', goHome);
 addEventListener('keydown', (e) => { if (e.key === 'Escape') goHome(); });
+
+/* The hand beckons while it is pointed at — two photographed poses held in
+   turn, on the same jittered stop-motion cadence as the frames on the plate,
+   rather than a CSS rotation of one drawing.
+   Delegated, because the project pages build their own copy of this control
+   every time one opens, and a listener bound to the element would go with it.
+   The run number is what stops a loop: a pointer that leaves mid-hold bumps it,
+   and the loop it belonged to falls out on its next line instead of fighting
+   the one that starts on the way back in. */
+const BECKONS = '#back, .proj-nav-hands';
+let beckonRun = 0;
+
+async function beckon(el) {
+  const me = ++beckonRun;
+  for (let i = 0; me === beckonRun; i = (i + 1) % BECKON.length) {
+    const [frame, hold] = BECKON[i];
+    el.dataset.beckon = frame;
+    await wait(jitter(hold));
+  }
+}
+
+function stopBeckon(el) {
+  beckonRun++;
+  el.dataset.beckon = '0';
+}
+
+/* pointerover/out rather than enter/leave: these bubble, which is what makes
+   one listener enough. The relatedTarget check drops the crossings between the
+   control's own children, which are not entering or leaving anything. */
+document.addEventListener('pointerover', (e) => {
+  const el = e.target.closest(BECKONS);
+  if (el && !el.contains(e.relatedTarget)) beckon(el);
+});
+document.addEventListener('pointerout', (e) => {
+  const el = e.target.closest(BECKONS);
+  if (el && !el.contains(e.relatedTarget)) stopBeckon(el);
+});
+/* it is a button: reaching it by keyboard should wave too */
+document.addEventListener('focusin', (e) => {
+  const el = e.target.closest(BECKONS);
+  if (el) beckon(el);
+});
+document.addEventListener('focusout', (e) => {
+  const el = e.target.closest(BECKONS);
+  if (el) stopBeckon(el);
+});
 
 document.addEventListener('click', (e) => {
   const a = e.target.closest('a.nav, a.camp');
