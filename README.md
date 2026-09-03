@@ -167,6 +167,20 @@ and lighting, keeps the original pen strokes, crops each paragraph, and scales
 the pieces to their live on-stage sizes. Their loose curve, gaps and small
 rotations are set under `#and-copy` in `style.css`.
 
+### The second line of campaign titles
+
+`python3 tools/build_titles.py` turns `update/more_titles.jpeg` — three new
+titles written on one sheet — into `img/ui/camp_l2_{0,1,2}.png`, replacing the
+three placeholder repeats that line used to carry. It thresholds the marker off
+the paper, opens the mask to drop the paper's dot grid, scales all three lines
+by ONE factor chosen so their cap height matches the four titles on the line
+above, re-thresholds to hard 1-bit at that size, and drops any speck left
+standing at the size the art is actually seen. The widths it prints are what
+`img/ui.json` places the row with: the line is centred on x=960 with the drawn
+33/34-unit gaps either side of its stars. Like `build_favicon.py` and unlike
+the rest of `tools/`, this one runs anywhere — its source is a photograph, not
+footage.
+
 ### The back hands
 
 `tools/build_beckon.py` cuts them out of `rpspump_00` and `rpspump_01`, the two

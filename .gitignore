@@ -5,6 +5,10 @@ videos/
 *.MOV
 *.mov
 
+# Campaign source material: the sheet of handwriting tools/build_titles.py
+# reads, and the films the two newest project pages are cut from
+update/
+
 # pyobjc venv used by the segmentation step
 venv/
 __pycache__/

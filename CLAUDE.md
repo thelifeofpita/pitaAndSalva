@@ -157,10 +157,11 @@ Keep that pattern when adding one.
 ## Project pages
 
 `PROJECTS[slug] = () => html` in `app.js` registers a built project (currently
-`back-in-smoothly`, `numpad-jam`, `ads-from-trash`); any campaign slug without
-an entry renders the shared COMING SOON page. Every project supplies only its
-own content — `renderProjectNav()` adds prev/next around the campaign ring and
-the close control. Media lives in `img/projects/<slug>/`.
+`back-in-smoothly`, `numpad-jam`, `ads-from-trash`, `surf-the-spike`,
+`tracking-life`); any campaign slug without an entry renders the shared
+COMING SOON page. Every project supplies only its own content —
+`renderProjectNav()` adds prev/next around the campaign ring and the close
+control. Media lives in `img/projects/<slug>/`.
 
 Project pages are pure `vw` designs pinned to a 1920 layout. Below 1000px they
 switch to the fixed-pixel phone layout in each page's `@media (max-width: 1000px)`

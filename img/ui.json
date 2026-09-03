@@ -82,30 +82,30 @@
   },
   {
    "src": "ui/camp_l2_0.png",
-   "x": 295,
+   "x": 370,
    "y": 918,
-   "w": 385,
+   "w": 320,
    "h": 89,
-   "label": "ADS FROM TRASH",
-   "slug": "ads-from-trash"
+   "label": "SURF THE SPIKE",
+   "slug": "surf-the-spike"
   },
   {
    "src": "ui/camp_l2_1.png",
-   "x": 778,
+   "x": 788,
    "y": 918,
-   "w": 450,
+   "w": 352,
    "h": 89,
-   "label": "BACK IN SMOOTHLY",
-   "slug": "back-in-smoothly"
+   "label": "PASTA FOR PASTA",
+   "slug": "pasta-for-pasta"
   },
   {
    "src": "ui/camp_l2_2.png",
-   "x": 1308,
+   "x": 1243,
    "y": 918,
-   "w": 321,
+   "w": 307,
    "h": 89,
-   "label": "NUMPAD JAM",
-   "slug": "numpad-jam"
+   "label": "TRACKING LIFE",
+   "slug": "tracking-life"
   }
  ],
  "stars": [
@@ -132,14 +132,14 @@
   },
   {
    "src": "ui/star_l2_0.png",
-   "x": 713,
+   "x": 723,
    "y": 918,
    "w": 31,
    "h": 89
   },
   {
    "src": "ui/star_l2_1.png",
-   "x": 1249,
+   "x": 1173,
    "y": 918,
    "w": 36,
    "h": 89

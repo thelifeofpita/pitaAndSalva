@@ -1402,9 +1402,15 @@ const headV = (id, vx, vy, ax, ay, bx, by) =>
 
 /* ---------------------------------------------------------- project nav */
 /* Every project (built or not) sits on the same ring — the order campaign
-   icons are laid out in on the landing, deduplicated (the landing repeats
-   some campaigns across its two star layers). Prev/next walk this ring and
-   wrap, so "move through all the projects" never dead-ends at an edge. */
+   icons are laid out in on the landing. Prev/next walk this ring and wrap, so
+   "move through all the projects" never dead-ends at an edge.
+
+   The dedup below is now a guard rather than a filter: the second drawn line
+   used to repeat three of the first line's campaigns, and it no longer does.
+   It stays because the ring is built from ui.json, and a title set twice
+   there — the landing is one drawing and a campaign could legitimately be
+   lettered on both lines again — would otherwise put a campaign next to
+   itself in the nav. */
 function campaignRing() {
   const seen = new Set();
   const ring = [];
@@ -1924,6 +1930,260 @@ PROJECTS['ads-from-trash'] = function () {
             <figure class="aft-cell" style="--m:${c.m}">
               <img src="${p}${c.img}" alt="${c.alt}" loading="lazy">
             </figure>`).join('')}
+        </div>
+      </div>
+
+      ${nav(false)}
+    </div>`;
+};
+
+/* Same campaign-mockup system as the three pages above — nav, title art, one
+   bold idea line, then the work. Everything here is cut from the case film
+   itself (short silent loops, `tools/` is not involved) plus the photographs
+   of the placements, which is all this campaign has produced so far: an app
+   feature and the machines it is sold beside. */
+PROJECTS['surf-the-spike'] = function () {
+  const p = PROJ_IMG('surf-the-spike');
+  const nav = (withHands) => renderProjectNav('surf-the-spike', withHands);
+  const yt = 'nf5xLDfsp5k';
+
+  /* The page's three arrows are the same pen as every other project page —
+     same 5.2 stroke, same open-V head, 1 unit = 1px at 1920 — and each one
+     carries its own filter id and its own seed, because three arrows in the
+     same box on one page wearing the identical wobble reads as one arrow
+     pasted three times. */
+  const caseArrow = `<svg viewBox="0 0 74 31"><defs>${penFilter('stsRough1')}</defs>
+    <path d="M3 17C11 6 22 2 33 4C47 7 55 13 60 19" ${pen('stsRough1')}/>
+    ${headV('stsRough1', 68, 27, 45, 22, 70, 3)}
+  </svg>`;
+
+  const scanArrow = `<svg viewBox="0 0 74 31"><defs>${penFilter('stsRough2', 13)}</defs>
+    <path d="M3 6C13 13 21 16 31 16C43 16 54 20 62 25" ${pen('stsRough2')}/>
+    ${headV('stsRough2', 69, 30, 56, 28, 67, 17)}
+  </svg>`;
+
+  /* Points sideways rather than down: the copy it trails sits beside the two
+     machines instead of above them. */
+  const outArrow = `<svg viewBox="0 0 74 31"><defs>${penFilter('stsRough3', 23)}</defs>
+    <path d="M3 22C14 19 26 15 38 12C46 10 55 8 62 7" ${pen('stsRough3')}/>
+    ${headV('stsRough3', 71, 6, 59, 1, 59, 15)}
+  </svg>`;
+
+  return `
+    <div class="proj proj-sts">
+      ${nav(true)}
+
+      <div class="proj-head">
+        <img class="proj-title-art" src="${IMG}ui/camp_l2_0.png" alt="Surf the spike">
+        <p class="sts-idea">gemini reads the drink in your hand and paces the study session to the caffeine curve, so the hardest hour lands on the spike instead of the crash.</p>
+      </div>
+
+      <div class="proj-block sts-b-case">
+        <p class="sts-cap">
+          case study
+          ${caseArrow}
+        </p>
+        <div class="proj-media sts-yt">
+          <iframe src="https://www.youtube.com/embed/${yt}?rel=0" title="Surf the spike" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen loading="lazy"></iframe>
+        </div>
+      </div>
+
+      <!-- the problem, in the campaign's own footage: nobody buys an energy
+           drink for the taste of it, they buy hours with it and then lose
+           them anyway. Cut silent and looping, like every clip on the site. -->
+      <div class="proj-block sts-b-drink">
+        <div class="sts-side">
+          <p class="sts-copy">a student doesn’t drink it for the taste. he is buying hours — and then sleeps through half of them.</p>
+          <div class="proj-media sts-clip">
+            <video autoplay muted loop playsinline poster="${p}drink.jpg"><source src="${p}drink.mp4" type="video/mp4"></video>
+          </div>
+        </div>
+      </div>
+
+      <div class="proj-block sts-b-scan">
+        <p class="sts-cap">
+          point the camera at whatever you’re drinking and it knows how long you’ve got
+          ${scanArrow}
+        </p>
+        <div class="proj-media sts-clip">
+          <video autoplay muted loop playsinline poster="${p}scan.jpg"><source src="${p}scan.mp4" type="video/mp4"></video>
+        </div>
+      </div>
+
+      <!-- The feature itself. The big one first, because the curve with the
+           session written along it is the whole idea in one screen; the two
+           under it are what that turns into subject by subject. -->
+      <div class="proj-block sts-b-app">
+        <p class="sts-cap sts-cap-end">
+          the session is cut to the curve — the heavy reading on the peak, the questions on the way down
+        </p>
+        <div class="proj-media sts-shot">
+          <img src="${p}app-history.webp" alt="Gemini showing a caffeine curve above a history reading, timed four minutes until the spike" loading="lazy">
+        </div>
+        <div class="proj-duo sts-duo">
+          <div class="proj-media sts-shot">
+            <img src="${p}app-biology.webp" alt="The same curve on a biology session, twenty minutes until the end" loading="lazy">
+          </div>
+          <div class="proj-media sts-shot">
+            <img src="${p}app-chord.webp" alt="A listening question set for the tail of the curve" loading="lazy">
+          </div>
+        </div>
+      </div>
+
+      <!-- Out of home, put where the spike is actually bought rather than
+           where students are: the machine, then the shop counter. -->
+      <div class="proj-block sts-b-out">
+        <p class="sts-cap">
+          bought where the spike is
+          ${outArrow}
+        </p>
+        <div class="proj-duo sts-duo">
+          <div class="proj-media sts-shot">
+            <img src="${p}vend1.webp" alt="Vending machine wrapped with “Get tonight’s energy spike. Tomorrow, sleep like a log.”" loading="lazy">
+          </div>
+          <div class="proj-media sts-shot">
+            <img src="${p}vend2.webp" alt="A row of vending machines carrying the same wrap in a college corridor" loading="lazy">
+          </div>
+        </div>
+        <div class="proj-duo sts-duo">
+          <div class="proj-media sts-shot">
+            <img src="${p}shop1.webp" alt="Shop window screen running “Sleep like a baby, tomorrow.”" loading="lazy">
+          </div>
+          <div class="proj-media sts-shot">
+            <img src="${p}shop2.webp" alt="The same screen behind a corner-shop counter, over the energy drinks" loading="lazy">
+          </div>
+        </div>
+      </div>
+
+      <!-- The line, last, in the film's own hand: the curve draws itself and
+           the endline lands on it. No caption and no doodle over this one —
+           the clip IS the lockup, and a pen mark on top of a finished endline
+           would be the page talking over the campaign. -->
+      <div class="proj-block sts-b-line">
+        <div class="proj-media sts-clip">
+          <video autoplay muted loop playsinline poster="${p}line.jpg"><source src="${p}line.mp4" type="video/mp4"></video>
+        </div>
+      </div>
+
+      ${nav(false)}
+    </div>`;
+};
+
+/* The one campaign here whose whole output is a film. So the page is the film
+   and then the film taken apart: the clips are cut straight out of it (silent,
+   looping, 2:1 the way it was shot — the source is letterboxed inside 16:9 and
+   the bars are cropped off here rather than shown twice), and the stills are
+   single frames of the same. Nothing is recreated; there is nothing to
+   recreate. */
+PROJECTS['tracking-life'] = function () {
+  const p = PROJ_IMG('tracking-life');
+  const nav = (withHands) => renderProjectNav('tracking-life', withHands);
+  const yt = 'JPgC5tQR8n4';
+
+  /* Same pen, same head, same 1-unit-≈-1px scale as the other project pages;
+     own ids and own seeds, so the three don't repeat one wobble. */
+  const filmArrow = `<svg viewBox="0 0 74 31"><defs>${penFilter('tlRough1', 3)}</defs>
+    <path d="M3 17C11 6 22 2 33 4C47 7 55 13 60 19" ${pen('tlRough1')}/>
+    ${headV('tlRough1', 68, 27, 45, 22, 70, 3)}
+  </svg>`;
+
+  const glyphArrow = `<svg viewBox="0 0 74 31"><defs>${penFilter('tlRough2', 17)}</defs>
+    <path d="M3 5C12 12 20 15 30 15C42 15 53 19 62 24" ${pen('tlRough2')}/>
+    ${headV('tlRough2', 69, 30, 56, 28, 67, 17)}
+  </svg>`;
+
+  const recapArrow = `<svg viewBox="0 0 74 31"><defs>${penFilter('tlRough3', 29)}</defs>
+    <path d="M3 21C14 18 26 14 38 11C46 9 55 7 62 6" ${pen('tlRough3')}/>
+    ${headV('tlRough3', 71, 5, 59, 0, 59, 14)}
+  </svg>`;
+
+  return `
+    <div class="proj proj-tl">
+      ${nav(true)}
+
+      <div class="proj-head">
+        <img class="proj-title-art" src="${IMG}ui/camp_l2_2.png" alt="Tracking life">
+        <p class="tl-idea">every tracker we own counts the day. the glyph matrix counts the moments that made you feel alive, and gives the month back to you as a map.</p>
+      </div>
+
+      <div class="proj-block tl-b-film">
+        <p class="tl-cap">
+          the film
+          ${filmArrow}
+        </p>
+        <div class="proj-media tl-yt">
+          <iframe src="https://www.youtube.com/embed/${yt}?rel=0" title="Tracking life" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen loading="lazy"></iframe>
+        </div>
+      </div>
+
+      <!-- The argument the film opens with, in its own frames: a crossing
+           of people being counted, and the watch doing the counting. Black
+           and white, because that is the half of the film that is. -->
+      <div class="proj-block tl-b-now">
+        <p class="tl-copy">steps, calories, minutes in zone. everything we wear measures the day and none of it measures the living of it.</p>
+        <div class="proj-duo tl-duo">
+          <div class="proj-media tl-shot">
+            <img src="${p}cross.webp" alt="A crossing shot from above, hundreds of people counted at once" loading="lazy">
+          </div>
+          <div class="proj-media tl-shot">
+            <img src="${p}watch.webp" alt="A fitness watch reading pace, distance and floors climbed" loading="lazy">
+          </div>
+        </div>
+        <div class="proj-media tl-shot tl-wide">
+          <img src="${p}alive.webp" alt="The word ALIVE spelled in glyph dots over a night out" loading="lazy">
+        </div>
+      </div>
+
+      <!-- The turn. The matrix writes the campaign's name itself, so the
+           clip is the logo animation and the page does not set it twice. -->
+      <div class="proj-block tl-b-glyph">
+        <p class="tl-cap">
+          the phone writes it on its own back
+          ${glyphArrow}
+        </p>
+        <div class="proj-media tl-clip">
+          <video autoplay muted loop playsinline poster="${p}glyph.jpg"><source src="${p}glyph.mp4" type="video/mp4"></video>
+        </div>
+        <div class="proj-duo tl-duo">
+          <div class="proj-media tl-shot">
+            <img src="${p}glyph-phone.webp" alt="The glyph matrix on the back of the phone, drawing the shape of a moment" loading="lazy">
+          </div>
+          <div class="proj-media tl-shot">
+            <img src="${p}product.webp" alt="Nothing Phone (3) face down beside its earbuds" loading="lazy">
+          </div>
+        </div>
+      </div>
+
+      <!-- What it hands back. The clip first, because the card arriving over
+           the moment it is about is the mechanic; the two stills under it are
+           the same card on two other nights. -->
+      <div class="proj-block tl-b-recap">
+        <p class="tl-cap">
+          a card for the moment, dated and placed — keep it, or send it to whoever was there
+          ${recapArrow}
+        </p>
+        <div class="proj-media tl-clip">
+          <video autoplay muted loop playsinline poster="${p}recap.jpg"><source src="${p}recap.mp4" type="video/mp4"></video>
+        </div>
+        <div class="proj-duo tl-duo">
+          <div class="proj-media tl-shot">
+            <img src="${p}recap-concert.webp" alt="A recap card dated May 3rd over the concert it remembers" loading="lazy">
+          </div>
+          <div class="proj-media tl-shot">
+            <img src="${p}recap-beach.webp" alt="A recap card dated June 4th over the beach it remembers" loading="lazy">
+          </div>
+        </div>
+        <div class="proj-media tl-shot tl-wide">
+          <img src="${p}map.webp" alt="Your map — the month's moments pinned where they happened" loading="lazy">
+        </div>
+      </div>
+
+      <!-- Earned, not bought: the film's own last movement is the argument
+           being picked up and printed. -->
+      <div class="proj-block tl-b-press">
+        <p class="tl-copy tl-copy-end">the point it makes is a story before it is an ad: hurry as a way of life, and a phone that measures the opposite.</p>
+        <div class="proj-media tl-shot tl-wide">
+          <img src="${p}press.webp" alt="A newspaper feature headlined “La prisa como estilo de vida”" loading="lazy">
         </div>
       </div>
 
