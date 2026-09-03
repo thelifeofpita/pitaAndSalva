@@ -939,9 +939,7 @@ body.narrow #page.page-and .back-in { gap: calc(16px * var(--inv)); }
    the frame), beckoning on hover the same way. `#back` itself can't show
    through here — #project sits in its own fixed stacking context above the
    whole stage — so this repeats its markup, and app.js drives the beckon by
-   delegation so this copy needs no wiring of its own. Only the size is this
-   control's own: the hands are drawn small here, so they are the one place on
-   the site where the art is scaled in the browser rather than baked. */
+   delegation so this copy needs no wiring of its own. */
 .proj-nav-hands {
   background: none;
   border: 0;
@@ -950,14 +948,20 @@ body.narrow #page.page-and .back-in { gap: calc(16px * var(--inv)); }
   cursor: pointer;
   line-height: 0;
 }
-.proj-nav-hands .back-in { display: flex; align-items: flex-end; gap: 26px; transform: rotate(180deg); }
-.proj-nav-hands .hand { display: block; width: clamp(38px, 5vw, 60px); }
-.proj-nav-hands .hand img { width: 100%; height: auto; }
+.proj-nav-hands .back-in { display: flex; align-items: flex-end; gap: 18px; transform: rotate(180deg); }
+/* One control at one size wherever it appears (see the #back note): the pair
+   cut across, so the palm is the width — `--back-hand`, the same number the &
+   and the member pages use. No project gives it a size of its own. */
+.proj-nav-hands .hand { display: block; }
+.proj-nav-hands .hand img { width: var(--back-hand, 48px); height: auto; }
 
 /* the flown-in campaign title, repeated here so the page it opens onto never
    needs a font to fake it — every project's own copy of this art starts
    the page at its one definitive position, already settled. */
-.proj-title-art { display: block; width: clamp(280px, 44vw, 560px); margin: 0 auto 26px; }
+/* shown at the size it is on the landing — the campaign label's own drawn
+   width over the 1920 stage (ui.json w / 19.2, in vw) — not grown. Each
+   project sets its own; this is the fallback for the shared COMING SOON. */
+.proj-title-art { display: block; width: 18vw; min-width: 180px; margin: 0 auto 26px; }
 
 /* ------------------------------------------------ project: back in smoothly */
 /* PlatanoMelón's own type, set once at the project root — everything under
@@ -989,10 +993,7 @@ body.narrow #page.page-and .back-in { gap: calc(16px * var(--inv)); }
 .proj-bis .proj-nav { font-size: var(--bis-copy); margin: 0 -0.729vw; }
 .proj-bis .proj-nav-link { gap: 0.573vw; padding: 0 0.104vw; }
 .proj-bis .proj-nav-link svg { width: 2.292vw; height: 1.771vw; }
-.proj-bis .proj-nav-hands { padding: 0; margin: 0; }
-.proj-bis .proj-nav-hands .back-in { gap: 1.823vw; }
-.proj-bis .proj-nav-hands .hand { width: 6.615vw; }
-.proj-bis .proj-title-art { width: 42.14vw; margin: 0 auto; }
+.proj-bis .proj-title-art { width: 23.385vw; margin: 0 auto; }
 .proj-bis .proj-duo { gap: 2.604vw; }   /* 50px @1920 between the two spots */
 /* the box is the mockup's box, not the video's: declaring the ratio up front
    means the page is laid out before a single frame of mp4 has arrived, so
@@ -1167,9 +1168,7 @@ body.narrow #page.page-and .back-in { gap: calc(16px * var(--inv)); }
   .proj-bis .proj-nav { margin: 0; }
   .proj-bis .proj-nav-link { gap: 9px; }
   .proj-bis .proj-nav-link svg { width: 22px; height: 17px; }
-  .proj-bis .proj-nav-hands .back-in { gap: 26px; }
-  .proj-bis .proj-nav-hands .hand { width: 48px; }
-  .proj-bis .proj-title-art { width: min(72vw, 620px); }
+  .proj-bis .proj-title-art { width: min(40vw, 344px); }
   .bis-subtitle { max-width: 100%; }
   .bis-sticker-row { margin: 0; }
   .bis-desc { margin: 26px 0 18px; gap: 10px; }
@@ -1213,9 +1212,6 @@ body.narrow #page.page-and .back-in { gap: calc(16px * var(--inv)); }
 .proj-numpad .proj-nav { font-size: var(--np-copy); margin: 0 -0.729vw; }
 .proj-numpad .proj-nav-link { gap: 0.573vw; padding: 0 0.104vw; }
 .proj-numpad .proj-nav-link svg { width: 2.292vw; height: 1.771vw; }
-.proj-numpad .proj-nav-hands { padding: 0; margin: 0; }
-.proj-numpad .proj-nav-hands .back-in { gap: 1.823vw; }
-.proj-numpad .proj-nav-hands .hand { width: 6.615vw; }
 /* Narrower than Back in Smoothly's 42.14vw, to come out the same size.
    Matching the two titles' WIDTHS is what made them look inconsistent: they
    are the same hand at the same size in the artwork, but "NUMPAD JAM" is a
@@ -1223,7 +1219,7 @@ body.narrow #page.page-and .back-in { gap: calc(16px * var(--inv)); }
    blows its letters up — 0.153 of the width against 0.111, half again as
    tall. What has to match is the lettering, so this is the width at which
    this title's letters stand as tall as that one's. */
-.proj-numpad .proj-title-art { width: 30.75vw; margin: 0 auto; }
+.proj-numpad .proj-title-art { width: 16.719vw; margin: 0 auto; }
 
 .numpad-idea {
   font-weight: 700;
@@ -1640,9 +1636,7 @@ body.narrow #page.page-and .back-in { gap: calc(16px * var(--inv)); }
   .proj-numpad .proj-nav { margin: 0; }
   .proj-numpad .proj-nav-link { gap: 9px; }
   .proj-numpad .proj-nav-link svg { width: 22px; height: 17px; }
-  .proj-numpad .proj-nav-hands .back-in { gap: 26px; }
-  .proj-numpad .proj-nav-hands .hand { width: 48px; }
-  .proj-numpad .proj-title-art { width: min(52.5vw, 452px); }   /* 72vw scaled the same way */
+  .proj-numpad .proj-title-art { width: min(29vw, 246px); }
   .numpad-idea { max-width: 100%; }
   .proj-numpad .np-b-case { margin-top: 26px; }
   .np-case { margin: 0 0 18px; gap: 10px; }
@@ -1709,16 +1703,13 @@ body.narrow #page.page-and .back-in { gap: calc(16px * var(--inv)); }
 .proj-aft .proj-nav { font-size: var(--aft-copy); margin: 0 -0.729vw; }
 .proj-aft .proj-nav-link { gap: 0.573vw; padding: 0 0.104vw; }
 .proj-aft .proj-nav-link svg { width: 2.292vw; height: 1.771vw; }
-.proj-aft .proj-nav-hands { padding: 0; margin: 0; }
-.proj-aft .proj-nav-hands .back-in { gap: 1.823vw; }
-.proj-aft .proj-nav-hands .hand { width: 6.615vw; }
 /* Sized off the lettering, not off the width — the same rule Numpad Jam's
    title carries: all three titles are the same hand at the same size in the
    artwork, so what has to match between pages is how tall the letters stand,
    which means each title's width scales with its own artwork's width.
    BACK IN SMOOTHLY is 449 units wide at 42.14vw and NUMPAD JAM 321 at
    30.75vw — ~0.094vw per unit. ADS FROM TRASH is 385, hence 36.5vw. */
-.proj-aft .proj-title-art { width: 36.5vw; margin: 0 auto; }
+.proj-aft .proj-title-art { width: 20.052vw; margin: 0 auto; }
 
 .aft-idea {
   font-weight: 700;
@@ -1757,9 +1748,7 @@ body.narrow #page.page-and .back-in { gap: calc(16px * var(--inv)); }
   .proj-aft .proj-nav { margin: 0; }
   .proj-aft .proj-nav-link { gap: 9px; }
   .proj-aft .proj-nav-link svg { width: 22px; height: 17px; }
-  .proj-aft .proj-nav-hands .back-in { gap: 26px; }
-  .proj-aft .proj-nav-hands .hand { width: 48px; }
-  .proj-aft .proj-title-art { width: min(61.5vw, 530px); }   /* 72vw scaled the same way */
+  .proj-aft .proj-title-art { width: min(34vw, 292px); }
   .aft-idea { max-width: 100%; }
   .proj-aft .aft-b-grid { margin-top: 26px; }
   /* still three across: the grid IS the layout here — the ring of corners,
@@ -1831,9 +1820,6 @@ body.narrow #page.page-and .back-in { gap: calc(16px * var(--inv)); }
 .proj-sts .proj-nav { font-size: var(--sts-copy); margin: 0 -0.729vw; }
 .proj-sts .proj-nav-link { gap: 0.573vw; padding: 0 0.104vw; }
 .proj-sts .proj-nav-link svg { width: 2.292vw; height: 1.771vw; }
-.proj-sts .proj-nav-hands { padding: 0; margin: 0; }
-.proj-sts .proj-nav-hands .back-in { gap: 1.823vw; }
-.proj-sts .proj-nav-hands .hand { width: 6.615vw; }
 /* Sized off the artwork, not off the string — ~0.094vw per unit of its own
    width, the rule the other three titles carry, which is what puts every
    campaign title on the site at the same stage scale whatever it says.
@@ -1842,7 +1828,7 @@ body.narrow #page.page-and .back-in { gap: calc(16px * var(--inv)); }
    more condensed hand — see tools/build_titles.py), so this title's letters
    stand taller than BACK IN SMOOTHLY's while reading level with them, which
    is exactly what they do on the landing. */
-.proj-sts .proj-title-art { width: 41.1vw; margin: 0 auto; }
+.proj-sts .proj-title-art { width: 22.76vw; margin: 0 auto; }
 
 .sts-idea {
   font-weight: 700;
@@ -1935,9 +1921,7 @@ body.narrow #page.page-and .back-in { gap: calc(16px * var(--inv)); }
   .proj-sts .proj-nav { margin: 0; }
   .proj-sts .proj-nav-link { gap: 9px; }
   .proj-sts .proj-nav-link svg { width: 22px; height: 17px; }
-  .proj-sts .proj-nav-hands .back-in { gap: 26px; }
-  .proj-sts .proj-nav-hands .hand { width: 48px; }
-  .proj-sts .proj-title-art { width: min(69.8vw, 602px); }   /* 72vw scaled the same way */
+  .proj-sts .proj-title-art { width: min(38.5vw, 334px); }
   .sts-idea { max-width: 100%; }
   .proj-sts { --sts-gap: 34px; --sts-lead: 12px; }
   .proj-sts .sts-b-case { margin-top: 30px; }
@@ -1987,11 +1971,8 @@ body.narrow #page.page-and .back-in { gap: calc(16px * var(--inv)); }
 .proj-tl .proj-nav { font-size: var(--tl-copy); margin: 0 -0.729vw; }
 .proj-tl .proj-nav-link { gap: 0.573vw; padding: 0 0.104vw; }
 .proj-tl .proj-nav-link svg { width: 2.292vw; height: 1.771vw; }
-.proj-tl .proj-nav-hands { padding: 0; margin: 0; }
-.proj-tl .proj-nav-hands .back-in { gap: 1.823vw; }
-.proj-tl .proj-nav-hands .hand { width: 6.615vw; }
 /* TRACKING LIFE is 425 units wide at the site-wide ~0.094vw per unit */
-.proj-tl .proj-title-art { width: 39.95vw; margin: 0 auto; }
+.proj-tl .proj-title-art { width: 22.135vw; margin: 0 auto; }
 
 .tl-idea {
   font-weight: 700;
@@ -2058,9 +2039,7 @@ body.narrow #page.page-and .back-in { gap: calc(16px * var(--inv)); }
   .proj-tl .proj-nav { margin: 0; }
   .proj-tl .proj-nav-link { gap: 9px; }
   .proj-tl .proj-nav-link svg { width: 22px; height: 17px; }
-  .proj-tl .proj-nav-hands .back-in { gap: 26px; }
-  .proj-tl .proj-nav-hands .hand { width: 48px; }
-  .proj-tl .proj-title-art { width: min(67.9vw, 585px); }   /* 72vw scaled the same way */
+  .proj-tl .proj-title-art { width: min(37.5vw, 324px); }
   .tl-idea { max-width: 100%; }
   .proj-tl .tl-b-case { margin-top: 30px; }
 
@@ -2098,7 +2077,7 @@ body.narrow #page.page-and .back-in { gap: calc(16px * var(--inv)); }
 .proj-pas .pas-b-kiosk,
 .proj-pas .pas-b-after { margin-top: var(--pas-gap); }
 .proj-pas > .proj-nav:last-child { margin-top: 4.58vw; }
-.proj-pas .proj-title-art { width: 17.08vw; margin: 0 auto; }  /* camp_l1_0 is 328u */
+.proj-pas .proj-title-art { width: 17.083vw; margin: 0 auto; }  /* camp_l1_0, 328u / 19.2 */
 .pas-idea {
   font-weight: 700;
   font-size: var(--pas-copy);
@@ -2176,9 +2155,7 @@ body.narrow #page.page-and .back-in { gap: calc(16px * var(--inv)); }
   .proj-pas .proj-nav { margin: 0; }
   .proj-pas .proj-nav-link { gap: 9px; }
   .proj-pas .proj-nav-link svg { width: 22px; height: 17px; }
-  .proj-pas .proj-nav-hands .back-in { gap: 26px; }
-  .proj-pas .proj-nav-hands .hand { width: 48px; }
-  .proj-pas .proj-title-art { width: min(56vw, 360px); }
+  .proj-pas .proj-title-art { width: min(30vw, 200px); }
   .pas-idea { max-width: 100%; }
   .proj-pas .pas-b-case { margin-top: 30px; }
 
@@ -2246,7 +2223,7 @@ body.narrow #page.page-and .back-in { gap: calc(16px * var(--inv)); }
     margin: -28px 0 0;
   }
   .proj-nav .proj-nav-hands .hand { width: var(--back-hand, 48px); }
-  .proj-nav .proj-nav-hands .back-in { gap: 26px; }
+  .proj-nav .proj-nav-hands .back-in { gap: 18px; }
   /* one line, and a row tall enough to be aimed at with a thumb */
   .proj-nav .proj-nav-link { white-space: nowrap; gap: 9px; padding: 8px 2px; }
   .proj-nav .proj-nav-link svg { width: 22px; height: 17px; }
