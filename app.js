@@ -1937,37 +1937,78 @@ PROJECTS['ads-from-trash'] = function () {
     </div>`;
 };
 
-/* Same campaign-mockup system as the three pages above — nav, title art, one
-   bold idea line, then the work. Everything here is cut from the case film
-   itself (short silent loops, `tools/` is not involved) plus the photographs
-   of the placements, which is all this campaign has produced so far: an app
-   feature and the machines it is sold beside. */
+/* Built to update/surf_the_spike/layout.pdf, which is drawn at the same 1920
+   the project pages are laid out in — so every number in .proj-sts's CSS is
+   read straight off it (155-unit margins, a 1610-wide column, the gaps between
+   the blocks) rather than invented. Four blocks, each one caption and one piece
+   of media the caption's arrow points into, and last the placements as a flush
+   2x2 with a caption over it and a caption under it. */
 PROJECTS['surf-the-spike'] = function () {
   const p = PROJ_IMG('surf-the-spike');
   const nav = (withHands) => renderProjectNav('surf-the-spike', withHands);
   const yt = 'nf5xLDfsp5k';
 
-  /* The page's three arrows are the same pen as every other project page —
-     same 5.2 stroke, same open-V head, 1 unit = 1px at 1920 — and each one
-     carries its own filter id and its own seed, because three arrows in the
-     same box on one page wearing the identical wobble reads as one arrow
-     pasted three times. */
+  /* Seven doodles, traced off the layout at its own scale: 1 SVG user unit =
+     1px at 1920, each sized in CSS at exactly its viewBox size in vw, same pen
+     and same open-V head as every other project page. Each carries its own
+     filter id — several sit in the DOM at once and a shared id silently
+     applies one arrow's filter region to another's geometry — and its own
+     seed, so seven arrows on one page don't wear one wobble seven times. */
   const caseArrow = `<svg viewBox="0 0 74 31"><defs>${penFilter('stsRough1')}</defs>
     <path d="M3 17C11 6 22 2 33 4C47 7 55 13 60 19" ${pen('stsRough1')}/>
     ${headV('stsRough1', 68, 27, 45, 22, 70, 3)}
   </svg>`;
 
-  const scanArrow = `<svg viewBox="0 0 74 31"><defs>${penFilter('stsRough2', 13)}</defs>
-    <path d="M3 6C13 13 21 16 31 16C43 16 54 20 62 25" ${pen('stsRough2')}/>
-    ${headV('stsRough2', 69, 30, 56, 28, 67, 17)}
+  /* The long one: it leaves the caption at the top right, runs back across the
+     black and drops onto the third phone. Its filter needs a region of its own
+     — penFilter's is fixed at x:-20..200, which is sized for the small arrow
+     boxes and would clip nothing here, but the height matters: this box is 88
+     tall against their 31, and the shared region's 220 covers it. Kept on
+     penFilter for exactly that reason. */
+  const scanArrow = `<svg viewBox="0 0 168 88"><defs>${penFilter('stsRough2', 13)}</defs>
+    <path d="M162 6C104 7 46 17 25 55" ${pen('stsRough2')}/>
+    ${headV('stsRough2', 24, 82, 6, 60, 42, 62)}
   </svg>`;
 
-  /* Points sideways rather than down: the copy it trails sits beside the two
-     machines instead of above them. */
-  const outArrow = `<svg viewBox="0 0 74 31"><defs>${penFilter('stsRough3', 23)}</defs>
-    <path d="M3 22C14 19 26 15 38 12C46 10 55 8 62 7" ${pen('stsRough3')}/>
-    ${headV('stsRough3', 71, 6, 59, 1, 59, 15)}
+  const uiArrow = `<svg viewBox="0 0 128 58"><defs>${penFilter('stsRough3', 23)}</defs>
+    <path d="M12 14C46 8 88 14 108 36" ${pen('stsRough3')}/>
+    ${headV('stsRough3', 117, 50, 94, 39, 122, 28)}
   </svg>`;
+
+  /* The pair over the shops: one arrow off each end of the caption, dropping
+     into the photograph under it. Mirrored, not one drawing flipped — a flip
+     would repeat the same wobble backwards, which reads as a copy. */
+  const shopLeft = `<svg viewBox="0 0 112 46"><defs>${penFilter('stsRough4', 31)}</defs>
+    <path d="M104 12C76 12 50 18 33 30" ${pen('stsRough4')}/>
+    ${headV('stsRough4', 14, 37, 27, 17, 40, 37)}
+  </svg>`;
+  const shopRight = `<svg viewBox="0 0 126 48"><defs>${penFilter('stsRough5', 37)}</defs>
+    <path d="M8 12C44 13 82 20 105 33" ${pen('stsRough5')}/>
+    ${headV('stsRough5', 116, 42, 93, 36, 111, 21)}
+  </svg>`;
+
+  /* And the pair under the vending machines, which point back UP into them:
+     short hooks rather than long sweeps, because the caption sits right on the
+     edge of the photographs instead of a block away from them. */
+  const vendLeft = `<svg viewBox="0 0 62 44"><defs>${penFilter('stsRough6', 43)}</defs>
+    <path d="M56 37C40 35 24 33 14 24" ${pen('stsRough6')}/>
+    ${headV('stsRough6', 12, 9, 12, 31, 26, 20)}
+  </svg>`;
+  const vendRight = `<svg viewBox="0 0 46 44"><defs>${penFilter('stsRough7', 47)}</defs>
+    <path d="M8 37C20 35 28 28 33 17" ${pen('stsRough7')}/>
+    ${headV('stsRough7', 35, 9, 23, 16, 40, 26)}
+  </svg>`;
+
+  /* The four placements, in the order the layout hangs them: the two shops on
+     the top row, the two machines under them, flush — no gutter, because the
+     grid is one wall of places the message was put rather than four pictures
+     with space to breathe. */
+  const PLACES = [
+    { img: 'shop1.webp', alt: 'Gas station shop front, the campaign running on a screen in the window: "Sleep like a baby, tomorrow."' },
+    { img: 'shop2.webp', alt: 'Behind a shop counter, the same campaign on a screen over the drinks fridge: "Sleep like a log, tomorrow."' },
+    { img: 'vend1.webp', alt: 'Campus vending machine wrapped with "Get tonight’s energy spike."' },
+    { img: 'vend2.webp', alt: 'A row of campus machines carrying the same wrap' },
+  ];
 
   return `
     <div class="proj proj-sts">
@@ -1975,12 +2016,12 @@ PROJECTS['surf-the-spike'] = function () {
 
       <div class="proj-head">
         <img class="proj-title-art" src="${IMG}ui/camp_l2_0.png" alt="Surf the spike">
-        <p class="sts-idea">gemini reads the drink in your hand and paces the study session to the caffeine curve, so the hardest hour lands on the spike instead of the crash.</p>
+        <p class="sts-idea">a solution for college students to take full advantage of their late-night caffeine-filled study sessions.</p>
       </div>
 
       <div class="proj-block sts-b-case">
-        <p class="sts-cap">
-          case study
+        <p class="sts-cap sts-cap-case">
+          <span>video case</span>
           ${caseArrow}
         </p>
         <div class="proj-media sts-yt">
@@ -1988,81 +2029,45 @@ PROJECTS['surf-the-spike'] = function () {
         </div>
       </div>
 
-      <!-- the problem, in the campaign's own footage: nobody buys an energy
-           drink for the taste of it, they buy hours with it and then lose
-           them anyway. Cut silent and looping, like every clip on the site. -->
-      <div class="proj-block sts-b-drink">
-        <div class="sts-side">
-          <p class="sts-copy">a student doesn’t drink it for the taste. he is buying hours — and then sleeps through half of them.</p>
-          <div class="proj-media sts-clip">
-            <video autoplay muted loop playsinline poster="${p}drink.jpg"><source src="${p}drink.mp4" type="video/mp4"></video>
-          </div>
-        </div>
-      </div>
-
+      <!-- The artwork carries its own black margin — the three phones are
+           drawn inside a 1610x906 field, not cropped to their own edges — and
+           the layout puts the caption inside that margin rather than above it.
+           So the caption is positioned over the top right of the image, which
+           is where the arrow needs to start from to fall on the third phone. -->
       <div class="proj-block sts-b-scan">
-        <p class="sts-cap">
-          point the camera at whatever you’re drinking and it knows how long you’ve got
-          ${scanArrow}
+        <div class="sts-scan">
+          <img src="${p}scan.webp" alt="Three phones scanning a coffee, a tea and an energy shot, each labelled with the caffeine it holds" loading="lazy">
+          <p class="sts-cap sts-cap-scan">
+            ${scanArrow}
+            <span>scan your caffeine intake</span>
+          </p>
+        </div>
+      </div>
+
+      <div class="proj-block sts-b-ui">
+        <p class="sts-cap sts-cap-ui">
+          <span>get your specific energy curve tracked and a study plan that benefits from it</span>
+          ${uiArrow}
         </p>
         <div class="proj-media sts-clip">
-          <video autoplay muted loop playsinline poster="${p}scan.jpg"><source src="${p}scan.mp4" type="video/mp4"></video>
+          <video autoplay muted loop playsinline poster="${p}ui.jpg"><source src="${p}ui.mp4" type="video/mp4"></video>
         </div>
       </div>
 
-      <!-- The feature itself. The big one first, because the curve with the
-           session written along it is the whole idea in one screen; the two
-           under it are what that turns into subject by subject. -->
-      <div class="proj-block sts-b-app">
-        <p class="sts-cap sts-cap-end">
-          the session is cut to the curve — the heavy reading on the peak, the questions on the way down
-        </p>
-        <div class="proj-media sts-shot">
-          <img src="${p}app-history.webp" alt="Gemini showing a caffeine curve above a history reading, timed four minutes until the spike" loading="lazy">
-        </div>
-        <div class="proj-duo sts-duo">
-          <div class="proj-media sts-shot">
-            <img src="${p}app-biology.webp" alt="The same curve on a biology session, twenty minutes until the end" loading="lazy">
-          </div>
-          <div class="proj-media sts-shot">
-            <img src="${p}app-chord.webp" alt="A listening question set for the tail of the curve" loading="lazy">
-          </div>
-        </div>
-      </div>
-
-      <!-- Out of home, put where the spike is actually bought rather than
-           where students are: the machine, then the shop counter. -->
       <div class="proj-block sts-b-out">
-        <p class="sts-cap">
-          bought where the spike is
-          ${outArrow}
+        <p class="sts-cap sts-cap-shops">
+          ${shopLeft}
+          <span>reached students in gas stations near residences</span>
+          ${shopRight}
         </p>
-        <div class="proj-duo sts-duo">
-          <div class="proj-media sts-shot">
-            <img src="${p}vend1.webp" alt="Vending machine wrapped with “Get tonight’s energy spike. Tomorrow, sleep like a log.”" loading="lazy">
-          </div>
-          <div class="proj-media sts-shot">
-            <img src="${p}vend2.webp" alt="A row of vending machines carrying the same wrap in a college corridor" loading="lazy">
-          </div>
+        <div class="sts-grid">
+          ${PLACES.map((c) => `<figure class="sts-cell"><img src="${p}${c.img}" alt="${c.alt}" loading="lazy"></figure>`).join('')}
         </div>
-        <div class="proj-duo sts-duo">
-          <div class="proj-media sts-shot">
-            <img src="${p}shop1.webp" alt="Shop window screen running “Sleep like a baby, tomorrow.”" loading="lazy">
-          </div>
-          <div class="proj-media sts-shot">
-            <img src="${p}shop2.webp" alt="The same screen behind a corner-shop counter, over the energy drinks" loading="lazy">
-          </div>
-        </div>
-      </div>
-
-      <!-- The line, last, in the film's own hand: the curve draws itself and
-           the endline lands on it. No caption and no doodle over this one —
-           the clip IS the lockup, and a pen mark on top of a finished endline
-           would be the page talking over the campaign. -->
-      <div class="proj-block sts-b-line">
-        <div class="proj-media sts-clip">
-          <video autoplay muted loop playsinline poster="${p}line.jpg"><source src="${p}line.mp4" type="video/mp4"></video>
-        </div>
+        <p class="sts-cap sts-cap-vend">
+          ${vendLeft}
+          <span>and in vending machines inside campus</span>
+          ${vendRight}
+        </p>
       </div>
 
       ${nav(false)}

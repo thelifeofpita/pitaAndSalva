@@ -1801,19 +1801,23 @@ body.narrow #page.page-and .back-in { gap: calc(16px * var(--inv)); }
 }
 
 /* ----------------------------------------------- project: surf the spike */
-/* Same system as the three pages above — same type, same nav/title-art
-   sizing, its own block so any of them can drift from the others.
+/* Set to update/surf_the_spike/layout.pdf. That file is drawn at 1920 wide,
+   which is the width these pages are laid out against, so its measurements are
+   used directly: 1 unit = 1px at 1920 = 1/19.2 vw. The column is 1610 units
+   inside 155-unit margins (8.073vw), and every block in it is that full width
+   — one caption, one piece of media, down the page — with the placements last
+   as a flush 2x2.
 
-   This page is a column of full-width media with a caption over each block,
-   which is the shape the work has: one film, one feature, one placement, in
-   that order. The only pairs are the two that are genuinely a pair — two
-   subjects of the same screen, two machines of the same wrap. */
+   Each caption's arrow is placed by its own numbers rather than a shared rule.
+   They are not decoration in a row of text: each one leaves the words at a
+   particular point and lands on a particular part of the picture under it, and
+   in the layout that means each sits at its own height against its own line. */
 .proj-sts {
   --sts-ink: #f2f2ea;
   --sts-copy: 1.411vw;
   font-family: 'CossetteTexte', "Helvetica Neue", Helvetica, Arial, sans-serif;
   max-width: none;
-  padding: 0 7.031vw 6.3vw;
+  padding: 0 8.073vw 6.3vw;
   font-size: var(--sts-copy);
 }
 .proj-sts .proj-head { margin-top: 3.07vw; }
@@ -1842,54 +1846,80 @@ body.narrow #page.page-and .back-in { gap: calc(16px * var(--inv)); }
   color: var(--sts-ink);
 }
 
-.proj-sts .proj-block { margin: 4.58vw 0 0; }
-.proj-sts .proj-block:first-of-type { margin-top: 4.58vw; }
-
-/* text hugging the left edge, arrow immediately trailing it, both pointing
-   down into the media the caption introduces — the same read as Back in
-   Smoothly's bis-desc and Numpad Jam's np-case */
-.sts-cap {
-  display: flex;
-  align-items: center;
-  justify-content: flex-start;
-  gap: 1.25vw;
-  flex-wrap: wrap;
-  font-size: var(--sts-copy);
-  color: var(--sts-ink);
-  text-align: left;
-  margin: 0 0 1.77vw;
-}
-.sts-cap svg { width: 3.854vw; height: 1.615vw; overflow: visible; flex: none; color: var(--sts-ink); }
-/* a caption that ends a thought rather than pointing at one: no arrow, so
-   nothing has to be left room for beside it */
-.sts-cap-end { max-width: 46vw; }
-
-.sts-copy {
-  font-size: var(--sts-copy);
-  line-height: 1.3;
-  color: var(--sts-ink);
-  margin: 0 0 1.77vw;
-  max-width: 30vw;
-}
-
-.sts-yt { position: relative; aspect-ratio: 16 / 9; }
-.sts-yt iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; display: block; }
-
 /* The shared .proj-media speckle edge is off here, the same call the other
    three project pages make: it is tuned for the site's own 1-bit art on
    black, and around a bright still — a white app screen, a lit shop window —
    it reads as a dirty border rather than a printed one. */
 .proj-sts .proj-media { mask-image: none; }
-/* the clips are the film's own frames, shown whole — never cropped to a box */
+
+/* the caption line: words and the arrow that leaves them, aligned to their
+   tops rather than centred, because the arrow's job is to hang below the line
+   and drop into the picture, not to sit level with the words */
+.sts-cap {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.885vw;              /* 17 units, the layout's own gap either side */
+  flex-wrap: nowrap;
+  font-size: var(--sts-copy);
+  line-height: 1.2;
+  color: var(--sts-ink);
+  text-align: left;
+  margin: 0;
+}
+.sts-cap svg { flex: none; overflow: visible; color: var(--sts-ink); }
+.sts-cap span { flex: none; }
+
+.proj-sts .proj-block { margin: 0; }
+.proj-sts .sts-b-case { margin-top: 4.58vw; }
+
+.sts-cap-case { margin-bottom: 1.094vw; }               /* caption 99 -> video 152 */
+.sts-cap-case svg { width: 3.854vw; height: 1.615vw; margin-top: 0.208vw; }
+
+.sts-yt { position: relative; aspect-ratio: 16 / 9; }
+.sts-yt iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; display: block; }
+
+/* video bottom 1056 -> the scan artwork's own box top 1151 */
+.proj-sts .sts-b-scan { margin-top: 4.948vw; }
+.sts-scan { position: relative; }
+.sts-scan img { display: block; width: 100%; height: auto; }
+/* inside the artwork's own black margin, 29 units down and 47 in from the
+   right, which is where the layout starts the line so its arrow lands on the
+   third phone */
+.sts-cap-scan {
+  position: absolute;
+  top: 1.51vw;
+  right: 2.448vw;
+}
+.sts-cap-scan svg { width: 8.75vw; height: 4.583vw; margin-top: 0.729vw; }
+
+/* the scan artwork's box bottom 2057 -> this caption's line at 2100 */
+.proj-sts .sts-b-ui { margin-top: 2.24vw; }
+.sts-cap-ui { margin-bottom: 1.667vw; }                 /* caption 2100 -> clip 2164 */
+.sts-cap-ui svg { width: 6.667vw; height: 3.021vw; margin-top: 0.313vw; }
+
+/* the clip is shown whole, at the ratio the UI was recorded in */
 .sts-clip video { width: 100%; height: auto; display: block; }
 
-.proj-sts .sts-duo { gap: 2.604vw; margin-top: 2.604vw; }
-.sts-shot img { display: block; width: 100%; height: auto; }
+/* clip bottom 3070 -> the shops caption at 3141 */
+.proj-sts .sts-b-out { margin-top: 3.698vw; }
+/* both grid captions are centred on the page, with an arrow off each end */
+.sts-cap-shops, .sts-cap-vend { justify-content: center; }
+.sts-cap-shops { margin-bottom: 1.406vw; }              /* caption 3141 -> grid 3198 */
+.sts-cap-shops svg:first-child { width: 5.833vw; height: 2.396vw; margin-top: 0.781vw; }
+.sts-cap-shops svg:last-child { width: 6.563vw; height: 2.5vw; margin-top: 0.833vw; }
 
-/* copy beside the clip rather than over it: the frame is a lit desk in a
-   dark room and there is no corner of it that carries type */
-.sts-side { display: grid; grid-template-columns: 1fr 2.2fr; gap: 2.604vw; align-items: center; }
-.sts-side .sts-copy { margin: 0; max-width: none; }
+/* Flush, deliberately: no gutter between the four. The two shops and the two
+   machines are one wall of places the message was put, and a gap between them
+   would make them four pictures of four places instead. */
+.sts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0; }
+.sts-cell { margin: 0; }
+.sts-cell img { display: block; width: 100%; height: auto; }
+
+/* and this one sits right on the bottom edge of the photographs, its hooks
+   reaching back up into them — hence the negative offsets */
+.sts-cap-vend { margin-top: 0.677vw; }
+.sts-cap-vend svg:first-child { width: 3.229vw; height: 2.292vw; margin-top: -0.625vw; }
+.sts-cap-vend svg:last-child { width: 2.396vw; height: 2.292vw; margin-top: -0.573vw; }
 
 @media (max-width: 1000px) {
   .proj-sts { padding: 24px 6vw 110px; --sts-copy: 14px; }
@@ -1900,14 +1930,43 @@ body.narrow #page.page-and .back-in { gap: calc(16px * var(--inv)); }
   .proj-sts .proj-nav-hands .back-in { gap: 26px; }
   .proj-sts .proj-nav-hands .hand { width: 48px; }
   .proj-sts .proj-title-art { width: min(69.8vw, 602px); }   /* 72vw scaled the same way */
-  .sts-idea, .sts-copy, .sts-cap-end { max-width: 100%; }
-  .proj-sts .proj-block, .proj-sts .proj-block:first-of-type { margin-top: 30px; }
-  .sts-cap { gap: 10px; margin-bottom: 12px; }
-  .sts-cap svg { width: 54px; height: 23px; }
-  /* one column: two vending machines side by side on a phone are two
-     thumbnails, and the wrap printed on them is the work */
-  .proj-sts .sts-duo { grid-template-columns: 1fr; gap: 10px; margin-top: 10px; }
-  .sts-side { grid-template-columns: 1fr; gap: 12px; }
+  .sts-idea { max-width: 100%; }
+  .proj-sts .sts-b-case { margin-top: 30px; }
+  .proj-sts .sts-b-scan, .proj-sts .sts-b-ui, .proj-sts .sts-b-out { margin-top: 30px; }
+
+  /* Every caption is a line of type and a doodle at the size the phone layout
+     sets them, and the long ones wrap — so they stop being a nowrap row with
+     the arrow pinned to one end. */
+  .sts-cap { flex-wrap: wrap; gap: 10px; align-items: center; }
+  .sts-cap svg { margin-top: 0 !important; }
+  .sts-cap-case { margin-bottom: 12px; }
+  .sts-cap-case svg { width: 54px; height: 23px; }
+  .sts-cap-ui { margin-bottom: 12px; }
+  .sts-cap-ui svg { width: 74px; height: 34px; }
+  /* the scan caption comes out of the artwork's margin and back into the flow:
+     there is no room beside three phones on a 390-wide screen for a line of
+     type to sit over them */
+  .sts-cap-scan { position: static; margin-bottom: 12px; }
+  .sts-cap-scan svg { width: 84px; height: 44px; }
+  /* The two grid captions point at pictures on either side of them, and on a
+     phone there is no either side — the 2x2 is one column. So the line takes
+     the width and both marks go on their own row against it, still on the
+     side of the type the layout puts them on: the shops' arrows below,
+     dropping into the first photograph, the vending hooks above, reaching
+     back up into the last one. */
+  .sts-cap-shops, .sts-cap-vend { text-align: center; }
+  .sts-cap-shops span, .sts-cap-vend span { flex-basis: 100%; }
+  .sts-cap-shops span { order: -1; }
+  .sts-cap-vend span { order: 1; }
+  .sts-cap-shops { margin-bottom: 12px; }
+  .sts-cap-shops svg:first-child { width: 64px; height: 26px; }
+  .sts-cap-shops svg:last-child { width: 68px; height: 26px; }
+  .sts-cap-vend { margin-top: 12px; }
+  .sts-cap-vend svg:first-child { width: 40px; height: 28px; }
+  .sts-cap-vend svg:last-child { width: 30px; height: 28px; }
+  /* one at a time: a shop window is 170px wide in two columns on a phone, and
+     the poster in that window is the work */
+  .sts-grid { grid-template-columns: 1fr; }
 }
 
 /* ------------------------------------------------- project: tracking life */

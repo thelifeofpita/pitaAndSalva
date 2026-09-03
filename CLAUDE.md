@@ -184,6 +184,13 @@ into one full-bleed column in each cell's `--m` order — each garment, then its
 stitching close, then the next, and the pile last — with the DOM left in ring
 order so nothing about the wide layout moves.
 
+Surf the Spike is set to a supplied layout (`update/surf_the_spike/layout.pdf`,
+gitignored with the rest of the source material). That file is drawn at 1920,
+the width these pages are laid out against, so its measurements go straight
+into the CSS as units/19.2 vw — margins, column width, the gap between blocks,
+and where each caption's arrow sits against its own line. If that page is
+re-cut, re-measure the PDF rather than nudging numbers.
+
 Hand-drawn doodles (arrows, circles, underlines) are inline SVG through the
 shared `penFilter`/`pen`/`headV` helpers. Two invariants: **each doodle needs a
 unique filter id** (duplicates silently cross-apply), and **each is sized in CSS
