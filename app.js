@@ -17,9 +17,15 @@ const PAGE_DEFS = {
   /* `*_plate`, not the raw keyframe: both of their keyframes mock a bio and CV
      in lorem, and that block is set as live type over the plate instead, so
      the plate has it erased — exactly what `kf_amp_plate` is to the & page. */
-  pita:  { seq: 'pita',  key: 'kf_pita_plate',  back: 'left' },
-  salva: { seq: 'salva', key: 'kf_salva_plate', back: 'right' },
-  and:   { seq: 'amp',   key: 'kf_amp_plate', back: 'bottom', settleKey: true },
+  /* Each member's framing is his own: in landscape it is the whole drawing,
+     and on a portrait window the camera travels to his figure — see FRAMING. */
+  pita:  { seq: 'pita',  key: 'kf_pita_plate',  back: 'left',  framing: 'pita' },
+  salva: { seq: 'salva', key: 'kf_salva_plate', back: 'right', framing: 'salva' },
+  and:   { seq: 'amp',   key: 'kf_amp_plate', back: 'bottom', settleKey: true,
+           /* the two faces are at the edges of this frame; it is never cropped
+              sideways, and on a portrait window it comes apart — both are the
+              `and` framing, which the move that opens the page carries. */
+           framing: 'and' },
 };
 const CAMPAIGN_BACK = 'top';   // campaign titles sit along the bottom of the landing
 /* where the title comes to rest on a campaign page — must match
@@ -58,6 +64,7 @@ const BECKON = [
 ];
 
 const $ = (s) => document.querySelector(s);
+const fitBox = $('#fit');
 const stage = $('#stage');
 const plate = $('#plate');
 const ui = $('#ui');
@@ -72,6 +79,17 @@ const projectScroll = $('#project-scroll');
 
 let cfg = null;
 let busy = false;
+/* A tap on the way back that lands while a move is running. Dropping it is what
+   makes the control feel broken: the site is mid-camera for the best part of a
+   second either side of every page, and a press inside that window used to go
+   nowhere at all — and worse, `goHome` had already cleared the address bar by
+   then, so the URL and the screen disagreed. Held here instead and let through
+   the moment the move ends. */
+let pendingHome = false;
+function idle() {
+  busy = false;
+  if (pendingHome) { pendingHome = false; goHome(); }
+}
 let current = null;          // null on landing, else a page id
 let pendingCampaignOrigin = null;
 let campaignReturnOrigin = null;
@@ -92,6 +110,7 @@ function setBackSide(side) {
 function setPageKind(id) {
   page.classList.remove(...PAGE_KINDS);
   if (id) page.classList.add('page-' + id);
+  layoutMemberCopy();
 }
 
 const src = (name) => `${IMG}${name}.png`;
@@ -216,18 +235,76 @@ async function warm(names) {
 const ctx = plate.getContext('2d', { alpha: false });
 ctx.imageSmoothingEnabled = false;
 
+/* The same drawing, as two half-width canvases. While the & is open these are
+   what is on screen instead of the plate — one holding the left 960 units of
+   every frame and one the right — which is what lets the frame come apart
+   inside the move rather than after it. Each is only its own half, so painting
+   both costs exactly what painting the plate costs. */
+const halves = [...document.querySelectorAll('.af-plate')].map((c, i) => {
+  const g = c.getContext('2d', { alpha: false });
+  g.imageSmoothingEnabled = false;
+  return { g, sx: i * 960 };
+});
+let andOpen = false;
+
 let painted = null;
+
+/* The overlay's artwork was erased out of the landing plate when it was built —
+   the labels, the ampersand, the three throws and the campaign titles are all
+   drawn on top of it instead — and the erase left a hairline of ink behind at
+   every one of those places. It has never been visible, because each piece of
+   overlay art has always sat exactly on top of its own ghost. It is visible the
+   moment any of them moves, so the plate is cleaned rather than the layout kept
+   still: these rectangles are black on the plate and black everywhere on this
+   site, and the hands do not reach into any of them. */
+let scrubs = null;
+function scrubList() {
+  if (scrubs || !cfg) return scrubs;
+  const pad = 10;
+  const box = (d) => [d.x - pad, d.y - pad, d.w + 2 * pad, d.h + 2 * pad];
+  scrubs = Object.values(cfg.assets).map(box);
+  const all = cfg.campaigns.concat(cfg.stars);
+  const x = Math.min(...all.map((c) => c.x)), y = Math.min(...all.map((c) => c.y));
+  scrubs.push([x - pad, y - pad,
+               Math.max(...all.map((c) => c.x + c.w)) - x + 2 * pad,
+               Math.max(...all.map((c) => c.y + c.h)) - y + 2 * pad]);
+  return scrubs;
+}
 
 function draw(name) {
   const bmp = bmps.get(name);
-  if (bmp) { ctx.drawImage(bmp, 0, 0, 1920, 1080); painted = name; return true; }
-  const e = store.get(name);
-  if (!e || !e.img || !e.img.complete) return false;  // never blank the stage
+  const e = bmp ? null : store.get(name);
+  if (!bmp && (!e || !e.img || !e.img.complete)) return false;  // never blank the stage
   // Loaded but not decoded yet: drawing the element decodes it here and now,
   // which costs a few ms but always puts the right frame on screen.
-  ctx.drawImage(e.img, 0, 0, 1920, 1080);
+  const img = bmp || e.img;
+  const scrub = name === LANDING && scrubList();
+  if (andOpen) {
+    for (const h of halves) {
+      h.g.drawImage(img, h.sx, 0, 960, 1080, 0, 0, 960, 1080);
+      if (!scrub) continue;
+      h.g.fillStyle = '#000';
+      for (const r of scrubs) h.g.fillRect(r[0] - h.sx, r[1], r[2], r[3]);
+    }
+  } else {
+    ctx.drawImage(img, 0, 0, 1920, 1080);
+    if (scrub) {
+      ctx.fillStyle = '#000';
+      for (const r of scrubs) ctx.fillRect(r[0], r[1], r[2], r[3]);
+    }
+  }
   painted = name;
   return true;
+}
+
+/* Swapping which canvas is on screen, with the frame already on it. Both are
+   painted before either is shown, so the change of surface is not a frame. */
+function setAndOpen(on) {
+  if (andOpen === on) return;
+  andOpen = on;
+  if (painted) { const was = painted; painted = null; draw(was); }
+  stage.classList.toggle('and-open', on);
+  if (!on) $('#and-faces').classList.remove('dressed');
 }
 
 /* The frame the page currently means to be showing. A frame that is not loaded
@@ -256,9 +333,33 @@ function show(name) {
    Driven off requestAnimationFrame so a hold ends on a paint rather than
    whenever a timer happens to fire — setTimeout drift accumulated across a
    twelve-frame dap is audible in the cadence. */
-async function play(frames, hold = TIMING.trans, lastHold = null) {
+/* `framing` moves the camera across the move: where the landing is pointed and
+   where the destination needs to be pointed are not the same place (see FRAMING
+   in the fit section), and a move is the only place that change can be made
+   without reading as a jump. It is stepped with the frames rather than tweened
+   under them — this site cuts, it does not dissolve, and a camera travelling on
+   the same beats as the poses is part of the same camera.
+
+   `travel` is when in the move it goes. It matters because these sequences are
+   themselves camera moves with a cut in them: the first frames of the way into
+   a member's page are still the two hands, and the person only appears halfway
+   through. Panning off the hands while they are still the picture is the jump,
+   not the fix. So arriving, the camera holds and then travels with the subject
+   it cuts to; leaving, it does the same thing in reverse and is home before the
+   hands come back. The curve inside that span is the site's own `camPose`. */
+const ARRIVE = [.45, 1], LEAVE = [0, .55];
+
+async function play(frames, hold = TIMING.trans, lastHold = null,
+                    framing = null, travel = ARRIVE) {
   if (!frames || !frames.length) return;
   await prime(frames);
+
+  const from = cam;
+  const to = framing ? camFor(framing) : from;
+  const span = Math.max(1, frames.length - 1);
+  const lerp = (a, b, p) => a + (b - a) * p;
+  const pose = (i) => camPose(clamp01(
+    (i / span - travel[0]) / Math.max(.001, travel[1] - travel[0])));
 
   const holds = frames.map((_, i) => {
     const h = (i === frames.length - 1 && lastHold !== null) ? lastHold : hold;
@@ -271,6 +372,12 @@ async function play(frames, hold = TIMING.trans, lastHold = null) {
     const step = (now) => {
       if (!due) due = now;
       if (now >= due) {
+        if (framing) {
+          const p = pose(i);
+          applyCam({ s: lerp(from.s, to.s, p), x: lerp(from.x, to.x, p),
+                     y: lerp(from.y, to.y, p),
+                     split: lerp(from.split || 0, to.split || 0, p) });
+        }
         show(frames[i]);
         // A backgrounded tab stops raf; on return, run the rest from now rather
         // than flushing the whole backlog into one paint.
@@ -278,6 +385,7 @@ async function play(frames, hold = TIMING.trans, lastHold = null) {
         i++;
         if (i >= frames.length) {
           keep = new Set();
+          if (framing) { framed = framing; fit(); }
           setTimeout(resolve, Math.max(0, due - performance.now()));
           return;
         }
@@ -293,21 +401,171 @@ async function play(frames, hold = TIMING.trans, lastHold = null) {
   });
 }
 
-function fit() {
-  const s = Math.min(innerWidth / 1920, innerHeight / 1080);
-  document.documentElement.style.setProperty('--scale', s);
+/* ------------------------------------------------------------------- fit */
+/* The stage is one fixed 1920x1080 drawing and a browser window is any shape at
+   all. Fitting the drawing by `contain` — the whole frame, letterboxed — is
+   what leaves a phone showing a 390x219 strip stranded in the middle of a black
+   screen. So the drawing is not fitted to the window; a camera is pointed at it.
+
+   A framing is that camera: a scale, and a point of the drawing to hold in the
+   middle of the window. What each one is for:
+
+     landing  two hands meeting dead centre, their arms already running off the
+              frame, so cropping the arms is native to the image rather than
+              something done to it. A window shaped like the drawing gets all of
+              it; a portrait one closes in to the palms, on a straight ramp so
+              dragging a window moves the frame rather than snapping it.
+     wide     the whole drawing, uncropped sideways — what the & needs, since
+              its subject is two faces held against opposite edges.
+     pita     a member's own frame is his figure standing in one half of a 1.9:1
+     salva    photograph, and a portrait window has no room for the half the
+              copy was set into. So the camera goes to the figure and the copy
+              takes the space under him. In landscape it is `wide`, unchanged.
+
+   Moving between framings moves the camera, and that move is made inside the
+   move that carries it — `play(..., framing)` steps it with the frames — so it
+   reads as the camera travelling rather than as a cut that jumped. That is the
+   whole reason a framing is a camera and not a number: a member's portrait
+   framing is off to one side of the drawing, and without the pan the last frame
+   of the move and the page it lands on are two different pictures. */
+const CROP_H = 1010;          /* the drawing top to bottom, less its black rim */
+
+/* every element the overlay clamps keeps this much clear screen edge */
+const EDGE_PAD = 22;
+
+/* Where the ink actually is in each member's plate — the box the portrait
+   camera sizes itself to, measured off the drawing rather than guessed at.
+
+   `cx` is a second measurement, and it is the one the camera actually holds in
+   the middle: the centre of the head and shoulders, not of the whole silhouette.
+   Pita stands square, so for him the two are the same point. Salva does not —
+   his head and shoulders sit at x 517-731 while the arm throwing the horns
+   trails down to 330 — so a frame centred on his ink box puts his face a
+   hundred units right of the middle, which is exactly where it looked. A
+   portrait is centred on the face; the arm is allowed to run wherever it runs. */
+const FIGURE = {
+  pita:  { x: 839, w: 935, y: 96,  h: 759, cx: 1306 },
+  salva: { x: 334, w: 396, y: 200, h: 779, cx: 624 },
+};
+/* the share of the window a member's figure takes in portrait, and the air it
+   keeps above him — the rest of the window is the column under him */
+const FIG_W = .90, FIG_H = .40, FIG_TOP = .045;
+
+const portrait = () => innerWidth / innerHeight < 1;
+
+/* contain: the whole drawing, less the black rim off its top and bottom */
+function wideCam() {
+  return { s: Math.min(innerWidth / 1920, innerHeight / CROP_H),
+           x: 960, y: 540, split: 0 };
 }
+
+const FRAMING = {
+  /* `split` is how far the & frame has come apart — carried on the camera so
+     the halves separate on the same curve, in the same beats, as the pull-back
+     that opens the page. One move, not a move and then a move. */
+  and() { return { ...wideCam(), split: portrait() ? 1 : 0 }; },
+  landing() {
+    const t = Math.min(1, Math.max(0, (1 - innerWidth / innerHeight) / .25));
+    const w = 1920 + (780 - 1920) * t;
+    return {
+      s: Math.min(Math.max(innerWidth / 1920, innerHeight / 1080),
+                  innerWidth / w, innerHeight / CROP_H),
+      x: 960, y: 540, split: 0,
+    };
+  },
+  wide: wideCam,
+  pita:  () => memberCam('pita'),
+  salva: () => memberCam('salva'),
+};
+
+/* The figure as large as the window will take him, held against the top so the
+   copy has the rest. `y` is the point of the drawing the window centres on, so
+   it is worked back from where his own centre has to land on the glass. */
+function memberCam(id) {
+  if (!portrait()) return wideCam();
+  const f = FIGURE[id];
+  const s = Math.min(innerWidth * FIG_W / f.w, innerHeight * FIG_H / f.h);
+  const top = innerHeight * FIG_TOP;
+  return {
+    s,
+    x: f.cx,
+    y: f.y + f.h / 2 + (innerHeight / 2 - top - f.h * s / 2) / s,
+    split: 0,
+  };
+}
+
+let framed = 'landing';
+let cam = { s: 1, x: 960, y: 540, split: 0 };
+
+/* the window onto the stage, in stage units: what a clamped element has to stay
+   inside of, and what a page's plate is fitted into */
+let view = { s: 1, x: 0, y: 0, w: 1920, h: 1080, pad: EDGE_PAD };
+
+const camFor = (name) => (FRAMING[name] || FRAMING.landing)();
+
+function applyCam(c) {
+  cam = c;
+  andSplit = c.split || 0;
+  /* the two fixed layers the site lives in, given exactly the size the layout
+     was measured against — see the note on #fit in style.css */
+  for (const el of [fitBox, project]) {
+    el.style.width = innerWidth + 'px';
+    el.style.height = innerHeight + 'px';
+  }
+  const s = c.s, w = innerWidth / s, h = innerHeight / s;
+  view = { s, w, h, x: c.x - w / 2, y: c.y - h / 2, pad: EDGE_PAD / s };
+
+  const css = document.documentElement.style;
+  css.setProperty('--scale', s);
+  /* the pan, applied after the scale so it is written in the drawing's own
+     units: moving the stage by this much puts `c.x, c.y` in the middle */
+  css.setProperty('--cam-x', (960 - c.x) + 'px');
+  css.setProperty('--cam-y', (540 - c.y) + 'px');
+  /* the inverse, so a box inside the scaled stage can be given a size in real
+     screen pixels: `calc(17px * var(--inv))` is 17px on the glass */
+  css.setProperty('--inv', 1 / s);
+  css.setProperty('--view-x', view.x + 'px');
+  css.setProperty('--view-y', view.y + 'px');
+  css.setProperty('--view-w', view.w + 'px');
+  css.setProperty('--view-h', view.h + 'px');
+  /* the same window written from the other two sides, for anything held
+     against them: `right: var(--view-r)` is the window's right edge */
+  css.setProperty('--view-r', (1920 - view.x - view.w) + 'px');
+  css.setProperty('--view-b', (1080 - view.y - view.h) + 'px');
+  /* one size for the way back, everywhere it appears */
+  css.setProperty('--back-hand', backHandPx() + 'px');
+
+  /* A destination page's plate, whole, inside that window — the `contain` fit
+     the whole stage used to get. Everything registered to the plate (the two
+     eyes, MAGIC, a campaign's title) goes through the same three numbers, so it
+     stays nailed to the drawing at every size. A camera pointed off centre is
+     already framing its own subject, so there it is left alone. */
+  const off = Math.abs(c.x - 960) > .5 || Math.abs(c.y - 540) > .5;
+  const k = off ? 1 : Math.min(view.w / 1920, view.h / 1080);
+  css.setProperty('--pg-k', k);
+  css.setProperty('--pg-x', (960 - 960 * k) + 'px');
+  css.setProperty('--pg-y', (540 - 540 * k) + 'px');
+
+  /* Portrait: no frame here has negative space left to set a member's CV into
+     beside him, so his page stacks instead. */
+  document.body.classList.toggle('narrow', portrait());
+  layoutUI();
+}
+
+function fit() { applyCam(camFor(framed)); }
 addEventListener('resize', fit);
 
 /* ------------------------------------------------------------ landing UI */
+/* Every piece of the overlay keeps the rect it was drawn at in `ui.json` — its
+   place in the 1920x1080 drawing — on the element itself, and `layoutUI()`
+   below is the only thing that ever writes a position. The two are separate
+   because the drawing's frame and the window's frame are no longer the same
+   rectangle: the plate is cropped to fill the window (see `fit`), so an element
+   drawn hard against the edge of the frame can be outside the window, and has
+   to be brought back in without being redrawn. */
 function buildUI() {
   const a = cfg.assets;
-  const put = (el, d) => {
-    el.style.left = d.x + 'px';
-    el.style.top = d.y + 'px';
-    el.style.width = d.w + 'px';
-    el.style.height = d.h + 'px';
-  };
+  const put = (el, d) => { el.design = { x: d.x, y: d.y, w: d.w, h: d.h }; };
   put($('#nav-salva'), a.salva);
   put($('#nav-pita'), a.pita);
   put($('#nav-amp'), a.amp);
@@ -322,7 +580,9 @@ function buildUI() {
     const i = document.createElement('img');
     i.src = IMG + s.src;
     i.alt = '';
-    i.style.cssText = `position:absolute;left:${s.x}px;top:${s.y}px;width:${s.w}px;height:${s.h}px`;
+    i.style.position = 'absolute';
+    i.design = { x: s.x, y: s.y, w: s.w, h: s.h };
+    campStars.push(i);
     wrap.appendChild(i);
   }
   for (const c of cfg.campaigns) {
@@ -333,13 +593,310 @@ function buildUI() {
     b.dataset.slug = c.slug;
     b.dataset.label = c.label;
     b.dataset.src = c.src;
-    b.style.cssText = `left:${c.x}px;top:${c.y}px;width:${c.w}px;height:${c.h}px`;
+    b.design = { x: c.x, y: c.y, w: c.w, h: c.h };
+    campItems.push(b);
     const i = document.createElement('img');
     i.src = IMG + c.src;
     i.alt = c.label;
     i.style.cssText = 'width:100%;height:100%';
     b.appendChild(i);
     wrap.appendChild(b);
+  }
+  layoutUI();
+}
+
+const campItems = [];
+const campStars = [];
+
+/* --------------------------------------------------------------- layout */
+/* Where an element goes once the window has cropped the drawing.
+
+   Nothing here re-designs the landing: every element keeps the place it was
+   drawn at for as long as that place is on screen, and is only pulled in — by
+   the shortest distance that clears the edge — when it is not. That is the
+   whole rule for the labels, the ampersand and the throw icons, and it is why
+   a desktop window at the drawing's own ratio comes out pixel-identical to the
+   keyframes while a phone still gets a label it can read.
+
+   The campaign block is the one thing that cannot simply be nudged: it is a
+   1772-unit line of hand-lettered titles, and a phone is not 1772 units wide at
+   any scale that leaves the titles legible. So it is set, in order of how much
+   it costs the design: at its drawn size if it fits, scaled down about its own
+   centre if a modest reduction is enough, and only then re-broken into rows. */
+function place(el, x, y, w, h) {
+  el.style.left = x + 'px';
+  el.style.top = y + 'px';
+  el.style.width = w + 'px';
+  el.style.height = h + 'px';
+}
+
+/* the drawn position, moved the least distance that puts the whole box inside
+   the window with `view.pad` to spare */
+function clampX(x, w) {
+  const lo = view.x + view.pad, hi = view.x + view.w - view.pad - w;
+  return hi < lo ? view.x + (view.w - w) / 2 : Math.min(Math.max(x, lo), hi);
+}
+function clampY(y, h) {
+  const lo = view.y + view.pad, hi = view.y + view.h - view.pad - h;
+  return hi < lo ? view.y + (view.h - h) / 2 : Math.min(Math.max(y, lo), hi);
+}
+
+/* Where the two names go when the frame has closed in past them. They are drawn
+   out at the wrists, in the black beyond the arms, and there is no black left
+   there once the frame crops: pulling them straight in lays white lettering
+   over a white hand. So they rise instead, to the line the ampersand's own
+   letter sits on — still one to a side with their arrows pointing off the frame
+   at the person they lead to, and now clear above the hands rather than beside
+   them. */
+const RAISED_LABEL_Y = 108;
+
+function layoutUI() {
+  if (!cfg) return;
+  for (const id of ['#nav-amp', '#ico-rock', '#ico-paper', '#ico-scissors']) {
+    const el = $(id), d = el.design;
+    if (d) place(el, clampX(d.x, d.w), clampY(d.y, d.h), d.w, d.h);
+  }
+  const salva = $('#nav-salva'), pita = $('#nav-pita');
+  /* a few units of travel is the label still standing in its own black; more
+     than that and it has started climbing the arm */
+  const raised = Math.abs(clampX(salva.design.x, salva.design.w) - salva.design.x) > 12 ||
+                 Math.abs(clampX(pita.design.x, pita.design.w) - pita.design.x) > 12;
+  for (const el of [salva, pita]) {
+    const d = el.design;
+    place(el, clampX(d.x, d.w), clampY(raised ? RAISED_LABEL_Y : d.y, d.h), d.w, d.h);
+  }
+  /* The ampersand points up out of the top of the frame and the throw icons sit
+     just over the fingertips: on a window short enough to push the ampersand
+     down onto them the two would collide, so it gives way rather than the
+     icons, which are anchored to the hands. */
+  const amp = $('#nav-amp'), rock = $('#ico-rock');
+  if (amp.design && rock.design) {
+    const ceiling = rock.offsetTop - amp.design.h - 16;
+    if (amp.offsetTop > ceiling) amp.style.top = ceiling + 'px';
+  }
+  layoutCampaigns();
+  layoutMemberCopy();
+  layoutAndFaces();
+}
+
+/* Portrait: the figure across the top, the copy under it.
+   In the frame each of them was shot in, the copy is set into the black his own
+   body leaves; on a phone that black is a sliver, so the frame is reopened. The
+   camera does the reframing (`memberCam` above) — by the time the move that
+   opens the page has landed, the plate is already sitting where it will stay,
+   which is what makes the page arrive rather than snap into place. All that is
+   left for the layout is the column: it starts under his feet, not at some
+   fixed share of the window, so Pita's copy does not open on a gap and Salva's
+   does not open on his knees. */
+function layoutMemberCopy() {
+  const id = page.classList.contains('page-pita') ? 'pita'
+           : page.classList.contains('page-salva') ? 'salva' : null;
+  if (!id || !portrait()) return;
+  const f = FIGURE[id];
+  const top = f.y + f.h + 26 / view.s;
+  const css = document.documentElement.style;
+  css.setProperty('--copy-top', top + 'px');
+  css.setProperty('--copy-h', (view.y + view.h - view.pad - top) + 'px');
+}
+
+/* ------------------------------------------------------------ the & page */
+/* The frame, taken apart. Two faces held against opposite edges of a 1.9:1
+   photograph is a composition with nothing in the middle, which is exactly what
+   a portrait window has most of — so rather than shrink the whole picture to a
+   band, the frame splits down the black gap between them and the two halves go
+   to opposite corners, one high and one low, with MAGIC in the diagonal they
+   leave. `andSplit` is how far through that they are, and it rides on the
+   camera (see FRAMING.and), so the halves separate on the same curve and in the
+   same held beats as the pull-back that opens the page.
+
+   At 0 the two halves are the plate, exactly: edge to edge at their drawn size,
+   filling the stage, which is what the moving frames need them to be and what a
+   landscape window keeps. The seam falls in the black gap between the faces, so
+   there is nothing there to give it away. */
+let andSplit = 0;
+/* the two halves where they currently are, in the drawing's units — the sky
+   below is drawn around them once they have left the places the map knows */
+let andRects = null;
+
+/* The way back is one control, and it is one size wherever it is: the hand
+   across the palm, in real screen pixels. The drawings differ — the pair that
+   reach in from the side of a member's frame are cut lengthwise, the pair that
+   hang into the & and into a project are cut the other way — so what is held
+   equal is the palm, not the box, and each place multiplies out from here.
+   Published as `--back-hand` for the stylesheet. */
+const backHandPx = () => Math.min(74, Math.max(48, innerWidth * .09));
+
+/* The strip of black at the bottom of the & that the picture does not get: it
+   exists for that control, so it is measured from it rather than being a share
+   of the window. A fraction cannot do this job — 20% of a 568-tall phone is
+   114px and the control is 98 of them, which leaves it sixteen pixels off the
+   bottom edge, exactly where a phone puts its own bar. Gap above, the control,
+   and a clearance under it that nothing is allowed to eat. */
+const BACK_GAP = 26;         /* between the picture and the hands */
+const BACK_CLEAR = 40;       /* under them, at the least */
+const andFootPx = () => Math.min(innerHeight * .3,
+                                 BACK_GAP + backHandPx() * 150 / 96 + BACK_CLEAR);
+/* MAGIC is measured down, not across: sized off the window's width it is a
+   third of the height of a tablet held upright, and there is then no room left
+   for the two faces it is supposed to be standing between. So the word takes a
+   share of the height, capped so it cannot run the full width of a phone, and
+   what is left over — less a little air on each side of it — is the two halves.
+   The three of them are one measurement, which is why they are worked out
+   together here rather than given separate constants. */
+const WORD_H = .135;         /* of the height the picture is laid out in */
+const WORD_MAX_W = .62;      /* of the window's width */
+const WORD_AIR = .02;        /* above and below it, of that same height */
+
+function layoutAndFaces() {
+  const l = $('.af-l'), r = $('.af-r'), word = $('#and-word');
+  if (!l) return;
+  /* a landscape window is the frame whole; turning one back from portrait puts
+     it together again rather than leaving the halves where they were */
+  if (!portrait()) andSplit = 0;
+  const t = andSplit;
+
+  /* Open: laid out in the window less its foot, which is the black the hands
+     waiting to take you back stand in — the one part of the window the picture
+     does not get, so the control is never on a face and never under the bar a
+     phone draws across the bottom of its own screen. */
+  const areaPx = innerHeight - andFootPx();
+  const wordPx = Math.min(areaPx * WORD_H, innerWidth * WORD_MAX_W * 223 / 521);
+  const halfPx = Math.max(0, (areaPx - wordPx - 2 * areaPx * WORD_AIR) / 2);
+
+  const area = areaPx / view.s;
+  /* where the picture stops and the foot begins, for the control that stands in
+     it — held against the bottom of the picture rather than the bottom of the
+     window, which on a phone is under the browser's own bar */
+  document.documentElement.style.setProperty('--and-foot', (view.y + area) + 'px');
+  const k1 = halfPx / view.s / 1080;
+  const lx1 = view.x, ly1 = view.y;
+  const rx1 = view.x + view.w - 960 * k1;
+  const ry1 = view.y + area - 1080 * k1;
+
+  const mix = (a, b) => a + (b - a) * t;
+  const k = mix(1, k1);
+  const lx = mix(0, lx1), ly = mix(0, ly1);
+  const rx = mix(960, rx1), ry = mix(0, ry1);
+  l.style.transform = `translate(${lx}px, ${ly}px) scale(${k})`;
+  r.style.transform = `translate(${rx}px, ${ry}px) scale(${k})`;
+  /* what the sky has to keep out of, once the halves have moved */
+  andRects = [{ x: lx, y: ly, w: 960 * k, h: 1080 * k },
+              { x: rx, y: ry, w: 960 * k, h: 1080 * k }];
+  openCellsFor = '';          /* the halves moved; the sky around them is new */
+
+  /* MAGIC keeps the place it was drawn in while the frame is closed, and once
+     the halves have gone it takes the middle of what they left. */
+  const wk1 = wordPx / view.s / 223;
+  const wx1 = 960 - 521 * wk1 / 2;
+  const wy1 = (ly1 + 1080 * k1 + ry1) / 2 - 223 * wk1 / 2;
+  const wx = mix(699, wx1), wy = mix(428, wy1), wk = mix(1, wk1);
+  word.style.transform = `translate(${wx}px, ${wy}px) scale(${wk})`;
+  /* the sky is a map of where the dark is, and the word is a hole in it. The
+     word is a good deal larger once the frame has opened, so the hole is
+     re-measured from where it actually is rather than left at the one place it
+     was drawn. `bow` is the room an arc needs to swing clear of it. */
+  const bow = 30;
+  STREAK_WORD.x = wx - bow;
+  STREAK_WORD.y = wy - bow;
+  STREAK_WORD.w = 521 * wk + 2 * bow;
+  STREAK_WORD.h = 223 * wk + 2 * bow;
+}
+
+/* The block as it was drawn, and what it costs to keep it. `MIN_SQUEEZE` is how
+   far the drawn line may be scaled down before re-breaking it reads as less of
+   a compromise than shrinking it further: under about two thirds the lettering
+   stops being a title someone can read across a room. */
+const MIN_SQUEEZE = .66;
+const CAMP_ROW_GAP = 26;      /* between re-broken rows, in stage units */
+const CAMP_STAR_GAP = 26;     /* around a star separator */
+
+function layoutCampaigns() {
+  if (!campItems.length) return;
+  const design = campItems.concat(campStars).map((el) => el.design);
+  const left = Math.min(...design.map((d) => d.x));
+  const right = Math.max(...design.map((d) => d.x + d.w));
+  const top = Math.min(...design.map((d) => d.y));
+  const bottom = Math.max(...design.map((d) => d.y + d.h));
+  /* a floor so an absurdly small window cannot drive the scale negative */
+  const avail = Math.max(240, view.w - 2 * view.pad);
+  const k = Math.min(1, avail / (right - left));
+
+  if (k >= MIN_SQUEEZE) {
+    /* drawn, or drawn and squeezed: the justified two-line block survives,
+       scaled about its own centre so it stays centred under the hands */
+    const cx = (left + right) / 2, cy = (top + bottom) / 2;
+    const dy = clampY(cy + (top - cy) * k, (bottom - top) * k) - (cy + (top - cy) * k);
+    for (const el of campItems.concat(campStars)) {
+      const d = el.design;
+      el.style.display = '';
+      place(el, cx + (d.x - cx) * k, cy + (d.y - cy) * k + dy, d.w * k, d.h * k);
+    }
+    return;
+  }
+  /* re-broken, the block is shorter than the two drawn lines; it keeps the
+     middle of the band those two lines occupied rather than their top edge, so
+     it sits where the design put it rather than riding up under the hands */
+  reflowCampaigns(avail, (top + bottom) / 2);
+}
+
+/* Re-broken into rows. Every title the drawn block sets is set again here,
+   repeats included: the block is the site's list of campaigns and each one of
+   them is a link, so dropping the second half of it to make the phone layout
+   tidy takes three quarters of the list away from anyone holding a phone. There
+   is room for all of them — the frame a portrait window crops to leaves more
+   height under the hands than the drawn two lines need, not less. */
+function reflowCampaigns(avail, middle) {
+  const items = campItems;
+  const star = campStars[0].design;
+  const pairGap = star.w + 2 * CAMP_STAR_GAP;
+  /* Scale so that the widest neighbouring pair still shares a row: two titles
+     to a line is the shape of the drawn block, and keeping it is worth more
+     than keeping the lettering at full size. */
+  let pair = 0;
+  for (let i = 1; i < items.length; i++) {
+    pair = Math.max(pair, items[i - 1].design.w + pairGap + items[i].design.w);
+  }
+  const widest = Math.max(...items.map((el) => el.design.w));
+  const k = Math.min(1, avail / (pair || widest));
+  const limit = avail / k;
+
+  const rows = [];
+  let row = [];
+  let width = 0;
+  for (const el of items) {
+    const w = el.design.w;
+    const add = row.length ? pairGap + w : w;
+    if (row.length && width + add > limit) { rows.push({ row, width }); row = []; width = 0; }
+    width += row.length ? pairGap + w : w;
+    row.push(el);
+  }
+  if (row.length) rows.push({ row, width });
+
+  const rowH = Math.max(...items.map((el) => el.design.h)) * k;
+  const gap = CAMP_ROW_GAP * k;
+  const blockH = rows.length * rowH + (rows.length - 1) * gap;
+  let y = clampY(middle - blockH / 2, blockH);
+
+  for (const el of campItems) el.style.display = 'none';
+  for (const el of campStars) el.style.display = 'none';
+
+  let starAt = 0;
+  for (const { row, width } of rows) {
+    let x = 960 - width * k / 2;
+    row.forEach((el, i) => {
+      if (i) {
+        const s = campStars[starAt++ % campStars.length];
+        s.style.display = '';
+        /* the star rides the middle of the gap, on the row's own baseline */
+        place(s, x + CAMP_STAR_GAP * k, y + (rowH - star.h * k) / 2,
+              star.w * k, star.h * k);
+        x += pairGap * k;
+      }
+      el.style.display = '';
+      place(el, x, y + (rowH - el.design.h * k) / 2, el.design.w * k, el.design.h * k);
+      x += el.design.w * k;
+    });
+    y += rowH + gap;
   }
 }
 
@@ -360,6 +917,8 @@ async function enterLanding({ dap = true, frames = null } = {}) {
   }
   await settleOnLanding();
   ui.classList.remove('hidden');
+  // every return to the landing is a return to the idle clock
+  restartIdle();
 }
 
 /* The plate is loaded before the first dap ever plays, so this is normally a
@@ -424,8 +983,9 @@ const STREAK_COLS = 60;
 const STREAK_DARK = 'ffffffffff0f0003fffffffff0f800003fffffff0f800001fffffffd80000007ffffffe00000003ffffffe00000001ffffffe1c000001fffffffcc000001ffffffb0c000001ffffff9bc800001ffffff9fffc8001ffffff8ff3e8701ffffff8fe3f07e1ffffff9fc730481ffffff9fcc30001ffffffffcc30020ffffffffc670000fffffff7c7f0001ffffffffc020001ffffffffe000001ffffffffe000003fffffffff000007fffffffff00800ffffffffff80801ffffffffff80003ffffffffffc0003ffffffffff82007ffffffffff8000fffffffffff8008fffffffffff821ffffffffffff837ffffffffffff83fffffffffffff83fffffffffffff83';
 /* what the sky is not: the word, the two eyes, and the hands waiting at the
    bottom edge — all drawn on top of the dark, so the map cannot see them */
+let STREAK_WORD = { x: 669, y: 398, w: 582, h: 283 };
 const STREAK_CLEAR = [
-  { x: 669, y: 398, w: 582, h: 283 },    // the word, with room for an arc's bow
+  STREAK_WORD,                           // the word, with room for an arc's bow
   { x: 210, y: 415, w: 115, h: 112 },    // his eye
   { x: 1716, y: 392, w: 115, h: 112 },   // his
   { x: 836, y: 916, w: 248, h: 164 },    // the hands
@@ -475,13 +1035,53 @@ const SKY_CELLS = (() => {
   return cells;
 })();
 
+/* The drawn sky is a map of where the dark is in the 1.9:1 frame, and once the
+   frame has come apart that map is describing a picture that is no longer on
+   screen. So while the halves are open the sky is the window itself, less the
+   two of them and less the word: the diagonal they leave between the corners,
+   which is the biggest piece of black this page has ever had. */
+const SKY_EDGE = 40;          /* how far a star stays off the window's own edge */
+const skyOpen = () => andSplit > .5 && andRects;
+
+function openSkyTakes(x, y) {
+  if (x < view.x + SKY_EDGE || x > view.x + view.w - SKY_EDGE ||
+      y < view.y + SKY_EDGE || y > view.y + view.h - SKY_EDGE) return false;
+  for (const r of andRects) {
+    if (x >= r.x - SKY_EDGE && x <= r.x + r.w + SKY_EDGE &&
+        y >= r.y - SKY_EDGE && y <= r.y + r.h + SKY_EDGE) return false;
+  }
+  return !(x >= STREAK_WORD.x && x <= STREAK_WORD.x + STREAK_WORD.w &&
+           y >= STREAK_WORD.y && y <= STREAK_WORD.y + STREAK_WORD.h);
+}
+
+/* Where a star may land: the drawn map's own lit cells, or — with the frame
+   open — a grid over the window, which is rebuilt whenever the window is. */
+let openCells = null, openCellsFor = '';
+function skyCells() {
+  if (!skyOpen()) return SKY_CELLS;
+  const key = [view.x, view.y, view.w, view.h].map(Math.round).join(',');
+  if (openCells && openCellsFor === key) return openCells;
+  const cells = [];
+  for (let y = view.y; y < view.y + view.h; y += STREAK_CELL) {
+    for (let x = view.x; x < view.x + view.w; x += STREAK_CELL) {
+      if (openSkyTakes(x + STREAK_CELL / 2, y + STREAK_CELL / 2)) cells.push({ x, y });
+    }
+  }
+  openCells = cells.length ? cells : SKY_CELLS;
+  openCellsFor = key;
+  return openCells;
+}
+
 function skyTakes(x, y) {
+  if (skyOpen()) return openSkyTakes(x, y);
   const col = Math.floor(x / STREAK_CELL);
   const row = Math.floor(y / STREAK_CELL);
   if (col < 0 || col >= STREAK_COLS || row < 0) return false;
   const i = row * STREAK_COLS + col;
   if (i >= STREAK_DARK.length * 4) return false;
   if (!((parseInt(STREAK_DARK[i >> 2], 16) >> (3 - (i & 3))) & 1)) return false;
+  if (x >= STREAK_WORD.x && x <= STREAK_WORD.x + STREAK_WORD.w &&
+      y >= STREAK_WORD.y && y <= STREAK_WORD.y + STREAK_WORD.h) return false;
   return !STREAK_CLEAR.some((c) => x >= c.x && x <= c.x + c.w && y >= c.y && y <= c.y + c.h);
 }
 
@@ -494,7 +1094,8 @@ function throwStreak(slot, taken) {
     const path = Math.floor(Math.random() * STREAK_PATHS.length);
     const scale = chance(.18) ? rand(.9, 1.5) : rand(.32, .8);
     const travel = rand(0, 360) * Math.PI / 180;
-    const cell = SKY_CELLS[Math.floor(Math.random() * SKY_CELLS.length)];
+    const cells = skyCells();
+    const cell = cells[Math.floor(Math.random() * cells.length)];
     const tip = { x: cell.x + rand(0, STREAK_CELL), y: cell.y + rand(0, STREAK_CELL) };
     const reach = STREAK_PATHS[path].chord * scale;
     const back = { x: -Math.cos(travel), y: -Math.sin(travel) };
@@ -583,7 +1184,7 @@ async function streakLoop() {
 const EYE_SYMBOLS = ['star', 'heart', 'flame'];
 let eyeTurn = 0;
 function dressEyes() {
-  const eyes = $('#and-eyes');
+  const eyes = $('#and-faces');
   eyes.dataset.l = EYE_SYMBOLS[eyeTurn % 3];
   eyes.dataset.r = EYE_SYMBOLS[(eyeTurn * 2 + 1) % 3];
   eyeTurn++;
@@ -597,7 +1198,12 @@ async function goPage(id) {
   // Decode the destination alongside the move, so the last frame of the camera
   // pull-back cuts straight to it instead of flashing the empty page.
   const dest = load([p.key]);
-  await play(p.frames, TIMING.trans, TIMING.transLast);
+  /* Hand the frames to the two halves before the move starts. They are the
+     plate exactly until the camera begins to open them, so the change of
+     surface is invisible — and it is what lets the frame come apart during the
+     move instead of after it. */
+  if (id === 'and') setAndOpen(true);
+  await play(p.frames, TIMING.trans, TIMING.transLast, p.framing);
   await dest;
   pageImg.src = src(p.key);
   setBackSide(p.back);
@@ -605,8 +1211,11 @@ async function goPage(id) {
   setPageKind(id);
   if (id === 'and') dressEyes();
   page.classList.add('on');
+  /* the eyes belong to the page, not to the move that opens it: they light on
+     the two faces once the frame has finished coming apart */
+  if (id === 'and') $('#and-faces').classList.add('dressed');
   current = id;
-  busy = false;
+  idle();
   /* after `current`, which is the flag the loop runs on */
   if (id === 'and') streakLoop();
 }
@@ -1280,18 +1889,25 @@ PROJECTS['ads-from-trash'] = function () {
      edges between them are the close-ups of their lettering, and the pile
      sits in the middle. Cropped square off the originals at the point of
      interest (tools/crop_aft.py), so the grid is nine equal squares and
-     nothing is letterboxed into one. */
+     nothing is letterboxed into one.
+
+     `m` is the same nine in the order a phone reads them, since one column
+     cannot be a ring: each garment hung, then the stitching on it read close,
+     then the next — and the pile, which is all four of them at once, last.
+     The grid keeps the DOM in ring order and re-orders with CSS, so the
+     reading order on a wide screen is the one written here. */
   const CELLS = [
-    { img: 'full-tshirt.webp',    alt: 'Worn-out t-shirt hung on a wall: "We tried to make the most of it, and the most turned out to be an ad."' },
-    { img: 'close-tshirt.webp',   alt: 'Close-up of the patched letters "WE TR" stitched onto the t-shirt' },
-    { img: 'full-dress.webp',     alt: 'Sequin dress hung on a wall: "We did our best, and it turned out to be this ugly ad."' },
-    { img: 'close-dress.webp',    alt: 'Close-up of the patched letters "D I" stitched onto the sequin dress' },
-    { img: 'pile.webp',           alt: 'The four garments in a pile on the floor in window light' },
-    { img: 'close-hoodie.webp',   alt: 'Close-up of the patched letters "AR" stitched onto the hoodie' },
-    { img: 'full-hoodie.webp',    alt: 'Blue hoodie hung on a wall: "The best clothes end up in our stores. The most worn-out ones are our ads."' },
-    { img: 'close-overalls.webp', alt: 'Close-up of the patched letters "NO" stitched onto the overalls' },
-    { img: 'full-overalls.webp',  alt: 'Grease-stained overalls hung on a wall: "We had no choice but to recycle these worn-out overalls into a worn-out ad."' },
+    { m: 1, img: 'full-tshirt.webp',    alt: 'Worn-out t-shirt hung on a wall: "We tried to make the most of it, and the most turned out to be an ad."' },
+    { m: 2, img: 'close-tshirt.webp',   alt: 'Close-up of the patched letters "WE TR" stitched onto the t-shirt' },
+    { m: 3, img: 'full-dress.webp',     alt: 'Sequin dress hung on a wall: "We did our best, and it turned out to be this ugly ad."' },
+    { m: 4, img: 'close-dress.webp',    alt: 'Close-up of the patched letters "D I" stitched onto the sequin dress' },
+    { m: 9, img: 'pile.webp',           alt: 'The four garments in a pile on the floor in window light' },
+    { m: 6, img: 'close-hoodie.webp',   alt: 'Close-up of the patched letters "AR" stitched onto the hoodie' },
+    { m: 5, img: 'full-hoodie.webp',    alt: 'Blue hoodie hung on a wall: "The best clothes end up in our stores. The most worn-out ones are our ads."' },
+    { m: 8, img: 'close-overalls.webp', alt: 'Close-up of the patched letters "NO" stitched onto the overalls' },
+    { m: 7, img: 'full-overalls.webp',  alt: 'Grease-stained overalls hung on a wall: "We had no choice but to recycle these worn-out overalls into a worn-out ad."' },
   ];
+
 
   return `
     <div class="proj proj-aft">
@@ -1305,7 +1921,7 @@ PROJECTS['ads-from-trash'] = function () {
       <div class="proj-block aft-b-grid">
         <div class="aft-grid">
           ${CELLS.map((c) => `
-            <figure class="aft-cell">
+            <figure class="aft-cell" style="--m:${c.m}">
               <img src="${p}${c.img}" alt="${c.alt}" loading="lazy">
             </figure>`).join('')}
         </div>
@@ -1566,6 +2182,14 @@ async function projectTransitionTo(slug, dir) {
   stopJams();
   buildProject(slug);
   current = 'c/' + slug;
+  /* The address follows the page. Replaced rather than pushed, and replaced
+     rather than assigned: `location.hash = ...` would fire hashchange, and
+     `route()` would answer it by opening this same project all over again —
+     from the landing, with the depth transition, on top of the pan that is
+     still running. The ring is a lateral move inside one project view, so it
+     leaves the history where entering it put it: Back is still the way out to
+     the landing, and a copied link is still the project on screen. */
+  history.replaceState(null, '', '#c/' + slug);
   campaignReturnOrigin = document.querySelector(`.camp[data-slug="${slug}"]`) || campaignReturnOrigin;
 
   // `out` ends at opacity 0 and `in`'s reverse start (its own p:1) is also
@@ -1579,7 +2203,7 @@ async function projectTransitionTo(slug, dir) {
   // still carries the camera's transform, and the title would read as being
   // wherever that pose left it rather than where the page puts it
   campaignReturnTarget = projectTitleRect();
-  busy = false;
+  idle();
 }
 
 async function goCampaign(slug, origin = null) {
@@ -1602,7 +2226,7 @@ async function goCampaign(slug, origin = null) {
   await campaignDepthTransition(origin, false, campaignReturnTarget);
   openProject(slug, true);
   current = 'c/' + slug;
-  busy = false;
+  idle();
 }
 
 async function goBack() {
@@ -1625,21 +2249,27 @@ async function goBack() {
     campaignReturnOrigin = null;
     campaignReturnTarget = null;
     current = null;
-    busy = false;
+    idle();
     return;
   }
   page.classList.remove('on', 'extra', ...PAGE_KINDS);
   setBackSide(null);
   if (PAGES[id]) {
-    await play([...PAGES[id].frames].reverse(), TIMING.trans, TIMING.transLast);
+    await play([...PAGES[id].frames].reverse(), TIMING.trans, TIMING.transLast,
+               'landing', LEAVE);
   }
+  /* by now the halves are closed again, so the plate can take the frames back */
+  setAndOpen(false);
   await enterLanding({ dap: false });
-  busy = false;
+  idle();
 }
 
 /* leaving a page always comes back through here, so the hash is cleared once
    and goBack() can never be kicked off twice */
 function goHome() {
+  /* queued, not dropped — and the address is only cleared once the move it asks
+     for is actually going to happen */
+  if (busy) { pendingHome = true; return; }
   if (location.hash) history.replaceState(null, '', location.pathname);
   goBack();
 }
@@ -1739,23 +2369,60 @@ addEventListener('pointermove', moveDrag);
 addEventListener('pointerup', endDrag);
 addEventListener('pointercancel', endDrag);
 
-function landingHandAt(p) {
-  // Hand-shaped hit regions, deliberately stopping before the navigation and
-  // campaign artwork. The arms alone and the black centre gap do not trigger.
-  const left = p.x >= 315 && p.x <= 935 && p.y >= 250 && p.y <= 725;
-  const right = p.x >= 975 && p.x <= 1650 && p.y >= 205 && p.y <= 745;
-  return left || right;
-}
-
-stage.addEventListener('click', async (ev) => {
+/* Anywhere on the landing asks for a dap — the hands, the arms, the black
+   around them, the letterbox outside the drawing. It used to be two hand-shaped
+   regions, which meant the answer to "what happens if I click this?" was
+   sometimes nothing, and nothing is the one answer a page like this should
+   never give. The exclusions are what already do something of their own: the
+   three navigation words and the campaign titles (`a, button`), and an icon
+   just put down, which `suppressStageClickUntil` covers. */
+$('#fit').addEventListener('click', async (ev) => {
   if (busy || current !== null || drag || performance.now() < suppressStageClickUntil ||
       ev.target.closest('a, button')) return;
-  if (!landingHandAt(stagePoint(ev))) return;
   busy = true;
   // the same return the rest of the site uses, so it settles the same way
   await enterLanding({ dap: true });
-  busy = false;
+  idle();
 });
+
+/* ------------------------------------------------------------- idle dap */
+/* Left alone, the two of them dap on their own. A minute is long enough that it
+   never interrupts someone reading the campaign titles, and short enough that a
+   tab left open keeps moving. It is the same dap a click asks for — the whole
+   point is that the page is doing what you would have done — and after it the
+   clock starts again, so an untouched landing keeps daps coming.
+
+   Any pointer, key or wheel resets the clock, so this only ever plays into an
+   empty room. It does not run on a page, under an open project, on a hidden
+   tab, or for a viewer who has asked for reduced motion: a dap the visitor did
+   not ask for is exactly the motion that preference is about. */
+const IDLE_DAP = 60000;
+const prefersStillness = matchMedia('(prefers-reduced-motion: reduce)');
+let idleTimer = null;
+
+function restartIdle() {
+  clearTimeout(idleTimer);
+  idleTimer = null;
+  if (current !== null || document.hidden || prefersStillness.matches) return;
+  idleTimer = setTimeout(idleDap, IDLE_DAP);
+}
+
+async function idleDap() {
+  idleTimer = null;
+  // mid-move, mid-drag or under a project: let whatever is happening finish and
+  // ask again a minute after it does
+  if (busy || current !== null || drag || document.hidden ||
+      project.classList.contains('on')) { restartIdle(); return; }
+  busy = true;
+  await enterLanding({ dap: true });
+  idle();
+}
+
+for (const e of ['pointerdown', 'pointermove', 'wheel', 'keydown', 'touchstart']) {
+  addEventListener(e, restartIdle, { passive: true });
+}
+// a backgrounded tab is not an idle visitor, it is no visitor at all
+addEventListener('visibilitychange', restartIdle);
 
 async function playRPS(zone, gesture) {
   if (busy) return;
@@ -1796,7 +2463,7 @@ async function playRPS(zone, gesture) {
   // the bridge ends on the plate; make sure it is the plate that is on screen
   await settleOnLanding();
   ui.classList.remove('hidden');
-  busy = false;
+  idle();
 }
 
 /* ----------------------------------------------------------------- wiring */
@@ -1873,6 +2540,7 @@ document.addEventListener('click', (e) => {
       frames: v.settleKey ? [...SEQ[v.seq], v.key] : SEQ[v.seq],
       key: v.key,
       back: v.back,
+      framing: v.framing || 'landing',
     }]));
   buildUI();
 
@@ -1890,7 +2558,7 @@ document.addEventListener('click', (e) => {
                 ...SEQ.rps.pump];
   for (const r of Object.values(SEQ.rps.round)) rest.push(...r.hold, ...r.after, ...r.settle);
 
-  if (location.hash) { show(LANDING); warm(rest); route(); }
+  if (location.hash) { show(LANDING); warm(rest); route(); restartIdle(); }
   else {
     const playing = enterLanding({ dap: true, frames: first });
     warm(rest);

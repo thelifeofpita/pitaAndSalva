@@ -28,9 +28,20 @@ html, body {
   -webkit-font-smoothing: antialiased;
 }
 
+/* Sized by `applyCam`, not by `inset: 0`. A fixed box pinned to all four sides
+   is the *layout* viewport, and every number in app.js comes from
+   `innerHeight`, which is the *visual* one — on a phone whose browser bar
+   overlays the page those are two different heights, so the whole composition
+   ends up centred on a taller box than the one it was measured for and anything
+   held against the bottom of the window lands below the bottom you can see.
+   Giving this box the same height the maths uses makes them one rectangle
+   again. `100dvh` is only the value before script runs. */
 #fit {
   position: fixed;
-  inset: 0;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100dvh;
   overflow: hidden;
 }
 
@@ -42,7 +53,11 @@ html, body {
   top: 50%;
   width: 1920px;
   height: 1080px;
-  transform: translate(-50%, -50%) scale(var(--scale));
+  /* Scale, then pan: the pan is applied inside the scale so it is written in
+     the drawing's own units. `--cam-*` is how far the drawing moves to put the
+     point the camera is on in the middle of the window — see `fit` in app.js. */
+  transform: translate(-50%, -50%) scale(var(--scale))
+             translate(var(--cam-x, 0px), var(--cam-y, 0px));
   transform-origin: center center;
   background: #000;
   user-select: none;
@@ -139,16 +154,34 @@ html, body {
   background: #000;
 }
 #page.on { display: block; }
+/* The & page's picture is the two halves behind this box, not inside it, so it
+   cannot lay its own black over them. The stage under it is black anyway, which
+   is what the page's background is for everywhere else. */
+#page.page-and { background: none; }
+/* A page's plate is the whole drawing, never a crop of it: a member stands
+   against one edge of his own frame and the & is two faces at both edges, so
+   there is nothing here that can be cut off the sides the way the landing's
+   arms can. `--pg-*` is that drawing fitted inside the window (see `fit` in
+   app.js) — and everything registered to it below goes through the same three
+   numbers, so type stays nailed to the photograph it was measured against. */
 #page-img {
   position: absolute;
-  inset: 0;
-  width: 1920px;
-  height: 1080px;
+  left: var(--pg-x, 0px);
+  top: var(--pg-y, 0px);
+  width: calc(1920px * var(--pg-k, 1));
+  height: calc(1080px * var(--pg-k, 1));
   image-rendering: pixelated;
+}
+#and-copy, .member-copy {
+  transform-origin: 0 0;
+  transform: translate(var(--pg-x, 0px), var(--pg-y, 0px)) scale(var(--pg-k, 1));
 }
 
 /* Back is a hand reaching in from the edge the landing is behind — the arm runs
-   off the frame, so it sits flush against that edge rather than inset. */
+   off the frame, so it sits flush against that edge rather than inset. The edge
+   is the plate's own, `--pg-*`, not the window's: the arm is cut off by the
+   picture it reaches out of, and on a window shaped differently from the
+   drawing there is black between the two. */
 #back {
   position: absolute;
   background: none;
@@ -174,6 +207,14 @@ html, body {
   position: relative;
   line-height: 0;
 }
+/* `pointer-events: none` is what makes this control work with a finger. The
+   beckon below hides whichever drawing is not the current one, and on touch the
+   element under the finger at touchstart *becoming hidden before touchend* is
+   how a browser decides no click happened — so pressing the hands themselves
+   started the beckon and then went nowhere, while pressing the padding beside
+   them or the gap between them worked, because those target something the
+   beckon never touches. The drawings are not the control; the button is. (The
+   landing overlay says the same thing about its own art, in `#ui img`.) */
 .hand img {
   display: block;
   image-rendering: pixelated;
@@ -181,6 +222,7 @@ html, body {
   left: 0;
   top: 0;
   visibility: hidden;
+  pointer-events: none;
 }
 .hand img:first-child {
   position: relative;
@@ -201,7 +243,7 @@ html, body {
    by dropping down to the titles. The hand on that edge is the other person's:
    his hand is out, waiting for the dap that takes you back. */
 #page.back-left #back {
-  left: 0;
+  left: var(--pg-x, 0px);
   top: 50%;
   transform: translateY(-50%);
 }
@@ -209,7 +251,7 @@ html, body {
 
 #page.back-right #back {
   left: auto;
-  right: 0;
+  right: var(--pg-x, 0px);
   top: 50%;
   transform: translateY(-50%);
 }
@@ -220,10 +262,13 @@ html, body {
 #page.back-bottom .h-salva-v, #page.back-bottom .h-pita-v,
 #page.back-top .h-salva-v, #page.back-top .h-pita-v { display: block; }
 
+/* The & is the only page the landing sits below, and its plate now fills the
+   stage, so the hands hang off the stage's own bottom edge — clamped to the
+   window on anything short enough to crop it. */
 #page.back-bottom #back {
   left: 50%;
   top: auto;
-  bottom: 0;
+  bottom: max(0px, var(--view-b, 0px));
   transform: translateX(-50%);
 }
 
@@ -232,7 +277,7 @@ html, body {
    edge and puts them in the order they stand in on the landing. */
 #page.back-top #back {
   left: 50%;
-  top: -22px;
+  top: calc(var(--pg-y, 0px) - 22px);
   transform: translateX(-50%);
 }
 #page.back-top .back-in { transform: rotate(180deg); }
@@ -257,10 +302,21 @@ html, body {
 }
 #page.page-and #and-copy { display: block; }
 
-#and-copy .magic { position: absolute; left: 699px; top: 428px; width: 521px; height: 223px; }
-#and-copy .magic img { position: absolute; left: 0; top: 0; opacity: 0; animation: boil3 .39s steps(1, end) infinite; }
-#and-copy .magic img:nth-child(2) { animation-delay: .13s; }
-#and-copy .magic img:nth-child(3) { animation-delay: .26s; }
+/* Placed by `layoutAndFaces` in app.js — the word belongs between the two
+   halves of the frame, and where that is depends on where they are. */
+#and-word {
+  position: absolute;
+  display: none;
+  /* the drawing's own size for the word: its three frames are stacked on top of
+     each other inside it, so the box has to be given the size they are */
+  width: 521px;
+  height: 223px;
+  transform-origin: 0 0;
+}
+#page.page-and #and-word { display: block; }
+.magic img { position: absolute; left: 0; top: 0; width: 521px; height: 223px; opacity: 0; animation: boil3 .39s steps(1, end) infinite; }
+.magic img:nth-child(2) { animation-delay: .13s; }
+.magic img:nth-child(3) { animation-delay: .26s; }
 
 /* Every frame of every shooting star is stacked on the point it arrives at, so
    a frame is a swap and never a move. A slot is a star's place in the sky —
@@ -276,15 +332,45 @@ html, body {
 /* One symbol burning on each eye. They sit on the iris, and carry their own
    black outline, because the left face is white there and the right one is
    black. */
-#and-eyes { position: absolute; inset: 0; display: none; pointer-events: none; }
-#page.page-and #and-eyes { display: block; }
+/* The frame as two halves. Side by side at their drawn size they are the plate
+   exactly — the seam falls in the black gap between the two faces, so there is
+   nothing there to give it away — and on a portrait window they travel to
+   opposite corners. Both transforms are written by `layoutAndFaces` in app.js;
+   each half carries its own copy of the plate, cropped to its half by the
+   overflow, and its own eye. */
+#and-faces { position: absolute; inset: 0; display: none; pointer-events: none; }
+/* the halves take the plate's place for the whole of the & move, so the frame
+   can come apart inside it — see `setAndOpen` in app.js */
+#stage.and-open #and-faces { display: block; }
+#stage.and-open #plate { visibility: hidden; }
+#page.page-and #page-img { display: none; }
+.and-face {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 960px;
+  height: 1080px;
+  overflow: hidden;
+  transform-origin: 0 0;
+}
+/* each half holds only its own half of the frame, so the two of them together
+   paint exactly what the plate paints */
+.af-plate {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 960px;
+  height: 1080px;
+  image-rendering: pixelated;
+}
+
 .eye { position: absolute; width: 62px; height: 62px; }
 .eye img { width: 100%; height: 100%; }
 .eye-l { left: 237px; top: 440px; }
 /* Centred on the widest clear black inside each eye, found by distance
    transform on the plate rather than by eye — the right face is looking off to
    one side, so its dark sits high and left of where the eye looks like it is. */
-.eye-r { left: 1743px; top: 417px; }
+.eye-r { left: 783px; top: 417px; }   /* 1743 in the frame, less its half */
 .sym { display: none; }
 .sym img { position: absolute; left: 0; top: 0; opacity: 0; animation: boil4 .48s steps(1, end) infinite; }
 .sym img:nth-child(2) { animation-delay: .12s; }
@@ -296,12 +382,12 @@ html, body {
 .eye-r .sym img:nth-child(3) { animation-delay: .28s; }
 .eye-r .sym img:nth-child(4) { animation-delay: .42s; }
 
-#and-eyes[data-l="star"]  .eye-l .s-star,
-#and-eyes[data-r="star"]  .eye-r .s-star,
-#and-eyes[data-l="heart"] .eye-l .s-heart,
-#and-eyes[data-r="heart"] .eye-r .s-heart,
-#and-eyes[data-l="flame"] .eye-l .s-flame,
-#and-eyes[data-r="flame"] .eye-r .s-flame { display: block; }
+#and-faces.dressed[data-l="star"]  .eye-l .s-star,
+#and-faces.dressed[data-r="star"]  .eye-r .s-star,
+#and-faces.dressed[data-l="heart"] .eye-l .s-heart,
+#and-faces.dressed[data-r="heart"] .eye-r .s-heart,
+#and-faces.dressed[data-l="flame"] .eye-l .s-flame,
+#and-faces.dressed[data-r="flame"] .eye-r .s-flame { display: block; }
 
 /* ------------------------------------------------------- member: bio + cv */
 /* Both keyframes mock a block of lorem into the negative space beside each of
@@ -324,9 +410,15 @@ html, body {
   /* The bio's size, and the block's default. 27px is what every project page
      sets its copy at (`--bis-copy` and its siblings, 1.411vw = 27.1px at 1920);
      a member page is the same voice one step under it, and the colophon below
-     is one step under that again — a bio is read, a CV is scanned. */
-  font-size: 24px;
-  line-height: 28px;     /* 1.15, the projects' own leading */
+     is one step under that again — a bio is read, a CV is scanned.
+
+     24 units of a frame scaled to the window is 24px only on a window the
+     frame's own size. On a small landscape one it is eleven, so the size has a
+     floor in real screen pixels (`--inv` is the stage's scale inverted, so
+     `14.5px * var(--inv)` is 14.5px on the glass) and a ceiling above it: past
+     29 units the block outgrows the negative space it was measured into. */
+  font-size: clamp(24px, calc(14.5px * var(--inv, 1)), 29px);
+  line-height: 1.17;     /* the projects' own leading */
   /* copy, not chrome: the stage bans selection so a drag never highlights a
      hand, but a CV is text someone should be able to take with them */
   user-select: text;
@@ -403,13 +495,15 @@ html, body {
    the entries beside it — so the gutter travels with the line rather than with
    the block. */
 .member-cv {
-  font-size: 21px;
-  line-height: 25px;
+  font-size: clamp(21px, calc(12.7px * var(--inv, 1)), 25px);
+  line-height: 1.19;
 }
 .member-cv dt {
   float: left;
-  width: 138px;
-  letter-spacing: 1.6px;
+  /* 138 units at the CV's drawn 21px — kept in em so the gutter grows with the
+     type when the floor above raises it on a small window */
+  width: 6.571em;
+  letter-spacing: .076em;
   opacity: .5;
 }
 /* Each group is its own box, so a label can never float up beside the last
@@ -424,7 +518,7 @@ html, body {
    the measure happens to make — and the second line is told apart by its tone
    rather than by a step in from the left. */
 .member-cv dd {
-  margin: 0 0 0 138px;
+  margin: 0 0 0 6.571em;
 }
 .member-cv dd + dd { margin-top: 6px; }
 .member-cv .at {
@@ -491,13 +585,118 @@ html, body {
   opacity: .75;
 }
 
+/* ------------------------------------------------- member: portrait */
+/* A window taller than it is wide has no negative space to set a CV into: the
+   whole point of the two member frames is a figure standing on one side of a
+   1.9:1 photograph, and on a phone that photograph is a strip. So the frame is
+   reopened rather than shrunk: the camera travels to the figure (`memberCam` in
+   app.js, and the move that opens the page carries it there, so nothing snaps
+   on arrival) and the bio and CV run under him as one column that scrolls — the
+   same copy, in the same voice, read the way a phone is read.
+
+   Sizes are written `calc(Npx * var(--inv))`: the stage is scaled to the window
+   and `--inv` is that scale inverted, so N is N real pixels on the glass. That
+   is what lets type inside the stage be set at a reading size instead of at
+   whatever the drawing's scale happens to leave it. */
+body.narrow #pita-copy,
+body.narrow #salva-copy {
+  transform: none;
+  left: var(--view-x);
+  top: var(--copy-top, calc(var(--view-y) + var(--view-h) * .42));
+  width: var(--view-w);
+  height: var(--copy-h, calc(var(--view-h) * .58));
+  /* The measured insets that hold each column clear of its own figure are a
+     fact about the 1920 frame and mean nothing here. What replaces them is a
+     screen edge and a measure: 22px of margin on a phone, and on anything wider
+     whatever it takes to hold the column to 560px, so a tablet gets a line
+     someone can read across rather than one that runs the width of the glass. */
+  padding: calc(20px * var(--inv))
+           max(calc(22px * var(--inv)),
+               calc((var(--view-w) - 560px * var(--inv)) / 2))
+           calc(48px * var(--inv));
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  font-size: calc(clamp(15px, 4.1vw, 19px) * var(--inv));
+  line-height: 1.34;
+}
+/* his own silhouette is not the right margin of anything any more */
+body.narrow .member-shape { display: none; }
+body.narrow #page.page-salva #salva-copy { display: block; }
+body.narrow .member-bio { margin-bottom: calc(26px * var(--inv)); }
+
+body.narrow .member-cv {
+  font-size: calc(clamp(14px, 3.7vw, 17px) * var(--inv));
+  line-height: 1.32;
+}
+/* The gutter the labels hang in is 138 units of a 1920 frame; there is no
+   gutter on a phone, so the label sits over its entries instead of beside
+   them — the same colophon, stacked. */
+body.narrow .member-cv dt {
+  float: none;
+  width: auto;
+  margin-bottom: calc(3px * var(--inv));
+}
+body.narrow .member-cv dd { margin-left: 0; }
+body.narrow .cv-group + .cv-group { margin-top: calc(15px * var(--inv)); }
+
+/* The hand reaching in for the way back. On a portrait page the frame it
+   reaches out of is the window, not the plate — the camera is pointed at a
+   corner of the drawing and the plate's own edge is somewhere off screen — so
+   it is held against the window's edge, at the height of the photograph rather
+   than the middle of a page that is now mostly type. */
+body.narrow #page.page-pita #back,
+body.narrow #page.page-salva #back {
+  top: calc(var(--view-y) + var(--view-h) * .24);
+}
+body.narrow #page.page-pita #back { left: var(--view-x); }
+body.narrow #page.page-salva #back { right: var(--view-r); }
+/* At the scale that frames a figure on a phone the drawn hand is a 56x36
+   control, which is smaller than the thumb going for it. Sized off `--back-hand`
+   instead — the palm width every one of these controls shares — which for this
+   pair, cut lengthwise, means multiplying it back out to the drawing's 150x96. */
+body.narrow #page.page-pita .hand img,
+body.narrow #page.page-salva .hand img {
+  width: calc(var(--back-hand, 48px) * 150 / 96 * var(--inv));
+  height: auto;
+}
+
+/* On the & the picture is laid out above a strip of black kept clear for this
+   (AND_FOOT in app.js) and the hands stand at the top of it: centred, on
+   nothing, and hung from the bottom edge of the picture rather than from the
+   bottom of the window. That last part is the whole point — the bottom of the
+   window on a phone is where the browser draws its own bar, and a control
+   sitting there is one you have to reach past a toolbar to press. Held to the
+   picture instead, the rest of the strip stays clear underneath it.
+   Sized in real pixels, because at the scale that fits both faces on a phone
+   the drawn hand is nineteen of them. */
+body.narrow #page.page-and #back {
+  top: calc(var(--and-foot) + 26px * var(--inv));   /* BACK_GAP in app.js */
+  bottom: auto;
+}
+/* Cut across rather than lengthwise, so here the palm is the width. The strip
+   of black this stands in is measured off the same number, so the two cannot
+   drift apart. */
+body.narrow #page.page-and .hand img {
+  width: calc(var(--back-hand, 48px) * var(--inv));
+  height: auto;
+}
+body.narrow #page.page-and .back-in { gap: calc(16px * var(--inv)); }
+
 /* ------------------------------------------------------------ project */
 /* A real project's content. Independent of the 1920x1080 stage: a normal
    scrolling page, laid out in viewport units, that opens on top of everything
    once a campaign's depth transition lands on black. */
+/* Sized by `applyCam` alongside #fit, and for the same reason: a fixed box
+   pinned to all four sides is the layout viewport, which on a phone whose
+   browser bar overlays the page is taller than the one you can see. A control
+   at the top of this layer then sits somewhere other than where it looks like
+   it is. `100dvh` is only the value before script runs. */
 #project {
   position: fixed;
-  inset: 0;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100dvh;
   z-index: 60;
   display: none;
   background: #000;
@@ -513,6 +712,10 @@ html, body {
   overflow-y: scroll;
   overflow-x: hidden;
   -webkit-overflow-scrolling: touch;
+  /* the close control is the first thing in here, and on a phone with a notch
+     the first thing in here is otherwise under it */
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 
 #project-close {
@@ -539,6 +742,12 @@ html, body {
 #project-close span:first-child { transform: translate(-50%, -50%) rotate(45deg); }
 #project-close span:last-child  { transform: translate(-50%, -50%) rotate(-45deg); }
 #project-close:hover span { background: #ff2f9f; }
+/* Every project renders the reaching hands in its nav, and that is the way out
+   of a project — so the cross is the one for a page that somehow has no hands.
+   Stated once, off the hands themselves, rather than page by page: the shared
+   COMING SOON page was the one nobody remembered to write a rule for, and it
+   was the only page on the site offering two ways to close itself. */
+#project:has(.proj-nav-hands) #project-close { display: none; }
 
 .proj {
   color: #f2f2ea;
@@ -666,8 +875,10 @@ html, body {
   .depth { transform: none !important; }
 }
 
-@media (max-width: 720px) {
-  .proj { padding: 76px 6vw 110px; }
+@media (max-width: 1000px) {
+  /* 24 to match the three built pages: the close hands are hung off the top of
+     the page by cancelling exactly this, so it has to be one number */
+  .proj { padding: 24px 6vw 110px; }
   .proj-duo { grid-template-columns: 1fr; }
   .proj-trio { gap: 0; }
   .proj-trio .t2 { margin-top: 8vw; }
@@ -680,13 +891,22 @@ html, body {
 /* no font-family here on purpose — nav is chrome, not content, so it wears
    whichever voice the project it's attached to declares (the site's own
    CossetteTexte by default, a project's own type where one sets one). */
+/* Three columns with the outer two equal, not a flex row spread apart: with
+   `space-between` the close control lands wherever the two labels leave it, so
+   it sits off centre by however much "ads from trash" differs from "numpad
+   jam". The hands are the middle of this page and belong in the middle of it. */
 .proj-nav {
-  display: flex;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
   align-items: center;
-  justify-content: space-between;
   font-size: clamp(13px, 1.6vw, 17px);
   color: #f2f2ea;
 }
+.proj-nav > :first-child { grid-column: 1; justify-self: start; }
+.proj-nav-hands { grid-column: 2; }
+.proj-nav > .next { grid-column: 3; justify-self: end; }
+/* a ring end with no neighbour renders an empty span; it must not take a cell */
+.proj-nav > span:empty { display: none; }
 .proj-nav-link {
   display: inline-flex;
   align-items: center;
@@ -754,7 +974,6 @@ html, body {
 /* the mockup's own close control is the pair of hands hanging off the top
    edge — the shared chrome's corner "x" is not in the drawing, and would be
    a second way to do the one thing the hands already do */
-#project:has(.proj-bis) #project-close { display: none; }
 
 /* nav sits a hair outside the content column in the mockup (arrow ink at
    x121 against a x135 column) and wears the same 27.1px as the copy */
@@ -929,9 +1148,11 @@ html, body {
 .bis-yt iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; display: block; }
 
 /* Below the mockup's own territory the vw scale stops being a size and starts
-   being a legibility problem (1.41vw is 10px on a phone), so the whole page
-   falls off the drawing's proportions and back onto readable px here. */
-@media (max-width: 720px) {
+   being a legibility problem — 1.41vw is 10px on a phone, and it is still only
+   14 at 1000px, which is where the copy would have to start shrinking below
+   what anyone reads — so the whole page falls off the drawing's proportions and
+   back onto readable px here. */
+@media (max-width: 1000px) {
   .proj-bis { padding: 24px 6vw 110px; --bis-copy: 14px; }
   .proj-bis .proj-head { margin-top: 26px; }
   .proj-bis .proj-nav { margin: 0; }
@@ -939,7 +1160,7 @@ html, body {
   .proj-bis .proj-nav-link svg { width: 22px; height: 17px; }
   .proj-bis .proj-nav-hands .back-in { gap: 26px; }
   .proj-bis .proj-nav-hands .hand { width: 48px; }
-  .proj-bis .proj-title-art { width: 72vw; }
+  .proj-bis .proj-title-art { width: min(72vw, 620px); }
   .bis-subtitle { max-width: 100%; }
   .bis-sticker-row { margin: 0; }
   .bis-desc { margin: 26px 0 18px; gap: 10px; }
@@ -984,7 +1205,6 @@ html, body {
   font-size: var(--np-copy);
 }
 .proj-numpad .proj-head { margin-top: 3.07vw; }
-#project:has(.proj-numpad) #project-close { display: none; }
 .proj-numpad .proj-nav { font-size: var(--np-copy); margin: 0 -0.729vw; }
 .proj-numpad .proj-nav-link { gap: 0.573vw; padding: 0 0.104vw; }
 .proj-numpad .proj-nav-link svg { width: 2.292vw; height: 1.771vw; }
@@ -1183,7 +1403,10 @@ html, body {
    track titles: one run of digits, tabular so the run stays even, tracked
    out so it reads as presses rather than as one long number */
 .np-jam-name {
-  font-size: 0.99vw;   /* 19px @1920 */
+  /* 19px @1920. The floor is what keeps this a label rather than a texture
+     on a laptop: below about 1300px the vw size drops under the smallest a
+     player's own track title is ever set. */
+  font-size: max(0.99vw, 13px);
   font-weight: 700;
   color: #fff;
   letter-spacing: 0.04em;
@@ -1194,7 +1417,7 @@ html, body {
 }
 .np-jam-by {
   margin-top: 0.16vw;
-  font-size: 0.677vw;   /* 13px @1920 */
+  font-size: max(0.677vw, 11px);   /* 13px @1920, floored — see .np-jam-name */
   color: #b3b3b3;
   letter-spacing: 0.02em;
   white-space: nowrap;
@@ -1248,7 +1471,7 @@ html, body {
 
 .np-jam-time {
   flex: none;
-  font-size: 0.625vw;   /* 12px @1920 */
+  font-size: max(0.625vw, 10px);   /* 12px @1920, floored */
   color: #b3b3b3;
   font-variant-numeric: tabular-nums;   /* so the clock doesn't jitter */
 }
@@ -1356,14 +1579,14 @@ html, body {
 .np-shop-name {
   margin-top: 0.9vw;
   font-family: Arial, "Helvetica Neue", Helvetica, sans-serif;
-  font-size: 0.677vw;   /* 13px @1920, the store's own size */
+  font-size: max(0.677vw, 11px);   /* 13px @1920, the store's own size, floored */
   color: #666;
   text-align: center;
 }
 .np-shop-price {
   margin-top: 0.25vw;
   font-family: Arial, "Helvetica Neue", Helvetica, sans-serif;
-  font-size: 0.552vw;   /* 10.6px @1920, the store's own size */
+  font-size: max(0.552vw, 10px);   /* 10.6px @1920, the store's own size, floored */
   color: #1aaef1;
   text-align: center;
 }
@@ -1406,7 +1629,7 @@ html, body {
 .np-pad-clip { justify-self: start; width: 30vw; aspect-ratio: 768 / 560; background: #000; }
 .np-pad-clip video { height: 100%; object-fit: contain; }
 
-@media (max-width: 720px) {
+@media (max-width: 1000px) {
   .proj-numpad { padding: 24px 6vw 110px; --np-copy: 14px; }
   .proj-numpad .proj-head { margin-top: 26px; }
   .proj-numpad .proj-nav { margin: 0; }
@@ -1414,7 +1637,7 @@ html, body {
   .proj-numpad .proj-nav-link svg { width: 22px; height: 17px; }
   .proj-numpad .proj-nav-hands .back-in { gap: 26px; }
   .proj-numpad .proj-nav-hands .hand { width: 48px; }
-  .proj-numpad .proj-title-art { width: 52.5vw; }   /* 72vw scaled the same way */
+  .proj-numpad .proj-title-art { width: min(52.5vw, 452px); }   /* 72vw scaled the same way */
   .numpad-idea { max-width: 100%; }
   .proj-numpad .np-b-case { margin-top: 26px; }
   .np-case { margin: 0 0 18px; gap: 10px; }
@@ -1479,7 +1702,6 @@ html, body {
   font-size: var(--aft-copy);
 }
 .proj-aft .proj-head { margin-top: 3.07vw; }
-#project:has(.proj-aft) #project-close { display: none; }
 .proj-aft .proj-nav { font-size: var(--aft-copy); margin: 0 -0.729vw; }
 .proj-aft .proj-nav-link { gap: 0.573vw; padding: 0 0.104vw; }
 .proj-aft .proj-nav-link svg { width: 2.292vw; height: 1.771vw; }
@@ -1525,7 +1747,7 @@ html, body {
    absorbs the sub-pixel difference between the box and the file */
 .aft-cell img { display: block; width: 100%; height: 100%; object-fit: cover; }
 
-@media (max-width: 720px) {
+@media (max-width: 1000px) {
   .proj-aft { padding: 24px 6vw 110px; --aft-copy: 14px; }
   .proj-aft .proj-head { margin-top: 26px; }
   .proj-aft .proj-nav { margin: 0; }
@@ -1533,18 +1755,41 @@ html, body {
   .proj-aft .proj-nav-link svg { width: 22px; height: 17px; }
   .proj-aft .proj-nav-hands .back-in { gap: 26px; }
   .proj-aft .proj-nav-hands .hand { width: 48px; }
-  .proj-aft .proj-title-art { width: 61.5vw; }   /* 72vw scaled the same way */
+  .proj-aft .proj-title-art { width: min(61.5vw, 530px); }   /* 72vw scaled the same way */
   .aft-idea { max-width: 100%; }
   .proj-aft .aft-b-grid { margin-top: 26px; }
   /* still three across: the grid IS the layout here — the ring of corners,
-     sides and centre only reads as one while it stays 3x3 */
+     sides and centre only reads as one while it stays 3x3, and down to about
+     720 a cell is still 200px, which is enough to read the headline on the
+     garment. Below that it is not; see the next block. */
   .aft-grid { gap: 8px; }
+}
+
+/* One at a time, the width of the glass. Three across is 118px a side on a
+   phone: a thumbnail of an ad rather than an ad, and the headline printed on
+   the garment is the whole work. So on a phone the ring is unwound into a
+   column in `--m`'s order — each garment hung, then the stitching on it read
+   close, then the next, and the pile of all four of them last — full-bleed out
+   through the page's own margin, and the scroll settles on them one by one.
+   The DOM stays in ring order, so nothing about the wide layout moves. */
+@media (max-width: 720px) {
+  .proj-aft .aft-b-grid { margin-left: -6vw; margin-right: -6vw; }
+  .aft-grid { grid-template-columns: 1fr; gap: 10px; }
+  .aft-cell { order: var(--m, 0); scroll-snap-align: center; }
+  /* The snap belongs to the thing that scrolls, which is the project's own
+     scroller, not the grid inside it. `proximity`, not `mandatory`: the title
+     and the two navs are not photographs and must not be snapped past.
+     The page itself is a snap point at its own start, and it has to be —
+     without one at the top the nearest snap is the first photograph's centre,
+     and the page opens having already scrolled its own title away. */
+  #project:has(.proj-aft) #project-scroll { scroll-snap-type: y proximity; }
+  .proj-aft { scroll-snap-align: start; }
 }
 
 /* a campaign reached by prev/next before it has a project of its own —
    the same title art + COMING SOON the landing shows, replayed inside
    #project so lateral nav never has to know whether the target is built */
-.proj-soon { display: flex; flex-direction: column; min-height: 100vh; }
+.proj-soon { display: flex; flex-direction: column; min-height: 100%; }
 .proj-soon-body { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
 .proj-soon-body img { width: clamp(220px, 34vw, 420px); height: auto; }
 .proj-soon .soon {
@@ -1553,6 +1798,52 @@ html, body {
   letter-spacing: 2px;
   color: #f2f2ea;
   opacity: .75;
+}
+
+/* Narrow: the same three parts, stacked. Side by side there is not room for
+   two campaign titles, two arrows and the hands on one line at 390, so the
+   labels wrap — and they wrap in the nav that carries the hands and not in the
+   one that doesn't, which is the top of the page disagreeing with the bottom of
+   it. Given its own line the control is centred on the page rather than on
+   whatever the two labels leave, and both navs set their titles the same way:
+   one line each, one row, whatever the campaign is called.
+
+   Written last and through `.proj-nav` so it outranks the three built pages'
+   own nav sizing: the nav is the one part of a project page that is not the
+   project's, and it should be the same control on all four of them — including
+   the shared COMING SOON page, which has no sizing of its own at all. */
+@media (max-width: 1000px) {
+  .proj-nav {
+    grid-template-columns: auto auto;
+    grid-template-areas:
+      "hands hands"
+      "prev  next";
+    font-size: 14px;
+  }
+  .proj-nav > :first-child { grid-area: prev; justify-self: start; }
+  .proj-nav > .next { grid-area: next; justify-self: end; }
+  /* These are the hanging cut of the hand — meant to come in over a top edge
+     with the wrists cut off by it — so they hang off the top of the page rather
+     than floating in a band of black below it. The negative margin cancels the
+     page's own top padding; the safe-area inset on #project-scroll is left
+     alone, so the edge they are cut by is the top of the readable page and
+     never a notch.
+
+     Padding, not size, is what makes them easy to press: the drawing stays the
+     size it is on every other page and the button grows around it, and it grows
+     downward, past the fingertips, because that is the end a thumb coming up
+     the screen arrives at. */
+  .proj-nav .proj-nav-hands {
+    grid-area: hands;
+    justify-self: center;
+    padding: 4px 24px 28px;
+    margin: -28px 0 0;
+  }
+  .proj-nav .proj-nav-hands .hand { width: var(--back-hand, 48px); }
+  .proj-nav .proj-nav-hands .back-in { gap: 26px; }
+  /* one line, and a row tall enough to be aimed at with a thumb */
+  .proj-nav .proj-nav-link { white-space: nowrap; gap: 9px; padding: 8px 2px; }
+  .proj-nav .proj-nav-link svg { width: 22px; height: 17px; }
 }
 
 /* --------------------------------------------------------------- boot */

@@ -4,6 +4,22 @@ Everything on screen is a pre-rendered 1-bit frame in `img/`. The page is a fixe
 1920×1080 stage scaled to the viewport, so every element sits at exactly the
 coordinate it sits at in `keyframes/`.
 
+The viewport is a camera pointed at that stage rather than a letterbox of it:
+`fit()` in `app.js` applies a framing — a scale and the point of the drawing to
+hold in the middle of the window — closing in on the two hands as the window
+turns portrait and keeping the full frame on anything shaped like the drawing.
+Moving between framings is stepped across the frames of the move that carries
+it, so the camera travels rather than jumping.
+
+`layoutUI()` holds each overlay element at its drawn place while that place is on
+screen and brings it in when it is not: the two names rise above the hands and
+the campaign titles re-break into rows, all seven of them, once the frame is too
+narrow for the drawn line. On a portrait window a member's page reframes onto his
+figure with the bio and CV under him, and the & page splits down the black
+between its two faces and sends them to opposite corners with MAGIC between. At
+the drawing's own ratio every element is still at the coordinate the keyframes
+put it at.
+
 ## Run
 
 ```
@@ -194,6 +210,22 @@ enough to bridge the gap between Salva's thumb and his fingers — then bakes ea
 hand at its on-screen size and re-dithers it there. Sizes are `WIDE` and `TALL`
 at the top of the file; the vertical one has to stay clear of the campaign
 title, which sits at `CAMPAIGN_TITLE_TOP` in `app.js`.
+
+### The favicon
+
+`tools/build_favicon.py` cuts the tab icon out of `img/dap0_02.png`, the one
+frame of the six daps where both hands are fully clasped and both sets of
+fingers still read as fingers. It crops 420 of the frame's 1920 units around the
+grip — the site's frame is 1.9:1 and a favicon is square, so the crop goes hard
+into the hands and lets the arms run off the sides. Two treatments: a blurred,
+thresholded, median-cleaned silhouette for the sizes where dither would only be
+mush, and a straight downsample at 180px where there are pixels enough for the
+grain to still be grain. Everything is written with the ink as alpha, so the
+background is transparent; `favicon.svg` carries the shape as a luminance mask
+over a filled rect so the ink can flip to black under `prefers-color-scheme:
+light`, where white on transparent would be invisible. Unlike the rest of
+`tools/`, this one runs anywhere — its source is a committed frame. It writes
+`favicon.svg`, `favicon.ico` and `apple-touch-icon.png` to the repo root.
 
 ### Picking daps
 

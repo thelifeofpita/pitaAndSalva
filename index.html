@@ -9,6 +9,13 @@
 <link rel="preload" as="fetch" href="img/frames.json" crossorigin>
 <link rel="preload" as="fetch" href="img/ui.json" crossorigin>
 <link rel="preload" as="image" href="img/landing_plate.png">
+<!-- The dap itself, cropped hard into the grip — see tools/build_favicon.py.
+     The SVG is the one a browser takes when it can: it carries the hands as a
+     mask over a filled rect, so the ink flips to black in a light tab strip,
+     where white on transparent would be nothing at all. -->
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="icon" href="favicon.ico" sizes="48x48">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
 </head>
 <body class="booting">
 <div id="fit">
@@ -16,6 +23,39 @@
     <!-- a canvas, not an <img>: drawImage paints during the call, so a frame can
          never be skipped by a swap that has not finished resolving -->
     <canvas id="plate" width="1920" height="1080"></canvas>
+
+    <!-- The plate again, as two halves — and it sits here beside it, not down
+         in the destination page, because the halves carry the moving frames
+         too. The & is two faces held against opposite edges of one 1.9:1
+         frame, and there is no crop of that which is still the picture, so a
+         portrait window takes the frame apart instead: the halves separate to
+         opposite corners with MAGIC left between. Doing that here means the
+         separation happens inside the camera move that opens the page rather
+         than after it — one move, not two (see `layoutAndFaces` in app.js).
+         Edge to edge at their drawn size the two halves are the plate exactly,
+         which is what the move starts from and what a landscape window keeps.
+         Each eye rides inside its own half, so it travels with its face rather
+         than being placed twice. Both eyes carry all three symbols, four
+         drawings each; the page picks a pair on the way in by setting
+         data-l / data-r, so nothing waits on an image swap. -->
+    <div id="and-faces" data-l="star" data-r="heart" aria-hidden="true">
+      <div class="and-face af-l">
+        <canvas class="af-plate" width="960" height="1080"></canvas>
+        <span class="eye eye-l">
+          <span class="sym s-star"><img src="img/ui/eye_star_0.png" alt=""><img src="img/ui/eye_star_1.png" alt=""><img src="img/ui/eye_star_2.png" alt=""><img src="img/ui/eye_star_3.png" alt=""></span>
+          <span class="sym s-heart"><img src="img/ui/eye_heart_0.png" alt=""><img src="img/ui/eye_heart_1.png" alt=""><img src="img/ui/eye_heart_2.png" alt=""><img src="img/ui/eye_heart_3.png" alt=""></span>
+          <span class="sym s-flame"><img src="img/ui/eye_flame_0.png" alt=""><img src="img/ui/eye_flame_1.png" alt=""><img src="img/ui/eye_flame_2.png" alt=""><img src="img/ui/eye_flame_3.png" alt=""></span>
+        </span>
+      </div>
+      <div class="and-face af-r">
+        <canvas class="af-plate" width="960" height="1080"></canvas>
+        <span class="eye eye-r">
+          <span class="sym s-star"><img src="img/ui/eye_star_0.png" alt=""><img src="img/ui/eye_star_1.png" alt=""><img src="img/ui/eye_star_2.png" alt=""><img src="img/ui/eye_star_3.png" alt=""></span>
+          <span class="sym s-heart"><img src="img/ui/eye_heart_0.png" alt=""><img src="img/ui/eye_heart_1.png" alt=""><img src="img/ui/eye_heart_2.png" alt=""><img src="img/ui/eye_heart_3.png" alt=""></span>
+          <span class="sym s-flame"><img src="img/ui/eye_flame_0.png" alt=""><img src="img/ui/eye_flame_1.png" alt=""><img src="img/ui/eye_flame_2.png" alt=""><img src="img/ui/eye_flame_3.png" alt=""></span>
+        </span>
+      </div>
+    </div>
 
     <!-- landing overlay -->
     <div id="ui">
@@ -36,33 +76,21 @@
     <!-- destination pages -->
     <div id="page">
       <img id="page-img" alt="">
-      <!-- Both eyes carry all three symbols, four drawings each; the page picks
-           a pair on the way in by setting data-l / data-r, so nothing waits on
-           an image swap. -->
-      <div id="and-eyes" data-l="star" data-r="heart" aria-hidden="true">
-        <span class="eye eye-l">
-          <span class="sym s-star"><img src="img/ui/eye_star_0.png" alt=""><img src="img/ui/eye_star_1.png" alt=""><img src="img/ui/eye_star_2.png" alt=""><img src="img/ui/eye_star_3.png" alt=""></span>
-          <span class="sym s-heart"><img src="img/ui/eye_heart_0.png" alt=""><img src="img/ui/eye_heart_1.png" alt=""><img src="img/ui/eye_heart_2.png" alt=""><img src="img/ui/eye_heart_3.png" alt=""></span>
-          <span class="sym s-flame"><img src="img/ui/eye_flame_0.png" alt=""><img src="img/ui/eye_flame_1.png" alt=""><img src="img/ui/eye_flame_2.png" alt=""><img src="img/ui/eye_flame_3.png" alt=""></span>
-        </span>
-        <span class="eye eye-r">
-          <span class="sym s-star"><img src="img/ui/eye_star_0.png" alt=""><img src="img/ui/eye_star_1.png" alt=""><img src="img/ui/eye_star_2.png" alt=""><img src="img/ui/eye_star_3.png" alt=""></span>
-          <span class="sym s-heart"><img src="img/ui/eye_heart_0.png" alt=""><img src="img/ui/eye_heart_1.png" alt=""><img src="img/ui/eye_heart_2.png" alt=""><img src="img/ui/eye_heart_3.png" alt=""></span>
-          <span class="sym s-flame"><img src="img/ui/eye_flame_0.png" alt=""><img src="img/ui/eye_flame_1.png" alt=""><img src="img/ui/eye_flame_2.png" alt=""><img src="img/ui/eye_flame_3.png" alt=""></span>
-        </span>
-      </div>
       <!-- The & page's copy: the word, drawn three times so it boils in place,
            and the sky of shooting stars falling through the black around it.
            buildStreaks() fills #streaks with slots that already hold every
            frame of every path, so a star never waits on an image. -->
       <div id="and-copy">
-        <span class="magic">
-          <img src="img/ui/magic_0.png" alt="MAGIC">
-          <img src="img/ui/magic_1.png" alt="">
-          <img src="img/ui/magic_2.png" alt="">
-        </span>
         <div id="streaks"></div>
       </div>
+      <!-- The word, drawn three times so it boils in place. It is held between
+           the two halves, so where it goes is whatever they leave — placed from
+           script rather than from a coordinate in the drawing. -->
+      <span id="and-word" class="magic">
+        <img src="img/ui/magic_0.png" alt="MAGIC">
+        <img src="img/ui/magic_1.png" alt="">
+        <img src="img/ui/magic_2.png" alt="">
+      </span>
       <!-- Pita's page: the block his keyframe mocks up in lorem, set for real.
            Live text rather than the &amp; page's pre-rendered phrases, because a CV
            is content that changes — so it wears CossetteTexte, the same voice a
@@ -117,7 +145,7 @@
              this float, not by a measure, so every line runs as far as the frame
              is empty and stops where the photograph starts. -->
         <span class="member-shape" aria-hidden="true"></span>
-        <p class="member-bio">Math, sports, art. Everything I was supposed to be good at, I suck at. Talking was my only skill. Communications seemed like the only option. My mom told her friends they’d see me on TV one day. She was right. I wasn’t the reporter. I was the news. I still can’t explain to my dad what I do for a living. My best joke was telling him I wanted to live off my creativity. He quoted Brad Pitt in Once Upon a Time in Hollywood. “Fucking hippies, motherfuckers.” I can’t tell the difference between wit and stupidity. But it pays, so call me stupid if you want.</p>
+        <p class="member-bio">Math, sports, art. Everything I was supposed to be good at, I suck at. Talking was my only skill. Communications seemed like the only option. My mom told her friends they’d see me on TV one day. She was right. I wasn’t the reporter. I was the news. I still can’t explain to my dad what I do for a living. My best joke was telling him I wanted to live off my creativity. He quoted Brad Pitt in Once Upon a Time in Hollywood. “Fucking hippies.” I can’t tell the difference between wit and stupidity. But it pays, so call me stupid if you want.</p>
         <dl class="member-cv">
           <div class="cv-group">
             <dt>experience</dt>
@@ -136,12 +164,15 @@
             <dt>awards</dt>
             <dd><span class="li">Young Lions Film Venezuela Gold</span></dd>
             <dd><span class="li">Young Lions Film Venezuela Shortlist</span></dd>
-            <dd><span class="li">HumansDID Finalist</span></dd>
+            <!-- no `li` on this one: that class is what keeps a break out of an
+                 item inside a dot-separated run, and a 46-character title has
+                 nowhere near enough room to stay on one line at phone width. -->
+            <dd>Movistar’s Pantallas para la reflexión Finalist</dd>
           </div>
 
           <div class="cv-group">
             <dt>languages</dt>
-            <dd><span class="li">Native Spanish ·</span> <span class="li">Intermediate English</span></dd>
+            <dd><span class="li">Native Spanish ·</span> <span class="li">Bilingual English</span></dd>
           </div>
 
           <div class="cv-group">
