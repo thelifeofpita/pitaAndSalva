@@ -1828,7 +1828,7 @@ body.narrow #page.page-and .back-in { gap: calc(16px * var(--inv)); }
    more condensed hand — see tools/build_titles.py), so this title's letters
    stand taller than BACK IN SMOOTHLY's while reading level with them, which
    is exactly what they do on the landing. */
-.proj-sts .proj-title-art { width: 22.76vw; margin: 0 auto; }
+.proj-sts .proj-title-art { width: 20.48vw; margin: 0 auto; }  /* balanced to the l1 titles' cap height, not camp_l2's taller 100u */
 
 .sts-idea {
   font-weight: 700;
@@ -1921,7 +1921,7 @@ body.narrow #page.page-and .back-in { gap: calc(16px * var(--inv)); }
   .proj-sts .proj-nav { margin: 0; }
   .proj-sts .proj-nav-link { gap: 9px; }
   .proj-sts .proj-nav-link svg { width: 22px; height: 17px; }
-  .proj-sts .proj-title-art { width: min(38.5vw, 334px); }
+  .proj-sts .proj-title-art { width: min(34.6vw, 300px); }
   .sts-idea { max-width: 100%; }
   .proj-sts { --sts-gap: 34px; --sts-lead: 12px; }
   .proj-sts .sts-b-case { margin-top: 30px; }
@@ -1972,7 +1972,7 @@ body.narrow #page.page-and .back-in { gap: calc(16px * var(--inv)); }
 .proj-tl .proj-nav-link { gap: 0.573vw; padding: 0 0.104vw; }
 .proj-tl .proj-nav-link svg { width: 2.292vw; height: 1.771vw; }
 /* TRACKING LIFE is 425 units wide at the site-wide ~0.094vw per unit */
-.proj-tl .proj-title-art { width: 22.135vw; margin: 0 auto; }
+.proj-tl .proj-title-art { width: 19.92vw; margin: 0 auto; }   /* same — matched to the l1 group's height */
 
 .tl-idea {
   font-weight: 700;
@@ -2039,7 +2039,7 @@ body.narrow #page.page-and .back-in { gap: calc(16px * var(--inv)); }
   .proj-tl .proj-nav { margin: 0; }
   .proj-tl .proj-nav-link { gap: 9px; }
   .proj-tl .proj-nav-link svg { width: 22px; height: 17px; }
-  .proj-tl .proj-title-art { width: min(37.5vw, 324px); }
+  .proj-tl .proj-title-art { width: min(33.75vw, 292px); }
   .tl-idea { max-width: 100%; }
   .proj-tl .tl-b-case { margin-top: 30px; }
 

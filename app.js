@@ -2630,6 +2630,11 @@ async function goBack() {
   }
   page.classList.remove('on', 'extra', ...PAGE_KINDS);
   setBackSide(null);
+  /* the eyes belong to the & page, not to the move that leaves it — the same
+     as on the way in, where they only light once the frame has come apart. So
+     drop them the instant the frame starts coming back together, not when the
+     move finishes (which is all setAndOpen(false) below would do). */
+  if (id === 'and') $('#and-faces').classList.remove('dressed');
   if (PAGES[id]) {
     await play([...PAGES[id].frames].reverse(), TIMING.trans, TIMING.transLast,
                'landing', LEAVE);
