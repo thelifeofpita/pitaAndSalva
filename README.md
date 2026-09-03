@@ -173,11 +173,21 @@ rotations are set under `#and-copy` in `style.css`.
 titles written on one sheet — into `img/ui/camp_l2_{0,1,2}.png`, replacing the
 three placeholder repeats that line used to carry. It thresholds the marker off
 the paper, opens the mask to drop the paper's dot grid, scales all three lines
-by ONE factor chosen so their cap height matches the four titles on the line
-above, re-thresholds to hard 1-bit at that size, and drops any speck left
-standing at the size the art is actually seen. The widths it prints are what
-`img/ui.json` places the row with: the line is centred on x=960 with the drawn
-33/34-unit gaps either side of its stars. Like `build_favicon.py` and unlike
+by ONE factor, re-thresholds to hard 1-bit at that size, and drops any speck
+left standing at the size the art is actually seen.
+
+The factor is the one that matches the PEN of the line above, measured off
+that line's own committed art and searched for on the output — not the one
+that matches cap height, which was tried first and set the row visibly small:
+this sheet is written in a finer, more condensed hand, so equal letter heights
+come out in a thinner stroke over a much shorter line. Matching the mark
+instead makes the letters about a fifth taller than line 1's and the two lines
+read as one block.
+
+The sizes it prints are what `img/ui.json` places the row with: the line is
+centred on x=960 with the drawn 33/34-unit gaps either side of its stars, its
+baseline held at the drawn row's own y (992), and the two stars nudged to the
+optical centre of the taller lettering. Like `build_favicon.py` and unlike
 the rest of `tools/`, this one runs anywhere — its source is a photograph, not
 footage.
 

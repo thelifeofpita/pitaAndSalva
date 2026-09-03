@@ -82,28 +82,28 @@
   },
   {
    "src": "ui/camp_l2_0.png",
-   "x": 370,
-   "y": 918,
-   "w": 320,
-   "h": 89,
+   "x": 198,
+   "y": 907,
+   "w": 437,
+   "h": 100,
    "label": "SURF THE SPIKE",
    "slug": "surf-the-spike"
   },
   {
    "src": "ui/camp_l2_1.png",
-   "x": 788,
-   "y": 918,
-   "w": 352,
-   "h": 89,
+   "x": 733,
+   "y": 907,
+   "w": 461,
+   "h": 100,
    "label": "PASTA FOR PASTA",
    "slug": "pasta-for-pasta"
   },
   {
    "src": "ui/camp_l2_2.png",
-   "x": 1243,
-   "y": 918,
-   "w": 307,
-   "h": 89,
+   "x": 1297,
+   "y": 907,
+   "w": 425,
+   "h": 100,
    "label": "TRACKING LIFE",
    "slug": "tracking-life"
   }
@@ -132,15 +132,15 @@
   },
   {
    "src": "ui/star_l2_0.png",
-   "x": 723,
-   "y": 918,
+   "x": 668,
+   "y": 907,
    "w": 31,
    "h": 89
   },
   {
    "src": "ui/star_l2_1.png",
-   "x": 1173,
-   "y": 918,
+   "x": 1227,
+   "y": 913,
    "w": 36,
    "h": 89
   }

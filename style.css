@@ -1823,11 +1823,15 @@ body.narrow #page.page-and .back-in { gap: calc(16px * var(--inv)); }
 .proj-sts .proj-nav-hands { padding: 0; margin: 0; }
 .proj-sts .proj-nav-hands .back-in { gap: 1.823vw; }
 .proj-sts .proj-nav-hands .hand { width: 6.615vw; }
-/* Sized off the lettering, not off the string — the rule the other three
-   titles carry: ~0.094vw per unit of the artwork's own width, so every
-   campaign title on the site stands the same height whatever it says.
-   SURF THE SPIKE is 333 units wide, hence 31.3vw. */
-.proj-sts .proj-title-art { width: 31.3vw; margin: 0 auto; }
+/* Sized off the artwork, not off the string — ~0.094vw per unit of its own
+   width, the rule the other three titles carry, which is what puts every
+   campaign title on the site at the same stage scale whatever it says.
+   SURF THE SPIKE is 437 units wide, hence 41.1vw. The second drawn line's
+   art is taller than the first's for the same apparent size (a finer,
+   more condensed hand — see tools/build_titles.py), so this title's letters
+   stand taller than BACK IN SMOOTHLY's while reading level with them, which
+   is exactly what they do on the landing. */
+.proj-sts .proj-title-art { width: 41.1vw; margin: 0 auto; }
 
 .sts-idea {
   font-weight: 700;
@@ -1895,7 +1899,7 @@ body.narrow #page.page-and .back-in { gap: calc(16px * var(--inv)); }
   .proj-sts .proj-nav-link svg { width: 22px; height: 17px; }
   .proj-sts .proj-nav-hands .back-in { gap: 26px; }
   .proj-sts .proj-nav-hands .hand { width: 48px; }
-  .proj-sts .proj-title-art { width: min(53.2vw, 458px); }   /* 72vw scaled the same way */
+  .proj-sts .proj-title-art { width: min(69.8vw, 602px); }   /* 72vw scaled the same way */
   .sts-idea, .sts-copy, .sts-cap-end { max-width: 100%; }
   .proj-sts .proj-block, .proj-sts .proj-block:first-of-type { margin-top: 30px; }
   .sts-cap { gap: 10px; margin-bottom: 12px; }
@@ -1926,8 +1930,8 @@ body.narrow #page.page-and .back-in { gap: calc(16px * var(--inv)); }
 .proj-tl .proj-nav-hands { padding: 0; margin: 0; }
 .proj-tl .proj-nav-hands .back-in { gap: 1.823vw; }
 .proj-tl .proj-nav-hands .hand { width: 6.615vw; }
-/* TRACKING LIFE is 326 units wide at the same ~0.094vw per unit */
-.proj-tl .proj-title-art { width: 30.65vw; margin: 0 auto; }
+/* TRACKING LIFE is 425 units wide at the same ~0.094vw per unit */
+.proj-tl .proj-title-art { width: 39.95vw; margin: 0 auto; }
 
 .tl-idea {
   font-weight: 700;
@@ -1987,7 +1991,7 @@ body.narrow #page.page-and .back-in { gap: calc(16px * var(--inv)); }
   .proj-tl .proj-nav-link svg { width: 22px; height: 17px; }
   .proj-tl .proj-nav-hands .back-in { gap: 26px; }
   .proj-tl .proj-nav-hands .hand { width: 48px; }
-  .proj-tl .proj-title-art { width: min(52.1vw, 449px); }   /* 72vw scaled the same way */
+  .proj-tl .proj-title-art { width: min(67.9vw, 585px); }   /* 72vw scaled the same way */
   .tl-idea, .tl-copy, .tl-copy-end, .tl-cap { max-width: 100%; }
   .proj-tl .proj-block, .proj-tl .proj-block:first-of-type { margin-top: 30px; }
   .tl-cap { gap: 10px; margin-bottom: 12px; }
