@@ -82,19 +82,19 @@
   },
   {
    "src": "ui/camp_l2_0.png",
-   "x": 480,
+   "x": 533,
    "y": 907,
-   "w": 437,
-   "h": 100,
+   "w": 393,
+   "h": 90,
    "label": "SURF THE SPIKE",
    "slug": "surf-the-spike"
   },
   {
    "src": "ui/camp_l2_2.png",
-   "x": 1015,
+   "x": 1005,
    "y": 907,
-   "w": 425,
-   "h": 100,
+   "w": 383,
+   "h": 90,
    "label": "TRACKING LIFE",
    "slug": "tracking-life"
   }
@@ -126,7 +126,7 @@
    "x": 950,
    "y": 907,
    "w": 31,
-   "h": 89
+   "h": 90
   }
  ]
 }
