@@ -1367,8 +1367,15 @@ async function campaignDepthTransition(origin, reverse = false, target = null) {
 const PROJECTS = {};
 
 /* hand-drawn pen doodles: every arrow, circle and underline on a project page
-   runs through the same feTurbulence/feDisplacementMap filter, so a plain
-   bezier reads as a loose pen stroke instead of vector-perfect line art.
+   runs through the same turbulence filter, so a plain bezier reads as a loose
+   pen stroke instead of vector-perfect line art. A feDisplacementMap bends the
+   path off true — a real pen never tracks straight — and then `penInk` softens
+   the edge and eats it back a little through an alpha gamma with a negative
+   offset. Because the erosion is a pure function of edge alpha it is identical
+   for every arrow, and because the displacement noise is isotropic and
+   moderate-frequency its thick/thin averages out over any one stroke's run:
+   the weight wanders ALONG each line the way a pen's does, without one arrow
+   ever reading heavier than the next.
    Each doodle gets its own filter id — several of these sit in the DOM at
    once, and a shared id is a duplicate-id bug waiting to make one arrow's
    filter region silently apply to another's geometry. */
@@ -1387,9 +1394,16 @@ const PROJECTS = {};
 /* `seed` only reshuffles the same noise, it doesn't change its character —
    it's there so two doodles that sit near each other on one page don't wear
    the identical wobble stroke for stroke. */
+/* the weight/ink tail, shared by penFilter and the two bespoke filters below.
+   It chains straight off whatever feDisplacementMap precedes it: a hair of
+   blur, then an alpha gamma with a small negative offset that trims the
+   softened edge — more where the wobble already pinched the line, so the
+   stroke thins and nearly dries in places. Keep it gentle: it must never gap. */
+const penInk = `<feGaussianBlur stdDeviation="0.5" result="b"/><feComponentTransfer in="b"><feFuncA type="gamma" amplitude="1.55" exponent="1.3" offset="-0.1"/></feComponentTransfer>`;
 const penFilter = (id, seed = 7) => `<filter id="${id}" filterUnits="userSpaceOnUse" x="-20" y="-20" width="220" height="220">
   <feTurbulence type="fractalNoise" baseFrequency="0.045" numOctaves="2" seed="${seed}" result="n"/>
   <feDisplacementMap in="SourceGraphic" in2="n" scale="2.6"/>
+  ${penInk}
 </filter>`;
 const PEN_W = 5.2;
 const pen = (id) => `fill="none" stroke="currentColor" stroke-width="${PEN_W}" stroke-linecap="round" stroke-linejoin="round" filter="url(#${id})"`;
@@ -1484,26 +1498,26 @@ PROJECTS['back-in-smoothly'] = function () {
      for the two that drop from a caption into the artwork under it. Each
      viewBox is the traced ink box from layout.png, geometry inset by 3 (half
      the pen) so the stroke lands exactly on that box. */
-  const descArrow = `<svg viewBox="0 0 74 31"><defs>${penFilter('bisRough1')}</defs>
+  const descArrow = `<svg class="proj-arrow" viewBox="0 0 74 31"><defs>${penFilter('bisRough1')}</defs>
     <path d="M3 17C11 6 22 2 33 4C47 7 55 13 60 19" ${pen('bisRough1')}/>
     ${headV('bisRough1', 68, 27, 45, 22, 70, 3)}
   </svg>`;
 
-  const printsArrow = `<svg viewBox="0 0 79 117"><defs>${penFilter('bisRough2')}</defs>
+  const printsArrow = `<svg class="proj-arrow" viewBox="0 0 79 117"><defs>${penFilter('bisRough2')}</defs>
     <path d="M75 3C58 1 22 6 8 34C1 52 12 82 30 98" ${pen('bisRough2')}/>
     ${headV('bisRough2', 45, 113, 22, 108, 47, 89)}
   </svg>`;
 
-  const arrowLeft = `<svg viewBox="0 0 94 33"><defs>${penFilter('bisRough3')}</defs>
+  const arrowLeft = `<svg class="proj-arrow" viewBox="0 0 94 33"><defs>${penFilter('bisRough3')}</defs>
     <path d="M24 16.5H91" ${pen('bisRough3')}/>
     ${headV('bisRough3', 3, 16.5, 23, 3, 23, 30)}
   </svg>`;
-  const arrowRight = `<svg viewBox="0 0 94 33"><defs>${penFilter('bisRough4')}</defs>
+  const arrowRight = `<svg class="proj-arrow" viewBox="0 0 94 33"><defs>${penFilter('bisRough4')}</defs>
     <path d="M3 16.5H70" ${pen('bisRough4')}/>
     ${headV('bisRough4', 91, 16.5, 71, 3, 71, 30)}
   </svg>`;
 
-  const tapArrow = `<svg class="bis-arrow-down" viewBox="0 0 54 91"><defs>${penFilter('bisRough5')}</defs>
+  const tapArrow = `<svg class="bis-arrow-down proj-arrow" viewBox="0 0 54 91"><defs>${penFilter('bisRough5')}</defs>
     <path d="M51 3C34 1 12 12 7 38C4 55 12 74 23 80" ${pen('bisRough5')}/>
     ${headV('bisRough5', 35, 88, 12, 83, 37, 64)}
   </svg>`;
@@ -1608,7 +1622,7 @@ PROJECTS['numpad-jam'] = function () {
 
   /* same pen, same open-V head as every other doodle on a project page —
      traced at the descArrow's own viewBox so the two read as one family. */
-  const caseArrow = `<svg viewBox="0 0 74 31"><defs>${penFilter('npRough1')}</defs>
+  const caseArrow = `<svg class="proj-arrow" viewBox="0 0 74 31"><defs>${penFilter('npRough1')}</defs>
     <path d="M3 17C11 6 22 2 33 4C47 7 55 13 60 19" ${pen('npRough1')}/>
     ${headV('npRough1', 68, 27, 45, 22, 70, 3)}
   </svg>`;
@@ -1620,7 +1634,7 @@ PROJECTS['numpad-jam'] = function () {
      bows the opposite way (sagging under its own start instead of arcing
      over it) and runs its own filter seed, so the roughness doesn't repeat
      stroke for stroke either. */
-  const jamArrow = `<svg viewBox="0 0 74 31"><defs>${penFilter('npRough3', 11)}</defs>
+  const jamArrow = `<svg class="proj-arrow" viewBox="0 0 74 31"><defs>${penFilter('npRough3', 11)}</defs>
     <path d="M3 5C12 12 20 15 30 15C42 15 53 19 62 24" ${pen('npRough3')}/>
     ${headV('npRough3', 69, 30, 56, 28, 67, 17)}
   </svg>`;
@@ -1629,7 +1643,7 @@ PROJECTS['numpad-jam'] = function () {
      product rather than above it, so this one runs almost flat and lifts
      slightly into its head. Its own seed again, so three arrows in the same
      box on one page don't wear the same wobble. */
-  const padArrow = `<svg viewBox="0 0 74 31"><defs>${penFilter('npRough6', 23)}</defs>
+  const padArrow = `<svg class="proj-arrow" viewBox="0 0 74 31"><defs>${penFilter('npRough6', 23)}</defs>
     <path d="M3 23C14 20 26 16 38 13C46 11 55 9 62 8" ${pen('npRough6')}/>
     ${headV('npRough6', 71, 7, 59, 2, 59, 16)}
   </svg>`;
@@ -1655,6 +1669,7 @@ PROJECTS['numpad-jam'] = function () {
   const tryFilter = `<filter id="npRough4" filterUnits="userSpaceOnUse" x="-30" y="-30" width="410" height="280">
     <feTurbulence type="fractalNoise" baseFrequency="0.013" numOctaves="3" seed="3" result="n"/>
     <feDisplacementMap in="SourceGraphic" in2="n" scale="9"/>
+    ${penInk}
   </filter>`;
   const tryCircle = `<svg class="np-try-ring" viewBox="0 0 350 220"><defs>${tryFilter}</defs>
     <path d="M24 104C24 52 96 16 180 12C262 8 332 42 330 104C328 160 254 206 168 202C86 198 20 174 20 118C20 88 32 60 56 40" ${pen('npRough4')}/>
@@ -1667,7 +1682,7 @@ PROJECTS['numpad-jam'] = function () {
      mid-size doodle between the small caption arrows and the long shop one,
      and it keeps penFilter's own roughness since that region (x:-20..200)
      still covers a path this size. */
-  const tryArrow = `<svg viewBox="0 0 150 90"><defs>${penFilter('npRough5', 19)}</defs>
+  const tryArrow = `<svg class="proj-arrow" viewBox="0 0 150 90"><defs>${penFilter('npRough5', 19)}</defs>
     <path d="M6 84C32 79 64 70 94 53C114 42 127 31 134 21" ${pen('npRough5')}/>
     ${headV('npRough5', 142, 10, 126, 13, 139, 27)}
   </svg>`;
@@ -1703,6 +1718,7 @@ PROJECTS['numpad-jam'] = function () {
   const npFilterWide = `<filter id="npRough2" filterUnits="userSpaceOnUse" x="-30" y="-30" width="470" height="140">
     <feTurbulence type="fractalNoise" baseFrequency="0.045" numOctaves="2" seed="7" result="n"/>
     <feDisplacementMap in="SourceGraphic" in2="n" scale="2.6"/>
+    ${penInk}
   </filter>`;
   /* The head's wings are rotated to the stem's own final tangent (the
      last segment dives toward 372,52, a 45° angle) instead of sitting
@@ -1714,7 +1730,7 @@ PROJECTS['numpad-jam'] = function () {
      not run all the way into it: it now ends at 364,44, ~11 units back
      along that same 45° line, leaving the same open gap caseArrow's stem
      leaves before its own head. */
-  const shopArrow = `<svg viewBox="0 0 410 70"><defs>${npFilterWide}</defs>
+  const shopArrow = `<svg class="proj-arrow" viewBox="0 0 410 70"><defs>${npFilterWide}</defs>
     <path d="M15 20C130 2 230 -4 305 20C338 30 360 40 364 44" ${pen('npRough2')}/>
     ${headV('npRough2', 372, 52, 371, 39, 359, 51)}
   </svg>`;
@@ -1954,7 +1970,7 @@ PROJECTS['surf-the-spike'] = function () {
      filter id — several sit in the DOM at once and a shared id silently
      applies one arrow's filter region to another's geometry — and its own
      seed, so seven arrows on one page don't wear one wobble seven times. */
-  const caseArrow = `<svg viewBox="0 0 74 31"><defs>${penFilter('stsRough1')}</defs>
+  const caseArrow = `<svg class="proj-arrow" viewBox="0 0 74 31"><defs>${penFilter('stsRough1')}</defs>
     <path d="M3 17C11 6 22 2 33 4C47 7 55 13 60 19" ${pen('stsRough1')}/>
     ${headV('stsRough1', 68, 27, 45, 22, 70, 3)}
   </svg>`;
@@ -1965,12 +1981,12 @@ PROJECTS['surf-the-spike'] = function () {
      boxes and would clip nothing here, but the height matters: this box is 88
      tall against their 31, and the shared region's 220 covers it. Kept on
      penFilter for exactly that reason. */
-  const scanArrow = `<svg viewBox="0 0 168 88"><defs>${penFilter('stsRough2', 13)}</defs>
+  const scanArrow = `<svg class="proj-arrow" viewBox="0 0 168 88"><defs>${penFilter('stsRough2', 13)}</defs>
     <path d="M162 6C104 7 46 17 25 55" ${pen('stsRough2')}/>
     ${headV('stsRough2', 24, 82, 6, 60, 42, 62)}
   </svg>`;
 
-  const uiArrow = `<svg viewBox="0 0 128 58"><defs>${penFilter('stsRough3', 23)}</defs>
+  const uiArrow = `<svg class="proj-arrow" viewBox="0 0 128 58"><defs>${penFilter('stsRough3', 23)}</defs>
     <path d="M12 14C46 8 88 14 108 36" ${pen('stsRough3')}/>
     ${headV('stsRough3', 117, 50, 94, 39, 122, 28)}
   </svg>`;
@@ -1978,11 +1994,11 @@ PROJECTS['surf-the-spike'] = function () {
   /* The pair over the shops: one arrow off each end of the caption, dropping
      into the photograph under it. Mirrored, not one drawing flipped — a flip
      would repeat the same wobble backwards, which reads as a copy. */
-  const shopLeft = `<svg viewBox="0 0 112 46"><defs>${penFilter('stsRough4', 31)}</defs>
+  const shopLeft = `<svg class="proj-arrow" viewBox="0 0 112 46"><defs>${penFilter('stsRough4', 31)}</defs>
     <path d="M104 12C76 12 50 18 33 30" ${pen('stsRough4')}/>
     ${headV('stsRough4', 14, 37, 27, 17, 40, 37)}
   </svg>`;
-  const shopRight = `<svg viewBox="0 0 126 48"><defs>${penFilter('stsRough5', 37)}</defs>
+  const shopRight = `<svg class="proj-arrow" viewBox="0 0 126 48"><defs>${penFilter('stsRough5', 37)}</defs>
     <path d="M8 12C44 13 82 20 105 33" ${pen('stsRough5')}/>
     ${headV('stsRough5', 116, 42, 93, 36, 111, 21)}
   </svg>`;
@@ -1990,11 +2006,11 @@ PROJECTS['surf-the-spike'] = function () {
   /* And the pair under the vending machines, which point back UP into them:
      short hooks rather than long sweeps, because the caption sits right on the
      edge of the photographs instead of a block away from them. */
-  const vendLeft = `<svg viewBox="0 0 62 44"><defs>${penFilter('stsRough6', 43)}</defs>
+  const vendLeft = `<svg class="proj-arrow" viewBox="0 0 62 44"><defs>${penFilter('stsRough6', 43)}</defs>
     <path d="M56 37C40 35 24 33 14 24" ${pen('stsRough6')}/>
     ${headV('stsRough6', 12, 9, 12, 31, 26, 20)}
   </svg>`;
-  const vendRight = `<svg viewBox="0 0 46 44"><defs>${penFilter('stsRough7', 47)}</defs>
+  const vendRight = `<svg class="proj-arrow" viewBox="0 0 46 44"><defs>${penFilter('stsRough7', 47)}</defs>
     <path d="M8 37C20 35 28 28 33 17" ${pen('stsRough7')}/>
     ${headV('stsRough7', 35, 9, 23, 16, 40, 26)}
   </svg>`;
@@ -2087,14 +2103,14 @@ PROJECTS['tracking-life'] = function () {
      open-V head as the rest of the site. Own filter id each — several sit in
      the DOM at once and a shared id silently applies one arrow's filter region
      to another's geometry — and own seed, so no two wear the same wobble. */
-  const caseArrow = `<svg viewBox="0 0 66 34"><defs>${penFilter('tlRough1', 5)}</defs>
+  const caseArrow = `<svg class="proj-arrow" viewBox="0 0 66 34"><defs>${penFilter('tlRough1', 5)}</defs>
     <path d="M4 11C18 8 34 12 45 23" ${pen('tlRough1')}/>
     ${headV('tlRough1', 57, 30, 39, 27, 55, 8)}
   </svg>`;
 
   /* The pair over the two clips: this one leaves the left of the line and
      drops into the phone, so it runs down-left and stands its head on end. */
-  const lightLeft = `<svg viewBox="0 0 122 52"><defs>${penFilter('tlRough2', 11)}</defs>
+  const lightLeft = `<svg class="proj-arrow" viewBox="0 0 122 52"><defs>${penFilter('tlRough2', 11)}</defs>
     <path d="M118 6C88 11 56 21 34 36" ${pen('tlRough2')}/>
     ${headV('tlRough2', 10, 46, 15, 11, 58, 44)}
   </svg>`;
@@ -2102,12 +2118,12 @@ PROJECTS['tracking-life'] = function () {
   /* And this one comes out from UNDER the words rather than after them — it
      starts below the middle of the line and sweeps out to the right clip, which
      is why the CSS pulls it back over the text instead of setting it beside. */
-  const lightRight = `<svg viewBox="0 0 108 32"><defs>${penFilter('tlRough3', 19)}</defs>
+  const lightRight = `<svg class="proj-arrow" viewBox="0 0 108 32"><defs>${penFilter('tlRough3', 19)}</defs>
     <path d="M5 4C22 16 42 8 60 14C74 19 84 22 92 26" ${pen('tlRough3')}/>
     ${headV('tlRough3', 101 , 29, 78, 25, 99, 7)}
   </svg>`;
 
-  const recapArrow = `<svg viewBox="0 0 76 42"><defs>${penFilter('tlRough4', 29)}</defs>
+  const recapArrow = `<svg class="proj-arrow" viewBox="0 0 76 42"><defs>${penFilter('tlRough4', 29)}</defs>
     <path d="M72 5C52 9 32 17 21 28" ${pen('tlRough4')}/>
     ${headV('tlRough4', 8, 37, 12, 9, 44, 35)}
   </svg>`;
@@ -2158,6 +2174,121 @@ PROJECTS['tracking-life'] = function () {
         <div class="proj-media tl-clip">
           <video autoplay muted loop playsinline poster="${p}recap.jpg"><source src="${p}recap.mp4" type="video/mp4"></video>
         </div>
+      </div>
+
+      ${nav(false)}
+    </div>`;
+};
+
+/* Built to update/pick_a_side/layout.pdf (drawn at 1920, 1 unit = 1px, the
+   same as Surf the Spike and Tracking Life). The work is four animations off
+   the source render (McDonald's turned its side menu into a midterm ballot):
+   the order kiosk folding its menu blocks into a ballot, the checkout screen
+   resolving into a ballot box, the fries carton turning to show an "I PICKED
+   MY SIDE" sticker, and the app running the election live. The renders keep
+   their alpha, so they play as animated WebP in <img> — the one transparent
+   animation format every current browser renders (this repo's ffmpeg cannot
+   make VP9-alpha WebM). tools/build_pas.sh cuts them; order/checkout/reminder
+   bounce (ping-pong), app plays straight. */
+PROJECTS['pick-a-side'] = function () {
+  const p = PROJ_IMG('pick-a-side');
+  const nav = (withHands) => renderProjectNav('pick-a-side', withHands);
+  const yt = 'C9xKzRLujqs';
+
+  /* Five doodles traced off the layout, same pen and open-V head as every
+     other project page — own filter id and seed each, and .proj-arrow so they
+     drop on a phone with the rest. */
+  const caseArrow = `<svg class="proj-arrow" viewBox="0 0 80 48"><defs>${penFilter('pasRough1', 3)}</defs>
+    <path d="M4 12C24 7 46 10 58 20C62 24 63 30 63 34" ${pen('pasRough1')}/>
+    ${headV('pasRough1', 63, 44, 52, 28, 74, 32)}
+  </svg>`;
+
+  /* A C-hook off the near side of each kiosk caption, curling down the edge of
+     the words and standing its head on end into the screen below — the left
+     one down the left side, the right one down the right. */
+  const orderArrow = `<svg class="proj-arrow" viewBox="0 0 56 80"><defs>${penFilter('pasRough2', 11)}</defs>
+    <path d="M42 4C18 7 5 24 8 42C9 54 10 60 11 66" ${pen('pasRough2')}/>
+    ${headV('pasRough2', 11, 78, 0, 61, 24, 64)}
+  </svg>`;
+  const checkoutArrow = `<svg class="proj-arrow" viewBox="0 0 56 80"><defs>${penFilter('pasRough3', 17)}</defs>
+    <path d="M14 4C38 7 51 24 48 42C47 54 46 60 45 66" ${pen('pasRough3')}/>
+    ${headV('pasRough3', 45, 78, 32, 64, 56, 61)}
+  </svg>`;
+
+  /* Off the end of the reminder line, curving down into the carton under it. */
+  const reminderArrow = `<svg class="proj-arrow" viewBox="0 0 92 68"><defs>${penFilter('pasRough4', 23)}</defs>
+    <path d="M4 8C30 3 56 12 74 32C78 36 80 42 81 46" ${pen('pasRough4')}/>
+    ${headV('pasRough4', 82, 58, 62, 50, 88, 36)}
+  </svg>`;
+
+  /* Straight across from the words to the phone beside them. */
+  const appArrow = `<svg class="proj-arrow" viewBox="0 0 140 40"><defs>${penFilter('pasRough5', 29)}</defs>
+    <path d="M4 22C42 14 90 14 120 21" ${pen('pasRough5')}/>
+    ${headV('pasRough5', 138, 24, 117, 8, 125, 33)}
+  </svg>`;
+
+  const loop = (name, alt) => `<div class="proj-media pas-anim pas-anim-${name}">
+        <img src="${p}${name}.webp" alt="${alt}" loading="lazy">
+      </div>`;
+
+  return `
+    <div class="proj proj-pas">
+      ${nav(true)}
+
+      <div class="proj-head">
+        <img class="proj-title-art" src="${IMG}ui/camp_l1_0.png" alt="Pick a side">
+        <p class="pas-idea">for the midterm elections in the United States, McDonald’s turned its side menu into a ballot.</p>
+      </div>
+
+      <div class="proj-block pas-b-case">
+        <p class="pas-cap pas-cap-case">
+          <span>video case</span>
+          ${caseArrow}
+        </p>
+        <div class="proj-media pas-yt">
+          <iframe src="https://www.youtube.com/embed/${yt}?rel=0" title="Pick a side" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen loading="lazy"></iframe>
+        </div>
+      </div>
+
+      <!-- The two kiosk screens are one act: the menu blocks fold into a
+           ballot, and that ballot is what you check out with. A caption over
+           each with an arrow onto its screen. -->
+      <div class="proj-block pas-b-kiosk">
+        <div class="pas-duo">
+          <div class="pas-col pas-col-order">
+            <p class="pas-cap pas-cap-order">
+              ${orderArrow}
+              <span>ordering is like filling up a ballot</span>
+            </p>
+            ${loop('order', 'A McDonald’s order kiosk: the Pick a Side menu blocks folding down into a ballot')}
+          </div>
+          <div class="pas-col pas-col-checkout">
+            <p class="pas-cap pas-cap-checkout">
+              <span>checkout with your “ballot”</span>
+              ${checkoutArrow}
+            </p>
+            ${loop('checkout', 'The kiosk order summary resolving into a red ballot box')}
+          </div>
+        </div>
+      </div>
+
+      <!-- The takeaway and the follow-up: a sticker on the carton so you
+           remember you voted, and the election running live in the app. -->
+      <!-- Placed, not gridded: in the layout the carton hangs lower-left and
+           the phone stands upper-right, its caption tucked in at the phone's
+           lower-left corner. .pas-b-after is a relative box and each piece is
+           set in vw off the 1920 drawing; the phone @media flattens it. -->
+      <div class="proj-block pas-b-after">
+        <p class="pas-cap pas-cap-reminder">
+          <span>get a cute reminder</span>
+          ${reminderArrow}
+        </p>
+        ${loop('reminder', 'A McDonald’s fries carton turning to show an “I PICKED MY SIDE” sticker')}
+        ${loop('app', 'The McDonald’s app: a Pick a Side section running the election live, state by state')}
+        <p class="pas-cap pas-cap-app">
+          <span>follow the elections in the app</span>
+          ${appArrow}
+        </p>
       </div>
 
       ${nav(false)}

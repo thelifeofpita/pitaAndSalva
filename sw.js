@@ -13,7 +13,7 @@
    Bump VERSION after rebuilding frames to force every client onto the new art in
    one step. Without a bump the stale-while-revalidate path below still picks up
    changes, just one visit later. */
-const VERSION = 'pitalva-v72';
+const VERSION = 'pitalva-v74';
 const CACHE = VERSION;
 
 /* Enough to boot and play the first dap. The rest of the frames land in the

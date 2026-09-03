@@ -925,6 +925,15 @@ body.narrow #page.page-and .back-in { gap: calc(16px * var(--inv)); }
    this arrow's line against every other arrow's. */
 .proj-nav-link svg { width: 22px; height: 17px; overflow: visible; flex: none; }
 
+/* `.proj-arrow` is every hand-drawn pointer doodle on a project page — the ones
+   trailing a caption into its media, the ones that crossed a gutter, the curl
+   onto the QR. On a phone the page is one column and each caption already sits
+   right against the thing it points at, so the arrows do no work and only add
+   height. Drop them all below the breakpoint; the in-project nav (its own
+   chevrons, not `.proj-arrow`) and the emphasis circles stay. (!important
+   because a couple sit in boxes whose own rule sets `svg { display: block }`.) */
+@media (max-width: 1000px) { .proj-arrow { display: none !important; } }
+
 /* The project's own close control — not a new drawing: the exact `#back`
    hands (the vertical cut, meant to hang from a top edge, wrists cut off by
    the frame), beckoning on hover the same way. `#back` itself can't show
@@ -1164,8 +1173,6 @@ body.narrow #page.page-and .back-in { gap: calc(16px * var(--inv)); }
   .bis-subtitle { max-width: 100%; }
   .bis-sticker-row { margin: 0; }
   .bis-desc { margin: 26px 0 18px; gap: 10px; }
-  .bis-desc svg { width: 37px; height: 16px; }
-  .bis-caption svg { width: 40px; height: 59px; margin: 4px 0 0; }
   .proj-bis .bis-b-duo, .proj-bis .bis-b-cap, .proj-bis .bis-b-stick,
   .proj-bis .bis-park-row, .proj-bis .bis-b-mobile { margin-top: 44px; }
   .proj-bis .bis-b-mobile + .proj-nav { margin-top: 56px; }
@@ -1178,17 +1185,15 @@ body.narrow #page.page-and .back-in { gap: calc(16px * var(--inv)); }
   .bis-sticker-row img:nth-child(2),
   .bis-sticker-row img:nth-child(3) { width: 42%; }
   .bis-interactive { gap: 10px; }
-  .bis-interactive svg { width: 47px; height: 17px; }
   .bis-interactive p { font-size: 15px; }
   .bis-mobile-center { top: 0; }
   .bis-tap-wrap { margin-top: 20px; }
   .bis-circle svg { width: 26px; height: 23px; }
   .bis-qr-wrap { margin-top: 14px; }
-  .bis-arrow-down { width: 27px; height: 46px; }
   .bis-qr { width: 96px; }
-  /* the mockup's single right-flush line only fits a screen that wide */
-  .bis-caption { white-space: normal; justify-content: flex-start; align-items: center; }
-  .bis-caption svg { margin: 0; }
+  /* every pointer arrow on the page is dropped here (.proj-arrow) — the
+     emphasis circle on "this" stays; each caption sits right on its media */
+  .bis-caption { white-space: normal; justify-content: flex-start; }
 }
 
 /* ------------------------------------------------ project: numpad jam */
@@ -1641,7 +1646,6 @@ body.narrow #page.page-and .back-in { gap: calc(16px * var(--inv)); }
   .numpad-idea { max-width: 100%; }
   .proj-numpad .np-b-case { margin-top: 26px; }
   .np-case { margin: 0 0 18px; gap: 10px; }
-  .np-case svg { width: 37px; height: 16px; }
   .proj-numpad .np-b-duo { margin-top: 44px; }
   /* clip over invitation at phone width: side by side, the ring would be
      about 90px across and the clip would lose the timeline covers that are
@@ -1770,20 +1774,13 @@ body.narrow #page.page-and .back-in { gap: calc(16px * var(--inv)); }
    the garment is the whole work. So on a phone the ring is unwound into a
    column in `--m`'s order — each garment hung, then the stitching on it read
    close, then the next, and the pile of all four of them last — full-bleed out
-   through the page's own margin, and the scroll settles on them one by one.
-   The DOM stays in ring order, so nothing about the wide layout moves. */
+   through the page's own margin. The DOM stays in ring order, so nothing about
+   the wide layout moves. The scroll runs free — no snap: settling the column
+   on each photograph in turn just fought the reader moving down the page. */
 @media (max-width: 720px) {
   .proj-aft .aft-b-grid { margin-left: -6vw; margin-right: -6vw; }
   .aft-grid { grid-template-columns: 1fr; gap: 10px; }
-  .aft-cell { order: var(--m, 0); scroll-snap-align: center; }
-  /* The snap belongs to the thing that scrolls, which is the project's own
-     scroller, not the grid inside it. `proximity`, not `mandatory`: the title
-     and the two navs are not photographs and must not be snapped past.
-     The page itself is a snap point at its own start, and it has to be —
-     without one at the top the nearest snap is the first photograph's centre,
-     and the page opens having already scrolled its own title away. */
-  #project:has(.proj-aft) #project-scroll { scroll-snap-type: y proximity; }
-  .proj-aft { scroll-snap-align: start; }
+  .aft-cell { order: var(--m, 0); }
 }
 
 /* a campaign reached by prev/next before it has a project of its own —
@@ -1946,39 +1943,21 @@ body.narrow #page.page-and .back-in { gap: calc(16px * var(--inv)); }
   .proj-sts .sts-b-case { margin-top: 30px; }
   .proj-sts > .proj-nav:last-child { margin-top: 34px; }
 
-  /* Every caption is a line of type and a doodle at the size the phone layout
-     sets them, and the long ones wrap — so they stop being a nowrap row with
-     the arrow pinned to one end. */
-  /* the line has to be able to break here — at 390 the longest of these
-     captions is three lines of type, and a span that cannot shrink runs
-     straight off the right edge instead */
+  /* Every caption is just its line of type here (the arrows are dropped, see
+     .proj-arrow) and the long ones have to wrap — at 390 the longest runs to
+     three lines, and a span that cannot shrink runs off the right edge. */
   .sts-cap { flex-wrap: wrap; gap: 10px; align-items: center; }
   .sts-cap span { flex: 0 1 auto; min-width: 0; }
-  .sts-cap svg { margin-top: 0 !important; }
   .sts-cap-case { margin-bottom: var(--sts-lead); }
-  .sts-cap-case svg { width: 54px; height: 23px; }
   .sts-cap-ui { margin-bottom: var(--sts-lead); }
-  .sts-cap-ui svg { width: 74px; height: 34px; }
-  /* left with the rest of them: right-aligning one line of a stacked column
-     reads as a mistake at this width */
+  /* scan / shops / vend all carried arrows that pointed across the wide
+     layout (back onto the third phone, out to a photo on each side). Stacked,
+     every one of those captions sits directly against its picture, so the
+     arrows are dropped (.proj-arrow) and the lines just left-set like the
+     rest. */
   .sts-cap-scan { justify-content: flex-start; }
-  .sts-cap-scan svg { width: 84px; height: 44px; }
-  /* The two grid captions point at pictures on either side of them, and on a
-     phone there is no either side — the 2x2 is one column. So the line takes
-     the width and both marks go on their own row against it, still on the
-     side of the type the layout puts them on: the shops' arrows below,
-     dropping into the first photograph, the vending hooks above, reaching
-     back up into the last one. */
-  .sts-cap-shops, .sts-cap-vend { text-align: center; }
-  .sts-cap-shops span, .sts-cap-vend span { flex-basis: 100%; }
-  .sts-cap-shops span { order: -1; }
-  .sts-cap-vend span { order: 1; }
   .sts-cap-shops { margin-bottom: var(--sts-lead); }
-  .sts-cap-shops svg:first-child { width: 64px; height: 26px; }
-  .sts-cap-shops svg:last-child { width: 68px; height: 26px; }
   .sts-cap-vend { margin-top: 12px; }
-  .sts-cap-vend svg:first-child { width: 40px; height: 28px; }
-  .sts-cap-vend svg:last-child { width: 30px; height: 28px; }
   /* one at a time: a shop window is 170px wide in two columns on a phone, and
      the poster in that window is the work */
   .sts-grid { grid-template-columns: 1fr; }
@@ -2085,25 +2064,146 @@ body.narrow #page.page-and .back-in { gap: calc(16px * var(--inv)); }
   .tl-idea { max-width: 100%; }
   .proj-tl .tl-b-case { margin-top: 30px; }
 
-  /* every caption is a line of type and a mark or two at the size the phone
-     layout sets them, and the long one breaks rather than running off the edge */
+  /* every caption is just its line of type here (arrows dropped, see
+     .proj-arrow); the long one has to wrap rather than run off the edge */
   .tl-cap { flex-wrap: wrap; gap: 10px; align-items: center; }
   .tl-cap span { flex: 0 1 auto; min-width: 0; }
-  .tl-cap svg { margin: 0 !important; }
-  .tl-cap-case svg { width: 48px; height: 25px; }
-  /* the caption points at a clip on either side of it, and stacked there is no
-     either side: the line takes the width and both marks go under it, into the
-     first of the two */
-  .tl-cap-light { text-align: center; }
-  .tl-cap-light span { flex-basis: 100%; order: -1; }
-  .tl-cap-light svg:first-of-type { width: 64px; height: 28px; }
-  .tl-cap-light svg:last-of-type { width: 60px; height: 18px; }
-  /* left with the rest of them: right-aligning one line of a stacked column
-     reads as a mistake at this width */
+  /* the light-up caption's two arrows and the recap arrow all pointed across
+     the wide layout; stacked, each caption is already right against its clip,
+     so they're dropped (.proj-arrow) and the lines left-set */
   .tl-cap-recap { justify-content: flex-start; }
-  .tl-cap-recap svg { width: 54px; height: 30px; }
   /* one clip at a time — half of 342 is a thumbnail of a phone screen */
   .tl-duo { grid-template-columns: 1fr; gap: 10px; }
+}
+
+/* ------------------------------------------------- project: pick a side */
+/* Built to update/pick_a_side/layout.pdf, drawn at 1920 (1 unit = 1px =
+   1/19.2 vw), same as Surf the Spike and Tracking Life. Four transparent
+   animated-WebP loops (tools/build_pas.sh) sit on the page's own black — no
+   .proj-media speckle, no fill behind them. Video case up top, then the two
+   kiosk screens side by side, then the carton and the app. */
+.proj-pas {
+  --pas-ink: #f2f2ea;
+  --pas-copy: 1.411vw;
+  --pas-gap: 5.2vw;          /* last media to next caption */
+  --pas-lead: 1.406vw;       /* a caption to the media under it */
+  font-family: 'CossetteTexte', "Helvetica Neue", Helvetica, Arial, sans-serif;
+  max-width: none;
+  padding: 0 8.073vw 6.3vw;
+  font-size: var(--pas-copy);
+}
+.proj-pas .proj-head { margin-top: 3.07vw; }
+.proj-pas .proj-block { margin: 0; }
+.proj-pas .pas-b-case { margin-top: 4.58vw; }
+.proj-pas .pas-b-kiosk,
+.proj-pas .pas-b-after { margin-top: var(--pas-gap); }
+.proj-pas > .proj-nav:last-child { margin-top: 4.58vw; }
+.proj-pas .proj-title-art { width: 17.08vw; margin: 0 auto; }  /* camp_l1_0 is 328u */
+.pas-idea {
+  font-weight: 700;
+  font-size: var(--pas-copy);
+  line-height: 1.15;
+  max-width: 40vw;
+  margin: 0 auto;
+  color: var(--pas-ink);
+}
+
+/* the loops carry their own alpha — kill the shared media dressing so they
+   float on the page instead of sitting in a lit box */
+.proj-pas .proj-media {
+  background: transparent;
+  mask-image: none;
+  overflow: visible;
+}
+.pas-anim img { display: block; width: 100%; height: auto; }
+
+.pas-cap {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.885vw;
+  flex-wrap: nowrap;
+  font-size: var(--pas-copy);
+  line-height: 1.2;
+  color: var(--pas-ink);
+  text-align: left;
+  margin: 0;
+}
+.pas-cap svg { flex: none; overflow: visible; color: var(--pas-ink); }
+.pas-cap span { flex: none; }
+
+/* video case: caption at the column edge, iframe full width */
+.pas-cap-case { margin-bottom: var(--pas-lead); }
+.pas-cap-case svg { width: 3.958vw; height: 1.979vw; margin-top: 0.26vw; }
+.pas-yt { position: relative; aspect-ratio: 16 / 9; }
+.pas-yt iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; display: block; }
+
+/* the two kiosks: a column each, caption then screen. In the layout the left
+   screen is ~514 units wide and its left edge is 119 units into the column;
+   the right is ~530 wide, 935 units in — so a plain 1fr 1fr grid with each
+   column padded to put its kiosk where the drawing has it. */
+.pas-duo { display: grid; grid-template-columns: 1fr 1fr; gap: 3vw; }
+.pas-col { display: flex; flex-direction: column; align-items: flex-start; }
+.pas-col-order { padding-left: 6.2vw; }
+.pas-col-checkout { padding-left: 5.28vw; }
+.pas-anim-order { width: 26.77vw; margin-top: 0.5vw; }
+.pas-anim-checkout { width: 27.6vw; margin-top: 0.5vw; }
+
+/* the C-hook hangs off the near side of the words and stands its head into the
+   screen below, so it is given its full 80-unit height and left to overhang */
+.pas-cap-order svg,
+.pas-cap-checkout svg { width: 2.917vw; height: 4.167vw; margin-top: -0.3vw; margin-bottom: -2.6vw; }
+.pas-cap-checkout { margin-left: 3.5vw; }
+
+/* the carton and the app are placed, not gridded (see the markup note): the
+   carton hangs lower-left, the phone stands upper-right, its caption tucked in
+   at the phone's lower-left. Positions are vw off the 1920 drawing. */
+.pas-b-after { position: relative; height: 46vw; }
+.proj-pas .pas-b-after { margin-top: 8vw; }
+.pas-b-after > * { position: absolute; }
+.pas-cap-reminder { left: 2.9vw; top: 0; }
+.pas-cap-reminder svg { width: 4.792vw; height: 3.542vw; margin-top: 1.2vw; }
+.pas-anim-reminder { left: 2.5vw; top: 4vw; width: 33vw; }
+.pas-anim-app { left: 52vw; top: 0; width: 21.8vw; }
+/* the phone's caption is tucked in at its lower-left: block flow so the line
+   wraps the way the drawing has it, with the arrow trailing the last word */
+.pas-cap-app { left: 35vw; top: 37vw; display: block; width: 14.5vw; line-height: 1.25; }
+.pas-cap-app span { display: inline; }
+.pas-cap-app svg { display: inline-block; vertical-align: middle; width: 7.292vw; height: 2.083vw; margin-left: 0.6vw; }
+
+@media (max-width: 1000px) {
+  .proj-pas { padding: 24px 6vw 110px; --pas-copy: 14px; --pas-gap: 34px; --pas-lead: 12px; }
+  .proj-pas .proj-head { margin-top: 26px; }
+  .proj-pas .proj-nav { margin: 0; }
+  .proj-pas .proj-nav-link { gap: 9px; }
+  .proj-pas .proj-nav-link svg { width: 22px; height: 17px; }
+  .proj-pas .proj-nav-hands .back-in { gap: 26px; }
+  .proj-pas .proj-nav-hands .hand { width: 48px; }
+  .proj-pas .proj-title-art { width: min(56vw, 360px); }
+  .pas-idea { max-width: 100%; }
+  .proj-pas .pas-b-case { margin-top: 30px; }
+
+  /* one column: the kiosk grid collapses, the placed after-block goes back to
+     normal flow, arrows dropped (.proj-arrow). Each caption is just its line
+     of type directly above the loop it names. */
+  .pas-cap { flex-wrap: wrap; gap: 10px; align-items: center; text-align: center; justify-content: center; }
+  .pas-cap span { flex: 0 1 auto; }
+  .pas-cap-checkout, .pas-cap-order svg, .pas-cap-checkout svg { margin: 0; }
+
+  .pas-duo { grid-template-columns: 1fr; gap: 0; }
+  .pas-col { align-items: stretch; }
+  .pas-col-order { padding-left: 0; }
+  .pas-col-checkout { padding-left: 0; margin-top: var(--pas-gap); }
+
+  .pas-b-after { position: static; height: auto; display: flex; flex-direction: column; }
+  .proj-pas .pas-b-after { margin-top: var(--pas-gap); }
+  .pas-b-after > * { position: static; width: auto; }
+  .pas-cap-app { flex-wrap: wrap; align-items: center; order: 1; margin-top: var(--pas-gap); }
+  .pas-anim-app { order: 2; }
+
+  .pas-anim-order, .pas-anim-checkout,
+  .pas-anim-reminder, .pas-anim-app {
+    width: min(78vw, 440px); margin-left: auto; margin-right: auto; margin-top: 12px;
+  }
 }
 
 /* Narrow: the same three parts, stacked. Side by side there is not room for
