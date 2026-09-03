@@ -1811,10 +1811,20 @@ body.narrow #page.page-and .back-in { gap: calc(16px * var(--inv)); }
    Each caption's arrow is placed by its own numbers rather than a shared rule.
    They are not decoration in a row of text: each one leaves the words at a
    particular point and lands on a particular part of the picture under it, and
-   in the layout that means each sits at its own height against its own line. */
+   in the layout that means each sits at its own height against its own line.
+
+   The vertical rhythm is regularised, which the layout is not: measured off it
+   the gaps between one block's picture and the next block's caption came out
+   124, 152 and 71, and the page read as unevenly distributed rather than as
+   deliberately varied. Two numbers now do all of it — `--sts-gap` between
+   blocks and `--sts-lead` from a caption to the picture it introduces — with
+   one exception, the caption under the placements, which hugs them because its
+   hooks reach back UP into the photographs. */
 .proj-sts {
   --sts-ink: #f2f2ea;
   --sts-copy: 1.411vw;
+  --sts-gap: 5.2vw;          /* between blocks: last picture to next caption */
+  --sts-lead: 1.406vw;       /* a caption to the picture directly under it */
   font-family: 'CossetteTexte', "Helvetica Neue", Helvetica, Arial, sans-serif;
   max-width: none;
   padding: 0 8.073vw 6.3vw;
@@ -1871,40 +1881,41 @@ body.narrow #page.page-and .back-in { gap: calc(16px * var(--inv)); }
 
 .proj-sts .proj-block { margin: 0; }
 .proj-sts .sts-b-case { margin-top: 4.58vw; }
+.proj-sts .sts-b-scan,
+.proj-sts .sts-b-ui,
+.proj-sts .sts-b-out { margin-top: var(--sts-gap); }
+/* the closing nav is the page's last line and needs the same air the first
+   block gets under the title — without this it sits straight under the
+   placements' caption, reading as part of it */
+.proj-sts > .proj-nav:last-child { margin-top: 4.58vw; }
 
-.sts-cap-case { margin-bottom: 1.094vw; }               /* caption 99 -> video 152 */
+.sts-cap-case { margin-bottom: var(--sts-lead); }
 .sts-cap-case svg { width: 3.854vw; height: 1.615vw; margin-top: 0.208vw; }
 
 .sts-yt { position: relative; aspect-ratio: 16 / 9; }
 .sts-yt iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; display: block; }
 
-/* video bottom 1056 -> the scan artwork's own box top 1151 */
-.proj-sts .sts-b-scan { margin-top: 4.948vw; }
-.sts-scan { position: relative; }
+/* The artwork is drawn inside a 1610x906 field with the three phones sitting
+   in the middle of it, which put 123 units of empty black above them and 109
+   below. Over a black page that is not margin, it is a hole: it doubled the
+   gap after the video case and left the caption stranded in the middle of it.
+   So the file is trimmed to the phones (plus 6 units of air) and the caption
+   comes out of the artwork and back onto the line above it, where every other
+   caption on this page sits. Right-aligned, because the arrow has to leave the
+   words travelling left to land on the third phone. */
 .sts-scan img { display: block; width: 100%; height: auto; }
-/* inside the artwork's own black margin, 29 units down and 47 in from the
-   right, which is where the layout starts the line so its arrow lands on the
-   third phone */
-.sts-cap-scan {
-  position: absolute;
-  top: 1.51vw;
-  right: 2.448vw;
-}
-.sts-cap-scan svg { width: 8.75vw; height: 4.583vw; margin-top: 0.729vw; }
+.sts-cap-scan { justify-content: flex-end; margin-bottom: var(--sts-lead); }
+.sts-cap-scan svg { width: 8.75vw; height: 4.583vw; }
 
-/* the scan artwork's box bottom 2057 -> this caption's line at 2100 */
-.proj-sts .sts-b-ui { margin-top: 2.24vw; }
-.sts-cap-ui { margin-bottom: 1.667vw; }                 /* caption 2100 -> clip 2164 */
+.sts-cap-ui { margin-bottom: var(--sts-lead); }
 .sts-cap-ui svg { width: 6.667vw; height: 3.021vw; margin-top: 0.313vw; }
 
 /* the clip is shown whole, at the ratio the UI was recorded in */
 .sts-clip video { width: 100%; height: auto; display: block; }
 
-/* clip bottom 3070 -> the shops caption at 3141 */
-.proj-sts .sts-b-out { margin-top: 3.698vw; }
 /* both grid captions are centred on the page, with an arrow off each end */
 .sts-cap-shops, .sts-cap-vend { justify-content: center; }
-.sts-cap-shops { margin-bottom: 1.406vw; }              /* caption 3141 -> grid 3198 */
+.sts-cap-shops { margin-bottom: var(--sts-lead); }
 .sts-cap-shops svg:first-child { width: 5.833vw; height: 2.396vw; margin-top: 0.781vw; }
 .sts-cap-shops svg:last-child { width: 6.563vw; height: 2.5vw; margin-top: 0.833vw; }
 
@@ -1931,22 +1942,26 @@ body.narrow #page.page-and .back-in { gap: calc(16px * var(--inv)); }
   .proj-sts .proj-nav-hands .hand { width: 48px; }
   .proj-sts .proj-title-art { width: min(69.8vw, 602px); }   /* 72vw scaled the same way */
   .sts-idea { max-width: 100%; }
+  .proj-sts { --sts-gap: 34px; --sts-lead: 12px; }
   .proj-sts .sts-b-case { margin-top: 30px; }
-  .proj-sts .sts-b-scan, .proj-sts .sts-b-ui, .proj-sts .sts-b-out { margin-top: 30px; }
+  .proj-sts > .proj-nav:last-child { margin-top: 34px; }
 
   /* Every caption is a line of type and a doodle at the size the phone layout
      sets them, and the long ones wrap — so they stop being a nowrap row with
      the arrow pinned to one end. */
+  /* the line has to be able to break here — at 390 the longest of these
+     captions is three lines of type, and a span that cannot shrink runs
+     straight off the right edge instead */
   .sts-cap { flex-wrap: wrap; gap: 10px; align-items: center; }
+  .sts-cap span { flex: 0 1 auto; min-width: 0; }
   .sts-cap svg { margin-top: 0 !important; }
-  .sts-cap-case { margin-bottom: 12px; }
+  .sts-cap-case { margin-bottom: var(--sts-lead); }
   .sts-cap-case svg { width: 54px; height: 23px; }
-  .sts-cap-ui { margin-bottom: 12px; }
+  .sts-cap-ui { margin-bottom: var(--sts-lead); }
   .sts-cap-ui svg { width: 74px; height: 34px; }
-  /* the scan caption comes out of the artwork's margin and back into the flow:
-     there is no room beside three phones on a 390-wide screen for a line of
-     type to sit over them */
-  .sts-cap-scan { position: static; margin-bottom: 12px; }
+  /* left with the rest of them: right-aligning one line of a stacked column
+     reads as a mistake at this width */
+  .sts-cap-scan { justify-content: flex-start; }
   .sts-cap-scan svg { width: 84px; height: 44px; }
   /* The two grid captions point at pictures on either side of them, and on a
      phone there is no either side — the 2x2 is one column. So the line takes
@@ -1958,7 +1973,7 @@ body.narrow #page.page-and .back-in { gap: calc(16px * var(--inv)); }
   .sts-cap-shops span, .sts-cap-vend span { flex-basis: 100%; }
   .sts-cap-shops span { order: -1; }
   .sts-cap-vend span { order: 1; }
-  .sts-cap-shops { margin-bottom: 12px; }
+  .sts-cap-shops { margin-bottom: var(--sts-lead); }
   .sts-cap-shops svg:first-child { width: 64px; height: 26px; }
   .sts-cap-shops svg:last-child { width: 68px; height: 26px; }
   .sts-cap-vend { margin-top: 12px; }

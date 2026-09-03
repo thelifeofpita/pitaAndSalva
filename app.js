@@ -2029,18 +2029,16 @@ PROJECTS['surf-the-spike'] = function () {
         </div>
       </div>
 
-      <!-- The artwork carries its own black margin — the three phones are
-           drawn inside a 1610x906 field, not cropped to their own edges — and
-           the layout puts the caption inside that margin rather than above it.
-           So the caption is positioned over the top right of the image, which
-           is where the arrow needs to start from to fall on the third phone. -->
+      <!-- The one caption set to the right of the column: its arrow has to
+           leave the words travelling left to land on the third phone, so the
+           words have to be over on that side to leave it the run. -->
       <div class="proj-block sts-b-scan">
         <div class="sts-scan">
-          <img src="${p}scan.webp" alt="Three phones scanning a coffee, a tea and an energy shot, each labelled with the caffeine it holds" loading="lazy">
           <p class="sts-cap sts-cap-scan">
             ${scanArrow}
             <span>scan your caffeine intake</span>
           </p>
+          <img src="${p}scan.webp" alt="Three phones scanning a coffee, a tea and an energy shot, each labelled with the caffeine it holds" loading="lazy">
         </div>
       </div>
 
