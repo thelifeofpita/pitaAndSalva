@@ -1985,16 +1985,23 @@ body.narrow #page.page-and .back-in { gap: calc(16px * var(--inv)); }
 }
 
 /* ------------------------------------------------- project: tracking life */
-/* Same system again. The whole campaign is one film, so this page is that
-   film and then frames and cuts of it: every media block here is 2:1, the
-   ratio it was shot in, and they run full width one under the other so the
-   page reads like the film does rather than like a gallery of it. */
+/* Set to update/tracking_life/layout.pdf, read the same way Surf the Spike's
+   is: the file is drawn at 1920, so 1 unit = 1px at 1920 = 1/19.2 vw, and the
+   column is 1610 units inside 155-unit margins. Three blocks — the film, the
+   pair of clips, the recap — each a caption and the media its arrow points at.
+
+   The vertical rhythm is this page's sibling's, not this file's: measured off
+   the PDF the blocks nearly touch (23 units under the film, 7 under the next
+   caption), which reads as cramped on a screen and disagrees with the page
+   next door. Same two numbers as Surf the Spike do all of it. */
 .proj-tl {
   --tl-ink: #f2f2ea;
   --tl-copy: 1.411vw;
+  --tl-gap: 5.2vw;           /* between blocks: last picture to next caption */
+  --tl-lead: 1.406vw;        /* a caption to the picture directly under it */
   font-family: 'CossetteTexte', "Helvetica Neue", Helvetica, Arial, sans-serif;
   max-width: none;
-  padding: 0 7.031vw 6.3vw;
+  padding: 0 8.073vw 6.3vw;
   font-size: var(--tl-copy);
 }
 .proj-tl .proj-head { margin-top: 3.07vw; }
@@ -2004,7 +2011,7 @@ body.narrow #page.page-and .back-in { gap: calc(16px * var(--inv)); }
 .proj-tl .proj-nav-hands { padding: 0; margin: 0; }
 .proj-tl .proj-nav-hands .back-in { gap: 1.823vw; }
 .proj-tl .proj-nav-hands .hand { width: 6.615vw; }
-/* TRACKING LIFE is 425 units wide at the same ~0.094vw per unit */
+/* TRACKING LIFE is 425 units wide at the site-wide ~0.094vw per unit */
 .proj-tl .proj-title-art { width: 39.95vw; margin: 0 auto; }
 
 .tl-idea {
@@ -2016,49 +2023,58 @@ body.narrow #page.page-and .back-in { gap: calc(16px * var(--inv)); }
   color: var(--tl-ink);
 }
 
-.proj-tl .proj-block { margin: 4.58vw 0 0; }
-.proj-tl .proj-block:first-of-type { margin-top: 4.58vw; }
+/* as on every other project page: the speckle edge is tuned for 1-bit art on
+   black and reads as a dirty border around a photograph */
+.proj-tl .proj-media { mask-image: none; }
 
 .tl-cap {
   display: flex;
-  align-items: center;
-  justify-content: flex-start;
-  gap: 1.25vw;
-  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 0.885vw;
+  flex-wrap: nowrap;
   font-size: var(--tl-copy);
+  line-height: 1.2;
   color: var(--tl-ink);
   text-align: left;
-  margin: 0 0 1.77vw;
-  max-width: 60vw;
+  margin: 0;
 }
-.tl-cap svg { width: 3.854vw; height: 1.615vw; overflow: visible; flex: none; color: var(--tl-ink); }
+.tl-cap svg { flex: none; overflow: visible; color: var(--tl-ink); }
+.tl-cap span { flex: none; }
 
-.tl-copy {
-  font-size: var(--tl-copy);
-  line-height: 1.3;
-  color: var(--tl-ink);
-  margin: 0 0 1.77vw;
-  max-width: 34vw;
-}
-.tl-copy-end { max-width: 46vw; }
+.proj-tl .proj-block { margin: 0; }
+.proj-tl .tl-b-case { margin-top: 4.58vw; }
+.proj-tl .tl-b-light,
+.proj-tl .tl-b-recap { margin-top: var(--tl-gap); }
+.proj-tl > .proj-nav:last-child { margin-top: 4.58vw; }
+
+.tl-cap-case { margin-bottom: var(--tl-lead); }
+.tl-cap-case svg { width: 3.438vw; height: 1.771vw; margin-top: 0.26vw; }
 
 .tl-yt { position: relative; aspect-ratio: 16 / 9; }
 .tl-yt iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; display: block; }
 
-.proj-tl .proj-media { mask-image: none; }   /* as on every other project page */
-/* as on Surf the Spike: the clip is shown whole, at the ratio it was shot */
+/* the clips are shown whole, at the ratio they were recorded in */
 .tl-clip video { width: 100%; height: auto; display: block; }
 
-/* Everything cut out of the film is 2:1 — the bars are cropped off the
-   source rather than carried into the page — so the boxes are given that
-   ratio and the images fill them. */
-.tl-shot { aspect-ratio: 2 / 1; }
-.tl-shot img { display: block; width: 100%; height: 100%; object-fit: cover; }
-.proj-tl .tl-duo { gap: 2.604vw; margin-top: 2.604vw; }
-.tl-wide { margin-top: 2.604vw; }
+/* centred over the pair, an arrow into each clip */
+.tl-cap-light { justify-content: center; margin-bottom: var(--tl-lead); }
+.tl-cap-light svg:first-of-type { width: 6.354vw; height: 2.708vw; margin-right: -0.469vw; }
+/* This one is drawn coming out from under the words, not after them: it starts
+   below the middle of the line and sweeps out to the right-hand clip. Hence the
+   pull back over the text — 122 units of it, which is where the layout starts
+   the stroke — and the drop below the line. */
+.tl-cap-light svg:last-of-type { width: 5.625vw; height: 1.667vw; margin-left: -6.354vw; margin-top: 1.458vw; }
+
+/* two 16:9 cells with the layout's own 20-unit gutter between them */
+.tl-duo { display: grid; grid-template-columns: 1fr 1fr; gap: 1.042vw; }
+
+/* set to the right of the column, because its arrow has to leave the words
+   travelling left to come down on the recap */
+.tl-cap-recap { justify-content: flex-end; margin-bottom: var(--tl-lead); }
+.tl-cap-recap svg { width: 3.958vw; height: 2.188vw; margin-top: 0.677vw; }
 
 @media (max-width: 1000px) {
-  .proj-tl { padding: 24px 6vw 110px; --tl-copy: 14px; }
+  .proj-tl { padding: 24px 6vw 110px; --tl-copy: 14px; --tl-gap: 34px; --tl-lead: 12px; }
   .proj-tl .proj-head { margin-top: 26px; }
   .proj-tl .proj-nav { margin: 0; }
   .proj-tl .proj-nav-link { gap: 9px; }
@@ -2066,15 +2082,28 @@ body.narrow #page.page-and .back-in { gap: calc(16px * var(--inv)); }
   .proj-tl .proj-nav-hands .back-in { gap: 26px; }
   .proj-tl .proj-nav-hands .hand { width: 48px; }
   .proj-tl .proj-title-art { width: min(67.9vw, 585px); }   /* 72vw scaled the same way */
-  .tl-idea, .tl-copy, .tl-copy-end, .tl-cap { max-width: 100%; }
-  .proj-tl .proj-block, .proj-tl .proj-block:first-of-type { margin-top: 30px; }
-  .tl-cap { gap: 10px; margin-bottom: 12px; }
-  .tl-cap svg { width: 54px; height: 23px; }
-  /* A 2:1 frame halved on a phone is 170px across; the recap card inside it
-     is unreadable at that size and reading it is the point. So the pairs
-     unstack and every frame runs the width of the glass. */
-  .proj-tl .tl-duo { grid-template-columns: 1fr; gap: 10px; margin-top: 10px; }
-  .tl-wide { margin-top: 10px; }
+  .tl-idea { max-width: 100%; }
+  .proj-tl .tl-b-case { margin-top: 30px; }
+
+  /* every caption is a line of type and a mark or two at the size the phone
+     layout sets them, and the long one breaks rather than running off the edge */
+  .tl-cap { flex-wrap: wrap; gap: 10px; align-items: center; }
+  .tl-cap span { flex: 0 1 auto; min-width: 0; }
+  .tl-cap svg { margin: 0 !important; }
+  .tl-cap-case svg { width: 48px; height: 25px; }
+  /* the caption points at a clip on either side of it, and stacked there is no
+     either side: the line takes the width and both marks go under it, into the
+     first of the two */
+  .tl-cap-light { text-align: center; }
+  .tl-cap-light span { flex-basis: 100%; order: -1; }
+  .tl-cap-light svg:first-of-type { width: 64px; height: 28px; }
+  .tl-cap-light svg:last-of-type { width: 60px; height: 18px; }
+  /* left with the rest of them: right-aligning one line of a stacked column
+     reads as a mistake at this width */
+  .tl-cap-recap { justify-content: flex-start; }
+  .tl-cap-recap svg { width: 54px; height: 30px; }
+  /* one clip at a time — half of 342 is a thumbnail of a phone screen */
+  .tl-duo { grid-template-columns: 1fr; gap: 10px; }
 }
 
 /* Narrow: the same three parts, stacked. Side by side there is not room for

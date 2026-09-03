@@ -588,7 +588,7 @@ function buildUI() {
   for (const c of cfg.campaigns) {
     const b = document.createElement('a');
     b.className = 'camp';
-    b.href = '#c/' + c.slug;
+    b.href = '#' + c.slug;
     b.title = c.label;
     b.dataset.slug = c.slug;
     b.dataset.label = c.label;
@@ -2072,32 +2072,44 @@ PROJECTS['surf-the-spike'] = function () {
     </div>`;
 };
 
-/* The one campaign here whose whole output is a film. So the page is the film
-   and then the film taken apart: the clips are cut straight out of it (silent,
-   looping, 2:1 the way it was shot — the source is letterboxed inside 16:9 and
-   the bars are cropped off here rather than shown twice), and the stills are
-   single frames of the same. Nothing is recreated; there is nothing to
-   recreate. */
+/* Built to update/tracking_life/layout.pdf, the same way Surf the Spike is
+   built to its own: that file is drawn at 1920, which is the width these pages
+   are laid out against, so its measurements go straight into .proj-tl's CSS.
+   Three blocks — the film, the phone's own back lighting up beside the life it
+   is reading, and the recap it hands back. */
 PROJECTS['tracking-life'] = function () {
   const p = PROJ_IMG('tracking-life');
   const nav = (withHands) => renderProjectNav('tracking-life', withHands);
   const yt = 'JPgC5tQR8n4';
 
-  /* Same pen, same head, same 1-unit-≈-1px scale as the other project pages;
-     own ids and own seeds, so the three don't repeat one wobble. */
-  const filmArrow = `<svg viewBox="0 0 74 31"><defs>${penFilter('tlRough1', 3)}</defs>
-    <path d="M3 17C11 6 22 2 33 4C47 7 55 13 60 19" ${pen('tlRough1')}/>
-    ${headV('tlRough1', 68, 27, 45, 22, 70, 3)}
+  /* Four doodles traced off the layout at its own scale: 1 unit = 1px at 1920,
+     each sized in CSS at exactly its viewBox size in vw, same pen and same
+     open-V head as the rest of the site. Own filter id each — several sit in
+     the DOM at once and a shared id silently applies one arrow's filter region
+     to another's geometry — and own seed, so no two wear the same wobble. */
+  const caseArrow = `<svg viewBox="0 0 66 34"><defs>${penFilter('tlRough1', 5)}</defs>
+    <path d="M4 11C18 8 34 12 45 23" ${pen('tlRough1')}/>
+    ${headV('tlRough1', 57, 30, 39, 27, 55, 8)}
   </svg>`;
 
-  const glyphArrow = `<svg viewBox="0 0 74 31"><defs>${penFilter('tlRough2', 17)}</defs>
-    <path d="M3 5C12 12 20 15 30 15C42 15 53 19 62 24" ${pen('tlRough2')}/>
-    ${headV('tlRough2', 69, 30, 56, 28, 67, 17)}
+  /* The pair over the two clips: this one leaves the left of the line and
+     drops into the phone, so it runs down-left and stands its head on end. */
+  const lightLeft = `<svg viewBox="0 0 122 52"><defs>${penFilter('tlRough2', 11)}</defs>
+    <path d="M118 6C88 11 56 21 34 36" ${pen('tlRough2')}/>
+    ${headV('tlRough2', 10, 46, 15, 11, 58, 44)}
   </svg>`;
 
-  const recapArrow = `<svg viewBox="0 0 74 31"><defs>${penFilter('tlRough3', 29)}</defs>
-    <path d="M3 21C14 18 26 14 38 11C46 9 55 7 62 6" ${pen('tlRough3')}/>
-    ${headV('tlRough3', 71, 5, 59, 0, 59, 14)}
+  /* And this one comes out from UNDER the words rather than after them — it
+     starts below the middle of the line and sweeps out to the right clip, which
+     is why the CSS pulls it back over the text instead of setting it beside. */
+  const lightRight = `<svg viewBox="0 0 108 32"><defs>${penFilter('tlRough3', 19)}</defs>
+    <path d="M5 4C22 16 42 8 60 14C74 19 84 22 92 26" ${pen('tlRough3')}/>
+    ${headV('tlRough3', 101 , 29, 78, 25, 99, 7)}
+  </svg>`;
+
+  const recapArrow = `<svg viewBox="0 0 76 42"><defs>${penFilter('tlRough4', 29)}</defs>
+    <path d="M72 5C52 9 32 17 21 28" ${pen('tlRough4')}/>
+    ${headV('tlRough4', 8, 37, 12, 9, 44, 35)}
   </svg>`;
 
   return `
@@ -2106,87 +2118,45 @@ PROJECTS['tracking-life'] = function () {
 
       <div class="proj-head">
         <img class="proj-title-art" src="${IMG}ui/camp_l2_2.png" alt="Tracking life">
-        <p class="tl-idea">every tracker we own counts the day. the glyph matrix counts the moments that made you feel alive, and gives the month back to you as a map.</p>
+        <p class="tl-idea">a vitality sensor indicated through the Nothing Phone (3)’s glyph.</p>
       </div>
 
-      <div class="proj-block tl-b-film">
-        <p class="tl-cap">
-          the film
-          ${filmArrow}
+      <div class="proj-block tl-b-case">
+        <p class="tl-cap tl-cap-case">
+          <span>video case</span>
+          ${caseArrow}
         </p>
         <div class="proj-media tl-yt">
           <iframe src="https://www.youtube.com/embed/${yt}?rel=0" title="Tracking life" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen loading="lazy"></iframe>
         </div>
       </div>
 
-      <!-- The argument the film opens with, in its own frames: a crossing
-           of people being counted, and the watch doing the counting. Black
-           and white, because that is the half of the film that is. -->
-      <div class="proj-block tl-b-now">
-        <p class="tl-copy">steps, calories, minutes in zone. everything we wear measures the day and none of it measures the living of it.</p>
-        <div class="proj-duo tl-duo">
-          <div class="proj-media tl-shot">
-            <img src="${p}cross.webp" alt="A crossing shot from above, hundreds of people counted at once" loading="lazy">
-          </div>
-          <div class="proj-media tl-shot">
-            <img src="${p}watch.webp" alt="A fitness watch reading pace, distance and floors climbed" loading="lazy">
-          </div>
-        </div>
-        <div class="proj-media tl-shot tl-wide">
-          <img src="${p}alive.webp" alt="The word ALIVE spelled in glyph dots over a night out" loading="lazy">
-        </div>
-      </div>
-
-      <!-- The turn. The matrix writes the campaign's name itself, so the
-           clip is the logo animation and the page does not set it twice. -->
-      <div class="proj-block tl-b-glyph">
-        <p class="tl-cap">
-          the phone writes it on its own back
-          ${glyphArrow}
+      <!-- The two of them read as one line: the glyph on the back of the phone
+           and the living it is reading off, side by side, one caption over the
+           pair with an arrow into each. -->
+      <div class="proj-block tl-b-light">
+        <p class="tl-cap tl-cap-light">
+          ${lightLeft}
+          <span>light up when vitality is high</span>
+          ${lightRight}
         </p>
-        <div class="proj-media tl-clip">
-          <video autoplay muted loop playsinline poster="${p}glyph.jpg"><source src="${p}glyph.mp4" type="video/mp4"></video>
-        </div>
-        <div class="proj-duo tl-duo">
-          <div class="proj-media tl-shot">
-            <img src="${p}glyph-phone.webp" alt="The glyph matrix on the back of the phone, drawing the shape of a moment" loading="lazy">
+        <div class="tl-duo">
+          <div class="proj-media tl-clip">
+            <video autoplay muted loop playsinline poster="${p}light-up.jpg"><source src="${p}light-up.mp4" type="video/mp4"></video>
           </div>
-          <div class="proj-media tl-shot">
-            <img src="${p}product.webp" alt="Nothing Phone (3) face down beside its earbuds" loading="lazy">
+          <div class="proj-media tl-clip">
+            <video autoplay muted loop playsinline poster="${p}life.jpg"><source src="${p}life.mp4" type="video/mp4"></video>
           </div>
         </div>
       </div>
 
-      <!-- What it hands back. The clip first, because the card arriving over
-           the moment it is about is the mechanic; the two stills under it are
-           the same card on two other nights. -->
       <div class="proj-block tl-b-recap">
-        <p class="tl-cap">
-          a card for the moment, dated and placed — keep it, or send it to whoever was there
+        <p class="tl-cap tl-cap-recap">
           ${recapArrow}
+          <span>and get a recap</span>
         </p>
         <div class="proj-media tl-clip">
           <video autoplay muted loop playsinline poster="${p}recap.jpg"><source src="${p}recap.mp4" type="video/mp4"></video>
-        </div>
-        <div class="proj-duo tl-duo">
-          <div class="proj-media tl-shot">
-            <img src="${p}recap-concert.webp" alt="A recap card dated May 3rd over the concert it remembers" loading="lazy">
-          </div>
-          <div class="proj-media tl-shot">
-            <img src="${p}recap-beach.webp" alt="A recap card dated June 4th over the beach it remembers" loading="lazy">
-          </div>
-        </div>
-        <div class="proj-media tl-shot tl-wide">
-          <img src="${p}map.webp" alt="Your map — the month's moments pinned where they happened" loading="lazy">
-        </div>
-      </div>
-
-      <!-- Earned, not bought: the film's own last movement is the argument
-           being picked up and printed. -->
-      <div class="proj-block tl-b-press">
-        <p class="tl-copy tl-copy-end">the point it makes is a story before it is an ad: hurry as a way of life, and a phone that measures the opposite.</p>
-        <div class="proj-media tl-shot tl-wide">
-          <img src="${p}press.webp" alt="A newspaper feature headlined “La prisa como estilo de vida”" loading="lazy">
         </div>
       </div>
 
@@ -2444,6 +2414,8 @@ async function projectTransitionTo(slug, dir) {
   for (const v of projectScroll.querySelectorAll('video')) v.pause();
   stopJams();
   buildProject(slug);
+  /* `c/` here is the internal key only — it is what tells goBack a campaign is
+     open rather than a member page. The address itself is the bare slug. */
   current = 'c/' + slug;
   /* The address follows the page. Replaced rather than pushed, and replaced
      rather than assigned: `location.hash = ...` would fire hashchange, and
@@ -2452,7 +2424,7 @@ async function projectTransitionTo(slug, dir) {
      still running. The ring is a lateral move inside one project view, so it
      leaves the history where entering it put it: Back is still the way out to
      the landing, and a copied link is still the project on screen. */
-  history.replaceState(null, '', '#c/' + slug);
+  history.replaceState(null, '', '#' + slug);
   campaignReturnOrigin = document.querySelector(`.camp[data-slug="${slug}"]`) || campaignReturnOrigin;
 
   // `out` ends at opacity 0 and `in`'s reverse start (its own p:1) is also
@@ -2480,6 +2452,10 @@ async function goCampaign(slug, origin = null) {
      the block (PASTA FOR PASTA, until it has a project) or was never on it
      goes home rather than opening a page with no title to fly. */
   if (!c) { goHome(); return; }   // goHome clears the address itself
+  /* and whatever spelling got us here, the address ends up the short one —
+     which is what upgrades a `#c/<slug>` link from the few hours the site
+     shipped with that prefix */
+  if (location.hash.slice(1) !== slug) history.replaceState(null, '', '#' + slug);
   busy = true;
   origin = origin || document.querySelector(`.camp[data-slug="${slug}"]`);
   campaignReturnOrigin = origin;
@@ -2543,15 +2519,24 @@ function goHome() {
   goBack();
 }
 
+/* One flat namespace: `#and`, `#pita`, `#salva` are the three drawn pages and
+   everything else is a campaign slug — `#numpad-jam`, not `#c/numpad-jam`. The
+   member pages are matched first, so a campaign may not be called `pita`,
+   `salva` or `and`; nothing else is reserved, and an unknown slug goes home
+   through goCampaign.
+
+   `c/` is still accepted and answered on the clean address: the site shipped
+   with that prefix for a few hours, and openProject rewrites whatever came in
+   to the short form, so an old link upgrades itself rather than 404ing into
+   the landing. */
 function route() {
-  const h = location.hash.replace(/^#/, '');
+  let h = location.hash.replace(/^#/, '');
   if (!h) { if (current !== null) goHome(); return; }
   if (PAGES[h]) { goPage(h); return; }
-  if (h.startsWith('c/')) {
-    const origin = pendingCampaignOrigin;
-    pendingCampaignOrigin = null;
-    goCampaign(h.slice(2), origin);
-  }
+  if (h.startsWith('c/')) h = h.slice(2);
+  const origin = pendingCampaignOrigin;
+  pendingCampaignOrigin = null;
+  goCampaign(h, origin);
 }
 addEventListener('hashchange', route);
 

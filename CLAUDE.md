@@ -146,11 +146,15 @@ plus the one dap about to play; `warm()` fetches the rest behind it.
 in ms, jittered so the cadence never locks to a metronome. Stop-motion, not
 slideshow.
 
-**Routing** is the URL hash. `PAGE_DEFS` maps `pita`/`salva`/`and` to a
-sequence, a destination plate, and `back` — the edge the landing lies behind, so
-leaving reverses the move that opened the page. Campaign pages route through
-`goCampaign` → `campaignDepthTransition` → `openProject`. Escape or `#back`
-goes home.
+**Routing** is the URL hash, one flat namespace: `PAGE_DEFS` maps
+`pita`/`salva`/`and` to a sequence, a destination plate, and `back` — the edge
+the landing lies behind, so leaving reverses the move that opened the page —
+and every other hash is a campaign slug (`#numpad-jam`). Those three names are
+therefore reserved: they are matched first, so a campaign may not take one.
+Campaign pages route through `goCampaign` → `campaignDepthTransition` →
+`openProject`; a slug the landing does not letter goes home. `#c/<slug>`, the
+prefix the site shipped with briefly, is still accepted and rewritten to the
+short form. Escape or `#back` goes home.
 
 **Preloaded, never swapped.** Several controls exist in the markup in all their
 variants (all four back hands, both eyes' three symbols, every star frame slot)
@@ -187,12 +191,18 @@ into one full-bleed column in each cell's `--m` order — each garment, then its
 stitching close, then the next, and the pile last — with the DOM left in ring
 order so nothing about the wide layout moves.
 
-Surf the Spike is set to a supplied layout (`update/surf_the_spike/layout.pdf`,
-gitignored with the rest of the source material). That file is drawn at 1920,
-the width these pages are laid out against, so its measurements go straight
-into the CSS as units/19.2 vw — margins, column width, the gap between blocks,
-and where each caption's arrow sits against its own line. If that page is
+Surf the Spike and Tracking Life are each set to a supplied layout
+(`update/<slug>/layout.pdf`, gitignored with the rest of the source material).
+Those files are drawn at 1920, the width these pages are laid out against, so
+their measurements go straight into the CSS as units/19.2 vw — margins, column
+width, where each caption's arrow sits against its own line. If either page is
 re-cut, re-measure the PDF rather than nudging numbers.
+
+Their vertical rhythm is the exception, and is deliberately not the PDFs':
+each page carries a `--*-gap` (block to next caption) and a `--*-lead`
+(caption to its own picture), and both pages use the same pair, because
+measured off the files the gaps ran 124/152/71 on one and 23/7/37 on the
+other — unevenly distributed rather than deliberately varied.
 
 Hand-drawn doodles (arrows, circles, underlines) are inline SVG through the
 shared `penFilter`/`pen`/`headV` helpers. Two invariants: **each doodle needs a
