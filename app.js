@@ -2471,10 +2471,16 @@ async function projectTransitionTo(slug, dir) {
 
 async function goCampaign(slug, origin = null) {
   if (busy) return;
-  busy = true;
   const c = cfg.campaigns.find((x) => x.slug === slug &&
     (!origin || x.src === origin.dataset.src)) ||
     cfg.campaigns.find((x) => x.slug === slug);
+  /* A campaign the landing does not letter does not exist: the block IS the
+     list, and everything downstream — the flying title, the project's own
+     prev/next — is built out of that entry. A hash for one that was taken off
+     the block (PASTA FOR PASTA, until it has a project) or was never on it
+     goes home rather than opening a page with no title to fly. */
+  if (!c) { goHome(); return; }   // goHome clears the address itself
+  busy = true;
   origin = origin || document.querySelector(`.camp[data-slug="${slug}"]`);
   campaignReturnOrigin = origin;
   pageImg.removeAttribute('src');

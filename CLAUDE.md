@@ -83,8 +83,11 @@ is on screen and is pulled in by the shortest distance that clears the edge when
 it is not. Two exceptions carry the portrait design: the two name labels rise to
 the ampersand's line rather than climb the arms they would otherwise cover, and
 the campaign block is squeezed about its centre or, past `MIN_SQUEEZE`, re-broken
-into rows. All seven titles are set in either case — each one is a link, and the
-block is the site's list of campaigns. The overlay's artwork was
+into rows. Every title is set in either case — each one is a link, and the
+block is the site's list of campaigns: a campaign the block does not letter
+does not exist to the site, and `goCampaign` sends a hash for one straight
+home (PASTA FOR PASTA is written and cut, and stays off the block until it has
+a project). The overlay's artwork was
 erased out of `landing_plate` when it was built and left a hairline ghost at
 every one of those places, so `draw()` blacks those rectangles out — without it,
 moving a piece of overlay reveals the ghost it used to cover.

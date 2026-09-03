@@ -82,7 +82,7 @@
   },
   {
    "src": "ui/camp_l2_0.png",
-   "x": 198,
+   "x": 480,
    "y": 907,
    "w": 437,
    "h": 100,
@@ -90,17 +90,8 @@
    "slug": "surf-the-spike"
   },
   {
-   "src": "ui/camp_l2_1.png",
-   "x": 733,
-   "y": 907,
-   "w": 461,
-   "h": 100,
-   "label": "PASTA FOR PASTA",
-   "slug": "pasta-for-pasta"
-  },
-  {
    "src": "ui/camp_l2_2.png",
-   "x": 1297,
+   "x": 1015,
    "y": 907,
    "w": 425,
    "h": 100,
@@ -132,16 +123,9 @@
   },
   {
    "src": "ui/star_l2_0.png",
-   "x": 668,
+   "x": 950,
    "y": 907,
    "w": 31,
-   "h": 89
-  },
-  {
-   "src": "ui/star_l2_1.png",
-   "x": 1227,
-   "y": 913,
-   "w": 36,
    "h": 89
   }
  ]

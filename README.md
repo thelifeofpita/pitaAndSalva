@@ -13,7 +13,7 @@ it, so the camera travels rather than jumping.
 
 `layoutUI()` holds each overlay element at its drawn place while that place is on
 screen and brings it in when it is not: the two names rise above the hands and
-the campaign titles re-break into rows, all seven of them, once the frame is too
+the campaign titles re-break into rows, every one of them, once the frame is too
 narrow for the drawn line. On a portrait window a member's page reframes onto his
 figure with the bio and CV under him, and the & page splits down the black
 between its two faces and sends them to opposite corners with MAGIC between. At
@@ -171,7 +171,9 @@ rotations are set under `#and-copy` in `style.css`.
 
 `python3 tools/build_titles.py` turns `update/more_titles.jpeg` — three new
 titles written on one sheet — into `img/ui/camp_l2_{0,1,2}.png`, replacing the
-three placeholder repeats that line used to carry. It thresholds the marker off
+three placeholder repeats that line used to carry. All three are cut; the
+landing sets the two that have a project behind them, and `img/ui.json` centres
+that line on what it sets. It thresholds the marker off
 the paper, opens the mask to drop the paper's dot grid, scales all three lines
 by ONE factor, re-thresholds to hard 1-bit at that size, and drops any speck
 left standing at the size the art is actually seen.
