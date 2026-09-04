@@ -303,20 +303,29 @@ html, body {
 #page.page-and #and-copy { display: block; }
 
 /* Placed by `layoutAndFaces` in app.js — the word belongs between the two
-   halves of the frame, and where that is depends on where they are. */
-#and-word {
+   halves of the frame, and where that is depends on where they are. Shared
+   with #and-email below it: each is sized to its own drawing's native pixels
+   (that's what its three stacked frames are drawn at), and `.magic img` sizes
+   every frame to fill whichever of the two boxes it's in, rather than to a
+   size fixed for the word alone. */
+#and-word, #and-email {
   position: absolute;
   display: none;
-  /* the drawing's own size for the word: its three frames are stacked on top of
-     each other inside it, so the box has to be given the size they are */
-  width: 521px;
-  height: 223px;
   transform-origin: 0 0;
 }
-#page.page-and #and-word { display: block; }
-.magic img { position: absolute; left: 0; top: 0; width: 521px; height: 223px; opacity: 0; animation: boil3 .39s steps(1, end) infinite; }
+/* the drawing's own size: its three frames are stacked on top of each other
+   inside the box, so the box has to be given the size they are */
+#and-word { width: 521px; height: 223px; }
+/* the address, cropped from a photo of the same handwriting rather than drawn
+   at this size — see update/email.jpeg and the frames it produced */
+#and-email { width: 1452px; height: 190px; }
+#page.page-and #and-word, #page.page-and #and-email { display: block; }
+.magic img { position: absolute; left: 0; top: 0; width: 100%; height: 100%; opacity: 0; animation: boil3 .39s steps(1, end) infinite; }
 .magic img:nth-child(2) { animation-delay: .13s; }
 .magic img:nth-child(3) { animation-delay: .26s; }
+/* the one piece of copy on this page meant to be clicked — no underline while
+   sitting, the ink itself is the only affordance it needs */
+#and-email { cursor: pointer; }
 
 /* Every frame of every shooting star is stacked on the point it arrives at, so
    a frame is a swap and never a move. A slot is a star's place in the sky —

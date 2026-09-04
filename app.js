@@ -748,7 +748,7 @@ const WORD_MAX_W = .62;      /* of the window's width */
 const WORD_AIR = .02;        /* above and below it, of that same height */
 
 function layoutAndFaces() {
-  const l = $('.af-l'), r = $('.af-r'), word = $('#and-word');
+  const l = $('.af-l'), r = $('.af-r'), word = $('#and-word'), email = $('#and-email');
   if (!l) return;
   /* a landscape window is the frame whole; turning one back from portrait puts
      it together again rather than leaving the halves where they were */
@@ -791,15 +791,33 @@ function layoutAndFaces() {
   const wy1 = (ly1 + 1080 * k1 + ry1) / 2 - 223 * wk1 / 2;
   const wx = mix(699, wx1), wy = mix(428, wy1), wk = mix(1, wk1);
   word.style.transform = `translate(${wx}px, ${wy}px) scale(${wk})`;
-  /* the sky is a map of where the dark is, and the word is a hole in it. The
-     word is a good deal larger once the frame has opened, so the hole is
-     re-measured from where it actually is rather than left at the one place it
-     was drawn. `bow` is the room an arc needs to swing clear of it. */
+
+  /* The address, right under MAGIC, at MAGIC's own width, at every point in
+     the move — not a second closed/open pair of its own. Because it's meant
+     to match the word's displayed width exactly, its scale falls straight
+     out of the word's (`521 / EMAIL_W` converts one to the other) and its x
+     is then just the word's x: same width plus same left edge is the same
+     centre. `EMAIL_GAP` is stage units in the word's own 223-tall space, so
+     the gap between them scales along with everything else. */
+  let emailBottom = wy + 223 * wk;
+  if (email) {
+    const EMAIL_W = 1452, EMAIL_H = 190, EMAIL_GAP = 20;
+    const ek = wk * 521 / EMAIL_W;
+    const ex = wx, ey = wy + (223 + EMAIL_GAP) * wk;
+    email.style.transform = `translate(${ex}px, ${ey}px) scale(${ek})`;
+    emailBottom = ey + EMAIL_H * ek;
+  }
+
+  /* the sky is a map of where the dark is, and the word (plus the address
+     under it) is a hole in it. Both are a good deal larger once the frame has
+     opened, so the hole is re-measured from where they actually are rather
+     than left at the one place they were drawn. `bow` is the room an arc
+     needs to swing clear of it. */
   const bow = 30;
   STREAK_WORD.x = wx - bow;
   STREAK_WORD.y = wy - bow;
   STREAK_WORD.w = 521 * wk + 2 * bow;
-  STREAK_WORD.h = 223 * wk + 2 * bow;
+  STREAK_WORD.h = emailBottom - wy + 2 * bow;
 }
 
 /* The block as it was drawn, and what it costs to keep it. `MIN_SQUEEZE` is how
